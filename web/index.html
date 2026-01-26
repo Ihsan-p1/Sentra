@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sentra - Media Framing Analysis</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .chat-bubble {
+            max-width: 85%;
+        }
+
+        .analysis-card {
+            transition: all 0.2s;
+        }
+
+        .analysis-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .model-badge-a {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        }
+
+        .model-badge-b {
+            background: linear-gradient(135deg, #64748b, #475569);
+        }
+    </style>
+</head>
+
+<body class="bg-slate-900 h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-slate-800 border-b border-slate-700 py-4 px-6 flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <div
+                class="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold text-xl shadow-lg">
+                S</div>
+            <div>
+                <h1 class="font-bold text-white text-lg">Sentra</h1>
+                <p class="text-xs text-slate-400">Indonesia Election Media Framing Analysis</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-4">
+            <div id="connection-status"
+                class="flex items-center gap-2 text-xs font-medium text-emerald-400 bg-emerald-500/10 px-3 py-1.5 rounded-full border border-emerald-500/30">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                System Ready
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex overflow-hidden">
+
+        <!-- Chat Area -->
+        <div class="flex-1 flex flex-col relative">
+            <div id="chat-container" class="flex-1 overflow-y-auto p-6 space-y-6">
+                <!-- Welcome Message -->
+                <div class="flex gap-4">
+                    <div
+                        class="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+                        AI</div>
+                    <div
+                        class="chat-bubble bg-slate-800 border border-slate-700 p-4 rounded-2xl rounded-tl-none shadow-lg text-slate-300 text-sm leading-relaxed">
+                        Hello! I'm Sentra. Ask me about Indonesia's 2024 presidential election coverage, and I'll
+                        analyze framing differences across media sources (Jakarta Post, Tempo, ANTARA, Jakarta Globe).
+                    </div>
+                </div>
+            </div>
+
+            <!-- Input Area -->
+            <div class="p-4 bg-slate-800 border-t border-slate-700">
+                <form id="chat-form" class="max-w-4xl mx-auto relative flex items-center gap-2">
+                    <input type="text" id="user-input"
+                        class="w-full bg-slate-700 border border-slate-600 rounded-xl px-5 py-3.5 focus:ring-2 focus:ring-indigo-500 text-white placeholder-slate-400 outline-none transition-all"
+                        placeholder="Example: How did different media cover Prabowo's cabinet formation?">
+                    <button type="submit"
+                        class="absolute right-2 p-2.5 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white rounded-lg transition-all shadow-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="22" y1="2" x2="11" y2="13"></line>
+                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                        </svg>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Analysis Sidebar -->
+        <div class="w-[420px] bg-slate-800 border-l border-slate-700 overflow-y-auto p-4 hidden md:block"
+            id="analysis-panel">
+            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Model Comparison Dashboard</h3>
+
+            <!-- Default State -->
+            <div id="analysis-empty" class="text-center py-10">
+                <div class="w-16 h-16 bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+                        class="text-slate-500">
+                        <path d="M3 3v18h18" />
+                        <path d="m19 9-5 5-4-4-3 3" />
+                    </svg>
+                </div>
+                <p class="text-slate-400 text-sm">Model A vs Model B comparison will appear here after you ask a
+                    question.</p>
+            </div>
+
+            <!-- Dashboard (Hidden initially) -->
+            <div id="analysis-dashboard" class="space-y-4 hidden">
+
+                <!-- Model Comparison Header -->
+                <div class="flex gap-2 mb-4">
+                    <div class="flex-1 text-center py-2 px-3 rounded-lg model-badge-a">
+                        <span class="text-xs font-bold text-white">Model A</span>
+                        <p class="text-[10px] text-white/70">Trained ML</p>
+                    </div>
+                    <div class="flex-1 text-center py-2 px-3 rounded-lg model-badge-b">
+                        <span class="text-xs font-bold text-white">Model B</span>
+                        <p class="text-[10px] text-white/70">Baseline</p>
+                    </div>
+                </div>
+
+                <!-- Confidence Score Comparison -->
+                <div class="analysis-card bg-slate-700/50 p-4 rounded-xl border border-slate-600">
+                    <h4 class="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2">
+                            <path d="M12 20V10" />
+                            <path d="M18 20V4" />
+                            <path d="M6 20v-4" />
+                        </svg>
+                        Confidence Score
+                    </h4>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-indigo-500/20 p-3 rounded-lg border border-indigo-500/30">
+                            <span class="text-[10px] text-indigo-300 uppercase font-medium">Model A</span>
+                            <p id="confidence-a" class="text-2xl font-bold text-indigo-400">0%</p>
+                            <span id="confidence-a-method" class="text-[10px] text-slate-400">Random Forest</span>
+                        </div>
+                        <div class="bg-slate-600/50 p-3 rounded-lg border border-slate-500/30">
+                            <span class="text-[10px] text-slate-400 uppercase font-medium">Model B</span>
+                            <p id="confidence-b" class="text-2xl font-bold text-slate-300">0%</p>
+                            <span id="confidence-b-method" class="text-[10px] text-slate-500">Heuristic</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hallucination Detection Comparison -->
+                <div class="analysis-card bg-slate-700/50 p-4 rounded-xl border border-slate-600">
+                    <h4 class="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />
+                        </svg>
+                        Hallucination Detection
+                    </h4>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-indigo-500/20 p-3 rounded-lg border border-indigo-500/30">
+                            <span class="text-[10px] text-indigo-300 uppercase font-medium">Model A</span>
+                            <p id="hallu-a-ratio" class="text-lg font-bold text-indigo-400">0/0</p>
+                            <span class="text-[10px] text-slate-400">Verified Sentences</span>
+                        </div>
+                        <div class="bg-slate-600/50 p-3 rounded-lg border border-slate-500/30">
+                            <span class="text-[10px] text-slate-400 uppercase font-medium">Model B</span>
+                            <p id="hallu-b-ratio" class="text-lg font-bold text-slate-300">0/0</p>
+                            <span class="text-[10px] text-slate-500">Verified Sentences</span>
+                        </div>
+                    </div>
+                    <div class="mt-3 text-[10px] text-slate-400 bg-slate-800 p-2 rounded">
+                        <strong class="text-indigo-400">Model A:</strong> Embedding Similarity + Logistic Regression<br>
+                        <strong class="text-slate-300">Model B:</strong> Simple Keyword Overlap
+                    </div>
+                </div>
+
+                <!-- Framing Keywords Comparison -->
+                <div class="analysis-card bg-slate-700/50 p-4 rounded-xl border border-slate-600">
+                    <h4 class="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2">
+                            <path d="M4 7V4h16v3" />
+                            <path d="M9 20h6" />
+                            <path d="M12 4v16" />
+                        </svg>
+                        Framing Keywords
+                    </h4>
+                    <div id="framing-comparison" class="space-y-3">
+                        <!-- Dynamic Content -->
+                    </div>
+                </div>
+
+                <!-- Unsupported Claims -->
+                <div class="analysis-card bg-amber-500/10 p-4 rounded-xl border border-amber-500/30">
+                    <h4 class="text-sm font-semibold text-amber-400 mb-3 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2">
+                            <path
+                                d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                            <line x1="12" y1="9" x2="12" y2="13" />
+                            <line x1="12" y1="17" x2="12.01" y2="17" />
+                        </svg>
+                        Unverified Claims Comparison
+                    </h4>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-indigo-500/10 p-3 rounded-lg border border-indigo-500/20">
+                            <span class="text-[10px] font-bold text-indigo-400 block mb-2">MODEL A (ML)</span>
+                            <ul id="hallucination-list-a"
+                                class="text-[10px] text-amber-300/80 space-y-1 list-disc pl-3">
+                                <li>All claims verified</li>
+                            </ul>
+                        </div>
+                        <div class="bg-slate-700/50 p-3 rounded-lg border border-slate-600">
+                            <span class="text-[10px] font-bold text-slate-400 block mb-2">MODEL B (Baseline)</span>
+                            <ul id="hallucination-list-b"
+                                class="text-[10px] text-amber-300/60 space-y-1 list-disc pl-3">
+                                <li>All claims verified</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        const chatForm = document.getElementById('chat-form');
+        const userInput = document.getElementById('user-input');
+        const chatContainer = document.getElementById('chat-container');
+        const analysisDashboard = document.getElementById('analysis-dashboard');
+        const analysisEmpty = document.getElementById('analysis-empty');
+
+        chatForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const message = userInput.value.trim();
+            if (!message) return;
+
+            // Add User Message
+            appendMessage(message, 'user');
+            userInput.value = '';
+
+            // Show Loading
+            const loadingId = appendLoading();
+
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message })
+                });
+
+                const data = await response.json();
+
+                // Remove loading
+                document.getElementById(loadingId).remove();
+
+                // Add Assistant Message
+                appendMessage(marked.parse(data.answer), 'bot');
+
+                // Update Sidebar with Comparison
+                updateDashboard(data);
+
+            } catch (error) {
+                console.error(error);
+                document.getElementById(loadingId).remove();
+                appendMessage("Sorry, there was a connection error.", 'bot');
+            }
+        });
+
+        function appendMessage(text, sender) {
+            const div = document.createElement('div');
+            div.className = `flex gap-4 ${sender === 'user' ? 'flex-row-reverse' : ''}`;
+
+            const avatar = document.createElement('div');
+            avatar.className = `w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 ${sender === 'user' ? 'bg-slate-600 text-white' : 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white'}`;
+            avatar.innerText = sender === 'user' ? 'U' : 'AI';
+
+            const bubble = document.createElement('div');
+            bubble.className = `chat-bubble p-4 rounded-2xl shadow-lg text-sm leading-relaxed ${sender === 'user' ? 'bg-indigo-600 text-white rounded-tr-none' : 'bg-slate-800 border border-slate-700 text-slate-300 rounded-tl-none'}`;
+
+            if (sender === 'bot') {
+                bubble.innerHTML = text;
+            } else {
+                bubble.innerText = text;
+            }
+
+            div.appendChild(avatar);
+            div.appendChild(bubble);
+            chatContainer.appendChild(div);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function appendLoading() {
+            const id = 'loading-' + Date.now();
+            const div = document.createElement('div');
+            div.id = id;
+            div.className = 'flex gap-4';
+            div.innerHTML = `
+                <div class="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">AI</div>
+                <div class="bg-slate-800 border border-slate-700 p-4 rounded-2xl rounded-tl-none shadow-lg flex items-center gap-2">
+                    <div class="w-2 h-2 bg-indigo-400 rounded-full animate-bounce"></div>
+                    <div class="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+                    <div class="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style="animation-delay: 0.4s"></div>
+                </div>
+            `;
+            chatContainer.appendChild(div);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            return id;
+        }
+
+        function updateDashboard(data) {
+            analysisEmpty.classList.add('hidden');
+            analysisDashboard.classList.remove('hidden');
+
+            const comparison = data.model_comparison || {};
+
+            // Confidence Comparison
+            if (comparison.confidence) {
+                document.getElementById('confidence-a').innerText = comparison.confidence.model_a?.score_percent || '0%';
+                document.getElementById('confidence-b').innerText = comparison.confidence.model_b?.score_percent || '0%';
+                document.getElementById('confidence-a-method').innerText = comparison.confidence.model_a?.name || 'ML Model';
+                document.getElementById('confidence-b-method').innerText = comparison.confidence.model_b?.name || 'Baseline';
+            }
+
+            // Hallucination Comparison
+            if (comparison.hallucination) {
+                document.getElementById('hallu-a-ratio').innerText = comparison.hallucination.model_a?.supported_ratio || '0/0';
+                document.getElementById('hallu-b-ratio').innerText = comparison.hallucination.model_b?.supported_ratio || '0/0';
+            }
+
+            // Framing Keywords Comparison
+            const framingDiv = document.getElementById('framing-comparison');
+            framingDiv.innerHTML = '';
+
+            if (comparison.framing) {
+                const mediaList = Object.keys(comparison.framing.model_a?.keywords || {});
+
+                mediaList.forEach(media => {
+                    const keywordsA = comparison.framing.model_a?.keywords[media] || [];
+                    const keywordsB = comparison.framing.model_b?.keywords[media] || [];
+
+                    const item = document.createElement('div');
+                    item.className = 'bg-slate-800 p-2 rounded-lg';
+                    item.innerHTML = `
+                        <span class="text-[10px] font-bold uppercase text-slate-400">${media.replace('_', ' ')}</span>
+                        <div class="grid grid-cols-2 gap-2 mt-1">
+                            <div class="text-[10px] text-indigo-300 bg-indigo-500/10 p-1.5 rounded">
+                                <strong>A:</strong> ${keywordsA.join(', ') || 'N/A'}
+                            </div>
+                            <div class="text-[10px] text-slate-400 bg-slate-700 p-1.5 rounded">
+                                <strong>B:</strong> ${keywordsB.join(', ') || 'N/A'}
+                            </div>
+                        </div>
+                    `;
+                    framingDiv.appendChild(item);
+                });
+            }
+
+            // Hallucination List - Model A
+            const halluListA = document.getElementById('hallucination-list-a');
+            halluListA.innerHTML = '';
+
+            if (data.unsupported_claims && data.unsupported_claims.length > 0) {
+                data.unsupported_claims.slice(0, 4).forEach(claim => {
+                    const li = document.createElement('li');
+                    li.innerText = `"${claim.sentence.substring(0, 40)}..."`;
+                    halluListA.appendChild(li);
+                });
+            } else {
+                halluListA.innerHTML = '<li class="text-emerald-400">All claims verified ✓</li>';
+            }
+
+            // Hallucination List - Model B
+            const halluListB = document.getElementById('hallucination-list-b');
+            halluListB.innerHTML = '';
+
+            if (data.unsupported_claims_b && data.unsupported_claims_b.length > 0) {
+                data.unsupported_claims_b.slice(0, 4).forEach(claim => {
+                    const li = document.createElement('li');
+                    li.innerText = `"${claim.sentence.substring(0, 40)}..."`;
+                    halluListB.appendChild(li);
+                });
+            } else {
+                halluListB.innerHTML = '<li class="text-emerald-400">All claims verified ✓</li>';
+            }
+        }
+    </script>
+</body>
+
+</html>

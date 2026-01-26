@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.env
+.env.local
+.venv
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Database
+*.db
+*.sqlite3
+chroma_db/
+
+# IDEs
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project specific
+data/raw/
+logs/
