@@ -91,8 +91,36 @@ The frontend displays a live comparison of how Model A and Model B evaluate the 
 
 ---
 
-## 📊 Model Evaluation
-You can run the comprehensive evaluation script to see how Model A compares to Model B on the test set.
+## � Customizing the Knowledge Base
+
+Want to use your own data? It's easy!
+
+1.  **Modify the Data Source**
+    Open `data/election_articles.py` and replace the content with your own articles.
+    ```python
+    ELECTION_ARTICLES = [
+        {
+            "title": "My Custom Article",
+            "content": "This is the text that the bot will read...",
+            "media_source": "my_source",
+            "url": "https://example.com",
+            "published_date": datetime(2024, 1, 1)
+        },
+        # Add more articles...
+    ]
+    ```
+
+2.  **Refresh the Database**
+    Run the script to clear the old database and ingest your new data:
+    ```bash
+    python refresh_database.py
+    ```
+    *This will rebuild the Vector Store (ChromaDB) with your new content.*
+
+3.  **No Retraining Needed!** 🚀
+    The AI models (Hallucination & Confidence) automatically adapt to your new data without any code changes.
+
+---
 
 ```bash
 python scripts/evaluate_models.py
