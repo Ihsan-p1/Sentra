@@ -18,8 +18,10 @@ class Settings(BaseSettings):
     EMBEDDING_DIMENSION: int = 384
     
     # LLM Configuration
+    GROQ_API_KEY: str  # Loaded from .env
     OPENAI_API_KEY: Optional[str] = None
-    LLM_MODEL: str = "gpt-4o-mini"
+    LLM_BASE_URL: str = "https://api.groq.com/openai/v1" 
+    LLM_MODEL: str = "llama-3.3-70b-versatile"
     LLM_TEMPERATURE: float = 0.3
     
     # RAG Settings

@@ -10,13 +10,14 @@ from contextlib import asynccontextmanager
 import sys
 sys.path.append('..')
 from database.connection import db_manager, init_database
-from api.routes import router
+from api.routes import router, init_components
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
     print("🚀 Starting Sentra API...")
     await init_database()
+    init_components()  # Initialize models
     yield
     # Shutdown
     await db_manager.disconnect()

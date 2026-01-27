@@ -18,10 +18,12 @@ class LLMClient:
         # Can be configured to point to local Ollama (base_url="http://localhost:11434/v1")
         # if using local LLM, set OPENAI_API_KEY to 'ollama'
         self.client = AsyncOpenAI(
-            api_key=settings.OPENAI_API_KEY, 
-            # base_url="http://localhost:11434/v1" # Uncomment for Ollama
+            api_key=settings.GROQ_API_KEY, 
+            base_url=settings.LLM_BASE_URL
         )
         self.model = settings.LLM_MODEL
+        print(f"🔧 LLM Config: BaseURL={settings.LLM_BASE_URL}, Model={self.model}")
+        print(f"🔑 API Key: {settings.GROQ_API_KEY[:5]}...{settings.GROQ_API_KEY[-4:] if settings.GROQ_API_KEY else 'NONE'}")
         
     async def generate_comparative_answer(
         self, 
@@ -54,8 +56,9 @@ class LLMClient:
             )
             return response.choices[0].message.content
         except Exception as e:
-            print(f"❌ LLM Generation Error: {e}")
-            return "Maaf, terjadi kesalahan saat menyusun jawaban. (LLM Error)"
+            error_msg = str(e)
+            print(f"❌ LLM Generation Error: {error_msg}")
+            return f"Maaf, terjadi kesalahan saat menyusun jawaban. (LLM Error: {error_msg})"
             
     def _format_context(self, chunks: Dict[str, List[Dict]]) -> str:
         formatted = []

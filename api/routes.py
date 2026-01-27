@@ -11,8 +11,19 @@ from chatbot.engine import ChatbotEngine
 from pipeline.ingest import ArticleIngestor
 
 router = APIRouter()
-chatbot = ChatbotEngine()
-ingestor = ArticleIngestor()
+chatbot = None
+ingestor = None
+
+def init_components():
+    """Initialize chatbot and ingestor components"""
+    global chatbot, ingestor
+    if chatbot is None:
+        print("🔄 Initializing Chatbot Engine...")
+        chatbot = ChatbotEngine()
+    if ingestor is None:
+        print("🔄 Initializing Article Ingestor...")
+        ingestor = ArticleIngestor()
+    print("✅ Components initialized")
 
 class ChatRequest(BaseModel):
     message: str
@@ -31,6 +42,9 @@ async def chat_endpoint(request: ChatRequest):
     Chat endpoint.
     Returns answer + analysis + confidence score.
     """
+    if chatbot is None:
+        raise HTTPException(status_code=503, detail="System is still initializing, please try again in a few seconds")
+    
     try:
         response = await chatbot.process_query(request.message)
         return response
@@ -44,6 +58,9 @@ async def ingest_endpoint(article: ArticleRequest):
     """
     Ingest a new article into the system.
     """
+    if ingestor is None:
+        raise HTTPException(status_code=503, detail="System is still initializing")
+
     try:
         article_data = article.dict()
         article_id = await ingestor.ingest_article(article_data)
