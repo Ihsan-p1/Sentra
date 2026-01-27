@@ -127,12 +127,20 @@ class ChatbotEngine:
             "framing": {
                 "model_a": {
                     "name": "TF-IDF Analyzer",
-                    "keywords": {m: data.get("top_keywords", [])[:3] for m, data in framing_model_a.get("framing_by_media", {}).items()},
+                    # Model A returns dict[media, result] directly, and keywords are tuples (word, score)
+                    "keywords": {
+                        m: [k[0] for k in data.get("top_keywords", [])][:3] 
+                        for m, data in framing_model_a.items()
+                    },
                     "method": "tf-idf + entity_extraction"
                 },
                 "model_b": {
                     "name": "Word Count Baseline",
-                    "keywords": {m: data.get("top_keywords", [])[:3] for m, data in framing_model_b.get("framing_by_media", {}).items()},
+                    # Model B returns {framing_by_media: ...} and keywords are strings
+                    "keywords": {
+                        m: data.get("top_keywords", [])[:3] 
+                        for m, data in framing_model_b.get("framing_by_media", {}).items()
+                    },
                     "method": "simple_frequency"
                 }
             },

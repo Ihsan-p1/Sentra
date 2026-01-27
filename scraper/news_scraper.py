@@ -89,6 +89,9 @@ class NewsScraper:
             
             # Get article body
             content_div = soup.select_one('article') or soup.select_one('.detail-content')
+            if not content_div:
+                print(f"    ❌ JP Content div not found for {url}")
+            
             if content_div:
                 paragraphs = content_div.select('p')
                 content = ' '.join([p.get_text(strip=True) for p in paragraphs])
@@ -96,6 +99,7 @@ class NewsScraper:
                 content = ""
                 
             if not content or len(content) < 100:
+                print(f"    ⚠️ JP Content too short ({len(content)} chars) for {url}")
                 return None
                 
             return {
@@ -153,6 +157,9 @@ class NewsScraper:
             title = title.get_text(strip=True) if title else "Untitled"
             
             content_div = soup.select_one('.post-content') or soup.select_one('article')
+            if not content_div:
+                print(f"    ❌ Antara Content div not found for {url}")
+
             if content_div:
                 paragraphs = content_div.select('p')
                 content = ' '.join([p.get_text(strip=True) for p in paragraphs])
@@ -160,6 +167,7 @@ class NewsScraper:
                 content = ""
                 
             if not content or len(content) < 100:
+                print(f"    ⚠️ Antara Content too short ({len(content)} chars) for {url}")
                 return None
                 
             return {
