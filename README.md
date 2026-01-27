@@ -4,8 +4,6 @@
 
 What sets Sentra apart is its **Dual-Model Evaluation System** which compares its own AI judgments (Model A) against baseline heuristics (Model B) in real-time.
 
-![Sentra Dashboard Screenshot](https://via.placeholder.com/800x400?text=Sentra+AI+Dashboard+Placeholder)
-
 ---
 
 ## 🚀 Key Features
