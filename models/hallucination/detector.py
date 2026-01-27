@@ -107,12 +107,27 @@ class HallucinationDetector:
         features_scaled = self.scaler.transform(features.reshape(1, -1))
         
         prob = self.model.predict_proba(features_scaled)[0]
-        is_supported = prob[1] > 0.5  # Class 1 = Supported
+        
+        # Lower threshold (0.35) to be more lenient for interpretive/analytical content
+        # Original academic research often paraphrases and interprets, not just quotes
+        is_supported = prob[1] > 0.35  # Was 0.5 - too strict
+        
+        # Determine reason if not supported
+        if not is_supported:
+            if features[0] < 0.3:  # max_similarity
+                reason = "Low semantic similarity to retrieved sources"
+            elif features[4] < 0.2:  # overlap
+                reason = "Limited keyword overlap with sources"
+            else:
+                reason = "Claim appears to extend beyond source material"
+        else:
+            reason = ""
         
         return {
             'is_supported': bool(is_supported),
             'confidence': float(prob[1] if is_supported else prob[0]),
             'score': float(prob[1]), # Probability of being supported
+            'reason': reason,
             'features': {
                 'max_similarity': float(features[0]),
                 'overlap': float(features[4])

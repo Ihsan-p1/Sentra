@@ -1,6 +1,8 @@
 """
 Integration of RAG + Custom Models + LLM Generator
 The 'Brain' of the chatbot with A/B Model Comparison.
+
+Improved: Aggregated hallucination warnings instead of per-sentence spam.
 """
 from typing import Dict, List, Any
 import asyncio
@@ -53,6 +55,7 @@ class ChatbotEngine:
     async def process_query(self, query: str) -> Dict[str, Any]:
         """
         Main pipeline execution with A/B comparison.
+        Now with AGGREGATED hallucination reporting for better UX.
         """
         # 1. RETRIEVAL
         retrieved_chunks = await self.retriever.retrieve(query)
@@ -88,9 +91,9 @@ class ChatbotEngine:
             framing_model_a
         )
         
-        # 4. HALLUCINATION DETECTION
+        # 4. HALLUCINATION DETECTION (Internal scoring, NOT per-sentence annotation)
         # Model A: Trained Logistic Regression
-        annotated_response_a, unsupported_a, stats_a = self._check_hallucinations_model_a(
+        verification_result_a, unsupported_a, stats_a = self._analyze_hallucinations_aggregated(
             raw_response, source_texts
         )
         
@@ -107,6 +110,9 @@ class ChatbotEngine:
         
         # Model B: Heuristic-based
         confidence_b = self.baseline_models["confidence"].score(query, retrieved_chunks)
+        
+        # 6. BUILD FINAL ANSWER (with aggregated disclaimer, not per-sentence spam)
+        final_answer = self._build_final_answer(raw_response, verification_result_a, unsupported_a)
         
         # Build comparison result
         model_comparison = {
@@ -168,9 +174,10 @@ class ChatbotEngine:
         ]
         
         return {
-            "answer": annotated_response_a,
+            "answer": final_answer,
             "raw_answer": raw_response,
             "framing_analysis": framing_model_a,
+            "verification_summary": verification_result_a,
             "unsupported_claims": unsupported_a,
             "unsupported_claims_b": unsupported_b,
             "confidence_score": confidence_a,
@@ -178,18 +185,19 @@ class ChatbotEngine:
             "model_comparison": model_comparison
         }
         
-    def _check_hallucinations_model_a(
+    def _analyze_hallucinations_aggregated(
         self, 
         response_text: str, 
         source_texts: List[str]
     ) -> tuple:
         """
-        Check each sentence using custom HallucinationDetector (Model A).
-        Returns: (annotated_text, unsupported_list, stats_dict)
+        Analyze hallucinations INTERNALLY per-sentence, but DON'T annotate each one.
+        Returns aggregated results for UX-friendly display.
+        
+        Returns: (verification_summary, unsupported_list, stats_dict)
         """
         sentences = re.split(r'(?<=[.!?])\s+', response_text)
         
-        annotated_sentences = []
         unsupported = []
         supported_count = 0
         total_checked = 0
@@ -199,7 +207,6 @@ class ChatbotEngine:
         
         for sentence in sentences:
             if len(sentence.split()) < 4:
-                annotated_sentences.append(sentence)
                 continue
             
             total_checked += 1
@@ -213,20 +220,116 @@ class ChatbotEngine:
             )
             
             if result['is_supported']:
-                annotated_sentences.append(sentence)
                 supported_count += 1
             else:
-                annotated_sentences.append(f"{sentence} [⚠️ Unverified]")
                 unsupported.append({
                     'sentence': sentence,
-                    'confidence': result['confidence']
+                    'confidence': result['confidence'],
+                    'reason': result.get('reason', 'Low similarity to source material')
                 })
+        
+        # Calculate verification level
+        support_rate = supported_count / total_checked if total_checked > 0 else 1.0
+        
+        # Determine overall verification status
+        if support_rate >= 0.8:
+            verification_level = "high"
+            verification_note = ""  # No disclaimer needed
+        elif support_rate >= 0.5:
+            verification_level = "moderate"
+            verification_note = "\n\n---\n*⚠️ Note: Some interpretive claims in this analysis may not be explicitly stated in the retrieved sources.*"
+        else:
+            verification_level = "low"
+            verification_note = "\n\n---\n*⚠️ Verification Notice: Due to limited source coverage, some claims in this analysis require additional confirmation from original sources.*"
+        
+        verification_summary = {
+            "level": verification_level,
+            "support_rate": support_rate,
+            "supported_count": supported_count,
+            "total_checked": total_checked,
+            "unsupported_count": len(unsupported)
+        }
         
         stats = {
             "supported_count": supported_count,
             "total_checked": total_checked,
             "supported_ratio": f"{supported_count}/{total_checked}",
-            "support_rate": supported_count / total_checked if total_checked > 0 else 1.0
+            "support_rate": support_rate,
+            "verification_note": verification_note
         }
                 
-        return " ".join(annotated_sentences), unsupported, stats
+        return verification_summary, unsupported, stats
+    
+    def _build_final_answer(
+        self, 
+        raw_response: str, 
+        verification_summary: Dict, 
+        unsupported_claims: List[Dict]
+    ) -> str:
+        """
+        Build final answer with academic disclaimer and categorized claim warnings.
+        NO per-sentence [Unverified] spam!
+        Uses softer language and claim categories instead of full sentences.
+        """
+        final_answer = raw_response
+        
+        # Always add global academic disclaimer at the end
+        academic_disclaimer = "\n\n---\n*This analysis focuses on media framing and emphasis. Some conclusions are interpretive and depend on the scope of retrieved articles.*"
+        
+        # For low verification, add categorized claims (not full sentences)
+        if verification_summary["level"] == "low" and unsupported_claims:
+            # Extract claim categories from sentences
+            claim_categories = self._extract_claim_categories(unsupported_claims)
+            
+            if claim_categories:
+                final_answer += "\n\n---\n**Interpretive Claims with Limited Source Support:**\n"
+                for category in claim_categories[:4]:  # Max 4 categories
+                    final_answer += f"- {category}\n"
+                
+                # Add interpretive note
+                final_answer += "\n*Interpretive statements are evaluated conservatively and may be flagged despite being reasonable in context.*"
+        
+        # Add global disclaimer
+        final_answer += academic_disclaimer
+        
+        return final_answer
+    
+    def _extract_claim_categories(self, unsupported_claims: List[Dict]) -> List[str]:
+        """
+        Extract high-level claim categories from unsupported sentences.
+        Instead of showing full sentences, show thematic categories.
+        """
+        categories = []
+        
+        # Keywords to category mapping
+        category_patterns = [
+            (["jokowi", "widodo", "president", "facilitat"], "Role of President Jokowi in the process"),
+            (["opposition", "rival", "opponent", "accept"], "Acceptance by former opposition figures"),
+            (["campaign", "strateg", "victory", "success"], "Attribution of campaign success factors"),
+            (["cabinet", "minister", "appoint", "position"], "Cabinet appointment decisions"),
+            (["coalition", "party", "political", "alliance"], "Political coalition dynamics"),
+            (["economic", "invest", "market", "business"], "Economic implications and outlook"),
+            (["diplomatic", "foreign", "international"], "Diplomatic and foreign relations"),
+            (["military", "defense", "security"], "Military and security aspects"),
+            (["social", "program", "meal", "welfare"], "Social program initiatives"),
+            (["constitutional", "court", "legal", "law"], "Constitutional and legal matters"),
+        ]
+        
+        seen_categories = set()
+        
+        for claim in unsupported_claims:
+            sentence_lower = claim['sentence'].lower()
+            
+            for keywords, category in category_patterns:
+                if any(kw in sentence_lower for kw in keywords):
+                    if category not in seen_categories:
+                        categories.append(category)
+                        seen_categories.add(category)
+                    break
+        
+        # If no patterns matched, add generic category
+        if not categories and unsupported_claims:
+            categories.append("General interpretive framing statements")
+        
+        return categories
+

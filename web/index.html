@@ -32,6 +32,85 @@
         .model-badge-b {
             background: linear-gradient(135deg, #64748b, #475569);
         }
+
+        /* Markdown Styling for Chat Bubbles */
+        .chat-bubble h2 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #a5b4fc;
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+            padding-bottom: 0.25rem;
+            border-bottom: 1px solid #475569;
+        }
+
+        .chat-bubble h3 {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #c4b5fd;
+            margin-top: 0.75rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .chat-bubble ul,
+        .chat-bubble ol {
+            margin-left: 1rem;
+            margin-top: 0.25rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .chat-bubble li {
+            margin-bottom: 0.25rem;
+            padding-left: 0.25rem;
+        }
+
+        .chat-bubble li::marker {
+            color: #818cf8;
+        }
+
+        .chat-bubble strong {
+            color: #e2e8f0;
+        }
+
+        .chat-bubble em {
+            color: #94a3b8;
+            font-style: italic;
+        }
+
+        .chat-bubble hr {
+            border: none;
+            border-top: 1px solid #475569;
+            margin: 0.75rem 0;
+        }
+
+        .chat-bubble p {
+            margin-bottom: 0.5rem;
+        }
+
+        /* Warning/Note styling */
+        .chat-bubble em:has(+ strong),
+        .chat-bubble p:last-child em {
+            display: block;
+            background: rgba(251, 191, 36, 0.1);
+            border-left: 3px solid #fbbf24;
+            padding: 0.5rem;
+            margin-top: 0.75rem;
+            border-radius: 0 0.25rem 0.25rem 0;
+            font-size: 0.75rem;
+        }
+
+        /* Verification level badges */
+        .verification-high {
+            color: #34d399;
+        }
+
+        .verification-moderate {
+            color: #fbbf24;
+        }
+
+        .verification-low {
+            color: #f87171;
+        }
     </style>
 </head>
 
@@ -117,15 +196,23 @@
             <div id="analysis-dashboard" class="space-y-4 hidden">
 
                 <!-- Model Comparison Header -->
-                <div class="flex gap-2 mb-4">
+                <!-- Model Comparison Header -->
+                <div class="flex gap-2 mb-3">
                     <div class="flex-1 text-center py-2 px-3 rounded-lg model-badge-a">
                         <span class="text-xs font-bold text-white">Model A</span>
-                        <p class="text-[10px] text-white/70">Trained ML</p>
+                        <p class="text-[10px] text-white/70">Conservative ML</p>
                     </div>
                     <div class="flex-1 text-center py-2 px-3 rounded-lg model-badge-b">
                         <span class="text-xs font-bold text-white">Model B</span>
-                        <p class="text-[10px] text-white/70">Baseline</p>
+                        <p class="text-[10px] text-white/70">Permissive Baseline</p>
                     </div>
+                </div>
+
+                <!-- Model Explanation -->
+                <div class="bg-slate-800/50 p-2.5 rounded-lg mb-4 text-[10px] text-slate-400 leading-relaxed">
+                    <strong class="text-slate-300">Note:</strong> Model A prioritizes source alignment, resulting in
+                    stricter verification. Model B favors coverage breadth, leading to higher apparent confidence.
+                    Higher scores do not necessarily indicate lower hallucination risk.
                 </div>
 
                 <!-- Confidence Score Comparison -->
@@ -166,12 +253,12 @@
                         <div class="bg-indigo-500/20 p-3 rounded-lg border border-indigo-500/30">
                             <span class="text-[10px] text-indigo-300 uppercase font-medium">Model A</span>
                             <p id="hallu-a-ratio" class="text-lg font-bold text-indigo-400">0/0</p>
-                            <span class="text-[10px] text-slate-400">Verified Sentences</span>
+                            <span class="text-[10px] text-slate-400">Strong Source Alignment</span>
                         </div>
                         <div class="bg-slate-600/50 p-3 rounded-lg border border-slate-500/30">
                             <span class="text-[10px] text-slate-400 uppercase font-medium">Model B</span>
                             <p id="hallu-b-ratio" class="text-lg font-bold text-slate-300">0/0</p>
-                            <span class="text-[10px] text-slate-500">Verified Sentences</span>
+                            <span class="text-[10px] text-slate-500">Strong Source Alignment</span>
                         </div>
                     </div>
                     <div class="mt-3 text-[10px] text-slate-400 bg-slate-800 p-2 rounded">
