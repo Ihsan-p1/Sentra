@@ -42,22 +42,37 @@ class BaselineHallucinationDetector:
     
     def check_response(self, response: str, source_texts: List[str]) -> Dict[str, Any]:
         """Check entire response"""
+        # Split by punctuation, but keep structure
         sentences = [s.strip() for s in re.split(r'[.!?]', response) if len(s.strip()) > 10]
         
         results = []
         for sentence in sentences:
-            result = self.check_sentence(sentence, source_texts)
+            # Clean sentence (remove citations and bullets)
+            clean_sentence = re.sub(r'\[.*?\]', '', sentence).strip()
+            clean_sentence = re.sub(r'^[\-\*•]\s+', '', clean_sentence).strip()
+            
+            # Skip headers/markdown artifacts
+            if clean_sentence.startswith("##") or len(clean_sentence) < 10:
+                continue
+                
+            # Skip refusal sentences
+            if "sufficient information" in clean_sentence.lower():
+                continue
+
+            result = self.check_sentence(clean_sentence, source_texts)
             results.append({
-                "sentence": sentence[:50] + "..." if len(sentence) > 50 else sentence,
+                # Store original sentence for display context (or clean if preferred)
+                "sentence": clean_sentence[:50] + "..." if len(clean_sentence) > 50 else clean_sentence,
                 **result
             })
         
         supported_count = sum(1 for r in results if r["is_supported"])
         total = len(results) if results else 1
+        unsupported_count = total - supported_count if results else 0
         
         return {
             "overall_score": supported_count / total,
-            "supported_ratio": f"{supported_count}/{total}",
+            "supported_ratio": f"{unsupported_count}/{total}", # Return UNsupported/Total to match Model A
             "details": results,
             "method": "baseline_keyword"
         }

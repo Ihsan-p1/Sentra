@@ -157,6 +157,31 @@
 
             <!-- Input Area -->
             <div class="p-4 bg-slate-800 border-t border-slate-700">
+                <!-- Mode Toggle -->
+                <div class="max-w-4xl mx-auto mb-2 flex items-center justify-end">
+                    <label class="group flex items-center gap-3 cursor-pointer">
+                        <div class="relative">
+                            <input type="checkbox" id="mode-toggle" class="peer sr-only">
+                            <!-- Track -->
+                            <div
+                                class="w-11 h-6 bg-slate-700/80 rounded-full border border-slate-600 peer-focus:ring-2 peer-focus:ring-indigo-500/50 transition-all duration-300 peer-checked:bg-gradient-to-r peer-checked:from-emerald-500 peer-checked:to-teal-400 peer-checked:border-transparent shadow-inner">
+                            </div>
+                            <!-- Knob -->
+                            <div
+                                class="absolute top-[2px] left-[2px] bg-white rounded-full h-5 w-5 shadow-lg shadow-black/20 transition-all duration-300 peer-checked:translate-x-5 peer-checked:shadow-emerald-900/20 group-hover:scale-105 active:scale-95">
+                            </div>
+                            <!-- Glow Effect -->
+                            <div
+                                class="absolute inset-0 rounded-full bg-emerald-400/20 blur opacity-0 peer-checked:opacity-100 transition-opacity duration-500 -z-10">
+                            </div>
+                        </div>
+                        <span
+                            class="text-xs font-semibold text-slate-400 group-hover:text-slate-200 transition-colors select-none tracking-wide">
+                            Reduce Hallucination
+                        </span>
+                    </label>
+                </div>
+
                 <form id="chat-form" class="max-w-4xl mx-auto relative flex items-center gap-2">
                     <input type="text" id="user-input"
                         class="w-full bg-slate-700 border border-slate-600 rounded-xl px-5 py-3.5 focus:ring-2 focus:ring-indigo-500 text-white placeholder-slate-400 outline-none transition-all"
@@ -318,190 +343,7 @@
 
     </main>
 
-    <script>
-        const chatForm = document.getElementById('chat-form');
-        const userInput = document.getElementById('user-input');
-        const chatContainer = document.getElementById('chat-container');
-        const analysisDashboard = document.getElementById('analysis-dashboard');
-        const analysisEmpty = document.getElementById('analysis-empty');
-
-        chatForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const message = userInput.value.trim();
-            if (!message) return;
-
-            // Add User Message
-            appendMessage(message, 'user');
-            userInput.value = '';
-
-            // Show Loading
-            const loadingId = appendLoading();
-
-            try {
-                const response = await fetch('/api/chat', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message })
-                });
-
-                const data = await response.json();
-
-                // Remove loading
-                document.getElementById(loadingId).remove();
-
-                // Add Assistant Message
-                appendMessage(marked.parse(data.answer), 'bot');
-
-                // Update Sidebar with Comparison
-                updateDashboard(data);
-
-            } catch (error) {
-                console.error(error);
-                document.getElementById(loadingId).remove();
-                appendMessage("Sorry, there was a connection error.", 'bot');
-            }
-        });
-
-        function appendMessage(text, sender) {
-            const div = document.createElement('div');
-            div.className = `flex gap-4 ${sender === 'user' ? 'flex-row-reverse' : ''}`;
-
-            const avatar = document.createElement('div');
-            avatar.className = `w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 ${sender === 'user' ? 'bg-slate-600 text-white' : 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white'}`;
-            avatar.innerText = sender === 'user' ? 'U' : 'AI';
-
-            const bubble = document.createElement('div');
-            bubble.className = `chat-bubble p-4 rounded-2xl shadow-lg text-sm leading-relaxed ${sender === 'user' ? 'bg-indigo-600 text-white rounded-tr-none' : 'bg-slate-800 border border-slate-700 text-slate-300 rounded-tl-none'}`;
-
-            if (sender === 'bot') {
-                bubble.innerHTML = text;
-            } else {
-                bubble.innerText = text;
-            }
-
-            div.appendChild(avatar);
-            div.appendChild(bubble);
-            chatContainer.appendChild(div);
-            chatContainer.scrollTop = chatContainer.scrollHeight;
-        }
-
-        function appendLoading() {
-            const id = 'loading-' + Date.now();
-            const div = document.createElement('div');
-            div.id = id;
-            div.className = 'flex gap-4';
-            div.innerHTML = `
-                <div class="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">AI</div>
-                <div class="bg-slate-800 border border-slate-700 p-4 rounded-2xl rounded-tl-none shadow-lg flex items-center gap-2">
-                    <div class="w-2 h-2 bg-indigo-400 rounded-full animate-bounce"></div>
-                    <div class="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
-                    <div class="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style="animation-delay: 0.4s"></div>
-                </div>
-            `;
-            chatContainer.appendChild(div);
-            chatContainer.scrollTop = chatContainer.scrollHeight;
-            return id;
-        }
-
-        function updateDashboard(data) {
-            analysisEmpty.classList.add('hidden');
-            analysisDashboard.classList.remove('hidden');
-
-            const comparison = data.model_comparison || {};
-
-            // Confidence Comparison
-            if (comparison.confidence) {
-                document.getElementById('confidence-a').innerText = comparison.confidence.model_a?.score_percent || '0%';
-                document.getElementById('confidence-b').innerText = comparison.confidence.model_b?.score_percent || '0%';
-                document.getElementById('confidence-a-method').innerText = comparison.confidence.model_a?.name || 'ML Model';
-                document.getElementById('confidence-b-method').innerText = comparison.confidence.model_b?.name || 'Baseline';
-            }
-
-            // Hallucination Comparison
-            if (comparison.hallucination) {
-                const ratioA = comparison.hallucination.model_a?.supported_ratio || '0/0';
-                const ratioB = comparison.hallucination.model_b?.supported_ratio || '0/0';
-
-                document.getElementById('hallu-a-ratio').innerText = ratioA;
-                document.getElementById('hallu-b-ratio').innerText = ratioB;
-
-                // Update Labels Logic
-                updateLabel('hallu-a-label', ratioA);
-                updateLabel('hallu-b-label', ratioB);
-            }
-
-            // Framing Keywords Comparison
-            const framingDiv = document.getElementById('framing-comparison');
-            framingDiv.innerHTML = '';
-
-            if (comparison.framing) {
-                const mediaList = Object.keys(comparison.framing.model_a?.keywords || {});
-
-                mediaList.forEach(media => {
-                    const keywordsA = comparison.framing.model_a?.keywords[media] || [];
-                    const keywordsB = comparison.framing.model_b?.keywords[media] || [];
-
-                    const item = document.createElement('div');
-                    item.className = 'bg-slate-800 p-2 rounded-lg';
-                    item.innerHTML = `
-                        <span class="text-[10px] font-bold uppercase text-slate-400">${media.replace('_', ' ')}</span>
-                        <div class="grid grid-cols-2 gap-2 mt-1">
-                            <div class="text-[10px] text-indigo-300 bg-indigo-500/10 p-1.5 rounded">
-                                <strong>A:</strong> ${keywordsA.join(', ') || 'N/A'}
-                            </div>
-                            <div class="text-[10px] text-slate-400 bg-slate-700 p-1.5 rounded">
-                                <strong>B:</strong> ${keywordsB.join(', ') || 'N/A'}
-                            </div>
-                        </div>
-                    `;
-                    framingDiv.appendChild(item);
-                });
-            }
-
-            // Hallucination List - Model A
-            const halluListA = document.getElementById('hallucination-list-a');
-            halluListA.innerHTML = '';
-
-            if (data.unsupported_claims && data.unsupported_claims.length > 0) {
-                data.unsupported_claims.slice(0, 4).forEach(claim => {
-                    const li = document.createElement('li');
-                    li.innerText = `"${claim.sentence.substring(0, 40)}..."`;
-                    halluListA.appendChild(li);
-                });
-            } else {
-                halluListA.innerHTML = '<li class="text-emerald-400">All claims verified ✓</li>';
-            }
-
-            // Hallucination List - Model B
-            const halluListB = document.getElementById('hallucination-list-b');
-            halluListB.innerHTML = '';
-
-            if (data.unsupported_claims_b && data.unsupported_claims_b.length > 0) {
-                data.unsupported_claims_b.slice(0, 4).forEach(claim => {
-                    const li = document.createElement('li');
-                    li.innerText = `"${claim.sentence.substring(0, 40)}..."`;
-                    halluListB.appendChild(li);
-                });
-            } else {
-                halluListB.innerHTML = '<li class="text-emerald-400">All claims verified ✓</li>';
-            }
-        }
-
-        function updateLabel(elementId, ratioString) {
-            const el = document.getElementById(elementId);
-            const [unver, total] = ratioString.split('/').map(Number);
-
-            if (unver > 0) {
-                el.innerText = 'Weak Source Alignment';
-                el.classList.remove('text-emerald-400', 'text-slate-400', 'text-slate-500');
-                el.classList.add('text-amber-400');
-            } else {
-                el.innerText = 'Strong Source Alignment';
-                el.classList.remove('text-amber-400', 'text-slate-400', 'text-slate-500');
-                el.classList.add('text-emerald-400');
-            }
-        }
-    </script>
+    <script src="js/app.js"></script>
 </body>
 
 </html>

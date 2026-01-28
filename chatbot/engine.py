@@ -53,13 +53,28 @@ class ChatbotEngine:
         self.baseline_models = get_baseline_models()
         print("✅ Loaded baseline models (Model B)")
         
-    async def process_query(self, query: str) -> Dict[str, Any]:
+    async def process_query(self, query: str, mode: str = "default") -> Dict[str, Any]:
         """
         Main pipeline execution with A/B comparison.
         Now with AGGREGATED hallucination reporting for better UX.
         """
+        # 0. QUERY SANITY CHECK (Reduce Hallucination Mode)
+        if mode == "reduce_hallucination":
+            # Check length ( < 3 words is prone to ambiguity)
+            if len(query.strip().split()) < 3:
+                 return {
+                    "answer": "This question cannot be reliably answered using the current news corpus. Please ask a more specific question (at least 3 words).",
+                    "analysis": {"error": "query_too_short"},
+                    "confidence": 0.0,
+                    "model_comparison": {}, 
+                    "mode": mode
+                }
+
         # 1. RETRIEVAL
-        retrieved_chunks = await self.retriever.retrieve(query)
+        # Context Saturation Control
+        top_k = 4 if mode == "reduce_hallucination" else None
+        
+        retrieved_chunks = await self.retriever.retrieve(query, top_k=top_k)
         
         # Flatten for certain analyses
         all_chunks_flat = self.retriever.flatten_results(retrieved_chunks)
@@ -78,10 +93,14 @@ class ChatbotEngine:
         max_similarity = max(similarities)
         avg_similarity = sum(similarities) / len(similarities)
         
-        # Threshold 0.35 (Strict MVP Gating)
-        if max_similarity < 0.35:
+        # Dynamic Threshold
+        threshold = 0.40 if mode == "reduce_hallucination" else 0.35
+        
+        if max_similarity < threshold:
+            refusal_msg = "Insufficient source coverage." if mode == "reduce_hallucination" else "I cannot answer this based on the available news sources. The retrieved articles do not contain sufficiently relevant information. Please try asking about specific Indonesian political events or candidates covered in the database."
+            
             return {
-                "answer": "I cannot answer this based on the available news sources. The retrieved articles do not contain sufficiently relevant information. Please try asking about specific Indonesian political events or candidates covered in the database.",
+                "answer": refusal_msg,
                 "analysis": {"retrieval_quality": "insufficient"},
                 "confidence": 0.0,
                 "model_comparison": {},
@@ -89,9 +108,15 @@ class ChatbotEngine:
                     "max_similarity": round(max_similarity, 3),
                     "avg_similarity": round(avg_similarity, 3),
                     "total_sources": len(all_chunks_flat),
-                    "refusal_reason": f"max_sim={max_similarity:.2f} < 0.35"
+                    "refusal_reason": f"max_sim={max_similarity:.2f} < {threshold}",
+                    "mode": mode
                 }
             }
+
+        # Reduce Chunks Per Media (Context Saturation Control)
+        if mode == "reduce_hallucination":
+            for media in retrieved_chunks:
+                retrieved_chunks[media] = retrieved_chunks[media][:2] # Max 2 per media
             
         # 2. FRAMING ANALYSIS
         texts_by_media = {
@@ -116,7 +141,8 @@ class ChatbotEngine:
         raw_response = await self.llm.generate_comparative_answer(
             query, 
             retrieved_chunks, 
-            framing_statistical
+            framing_statistical,
+            mode=mode
         )
         
         # 4. HALLUCINATION DETECTION (Internal scoring, NOT per-sentence annotation)
@@ -260,13 +286,23 @@ class ChatbotEngine:
             if sentence.strip().startswith("##"):
                 continue
             
+            # Clean sentence for detection (remove citations and markdown)
+            # 1. Remove [Source] type citations
+            clean_sentence = re.sub(r'\[.*?\]', '', sentence).strip()
+            # 2. Remove leading bullets/dashes
+            clean_sentence = re.sub(r'^[\-\*•]\s+', '', clean_sentence).strip()
+            
+            # Skip if empty after cleaning
+            if not clean_sentence or len(clean_sentence.split()) < 3:
+                continue
+
             total_checked += 1
-            sent_emb = self.embedder.generate_single(sentence)
+            sent_emb = self.embedder.generate_single(clean_sentence)
             
             result = self.hallucination_detector.predict(
                 sent_emb, 
                 source_embs, 
-                sentence, 
+                clean_sentence, # Use clean text for overlap check
                 source_texts
             )
             

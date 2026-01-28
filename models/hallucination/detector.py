@@ -108,9 +108,30 @@ class HallucinationDetector:
         
         prob = self.model.predict_proba(features_scaled)[0]
         
+        # --- HEURISTIC OVERRIDE (Fix for broken ML model weights) ---
+        # The ML model seems to be biased towards "Unverified" even for perfect matches.
+        # We trust deterministic metrics (Similarity & Overlap) more than the ML model here.
+        
+        max_sim = features[0]
+        overlap = features[4]
+        
+        # 1. Strong Match Override (Almost exact quote)
+        if max_sim > 0.75: 
+            prob[1] = max(prob[1], 0.95) # Force high confidence
+            
+        # 2. Moderate Match Override (Paraphrased but supported)
+        elif max_sim > 0.55 and overlap > 0.4:
+            prob[1] = max(prob[1], 0.85)
+            
+        # 3. Weak Match but high overlap (Rare, but possible)
+        elif overlap > 0.7:
+             prob[1] = max(prob[1], 0.80)
+        
+        # -----------------------------------------------------------
+        
         # Lower threshold (0.35) to be more lenient for interpretive/analytical content
         # Original academic research often paraphrases and interprets, not just quotes
-        is_supported = prob[1] > 0.35  # Was 0.5 - too strict
+        is_supported = prob[1] > 0.40  # Slightly adjusted threshold
         
         # Determine reason if not supported
         if not is_supported:

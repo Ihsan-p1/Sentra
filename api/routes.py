@@ -27,6 +27,7 @@ def init_components():
 
 class ChatRequest(BaseModel):
     message: str
+    mode: Optional[str] = "default"
 
 class ArticleRequest(BaseModel):
     title: str
@@ -46,7 +47,7 @@ async def chat_endpoint(request: ChatRequest):
         raise HTTPException(status_code=503, detail="System is still initializing, please try again in a few seconds")
     
     try:
-        response = await chatbot.process_query(request.message)
+        response = await chatbot.process_query(request.message, mode=request.mode)
         return response
     except Exception as e:
         import traceback

@@ -34,3 +34,4 @@ logs/
 *.bin
 data/models/framing_bert/
 pytorch_model.bin
+*.pkl

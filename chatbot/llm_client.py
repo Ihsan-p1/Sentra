@@ -33,7 +33,8 @@ class LLMClient:
         self, 
         user_query: str, 
         retrieved_chunks: Dict[str, List[Dict]], 
-        framing_analysis: Dict[str, Any]
+        framing_analysis: Dict[str, Any],
+        mode: str = "default"
     ) -> str:
         """
         Generate answer using the specific framing analysis prompt.
@@ -51,9 +52,12 @@ class LLMClient:
         # Format framing analysis for prompt
         framing_str = json.dumps(framing_analysis, indent=2)
         
-        from chatbot.prompts import FRAMING_ANALYSIS_PROMPT
+        from chatbot.prompts import FRAMING_ANALYSIS_PROMPT, REDUCE_HALLUCINATION_PROMPT
         
-        system_prompt = FRAMING_ANALYSIS_PROMPT.format(
+        # Select prompt based on mode
+        base_prompt = REDUCE_HALLUCINATION_PROMPT if mode == "reduce_hallucination" else FRAMING_ANALYSIS_PROMPT
+        
+        system_prompt = base_prompt.format(
             user_question=user_query,
             retrieved_chunks_by_media=chunks_str,
             computed_framing=framing_str
