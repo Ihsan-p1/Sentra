@@ -1645,6 +1645,881 @@ ELECTION_ARTICLES = [
         "url": "https://jakartaglobe.id/business/indonesia-investment-summit",
         "published_date": datetime(2025, 1, 22)
     },
+    
+    # =========================================
+    # ADDITIONAL ARTICLES - US POLITICS (TRUMP)
+    # =========================================
+    {
+        "title": "Trump secures victory in 2024 US Presidential Election",
+        "content": """
+        Donald Trump has defeated incumbent Joe Biden to win the 2024 US presidential election, securing a second non-consecutive term.
+        The Republican candidate swept key swing states including Pennsylvania, Michigan, and Wisconsin, amassing well over the 270 electoral votes needed.
+        In his victory speech, Trump promised to "seal the border" and restore the American economy, declaring a new "Golden Age" for the United States.
+        World leaders reacted swiftly, with many emphasizing the importance of stable diplomatic relations.
+        Markets initially showed volatility but rallied on expectations of deregulation and tax cuts.
+        The victory marks a historic political comeback for Trump, who faced numerous legal challenges during the campaign.
+        Analysts predict significant shifts in US foreign policy, particularly regarding Ukraine and trade relations with China.
+        """,
+        "media_source": "jakarta_post",
+        "url": "https://www.thejakartapost.com/world/2024/11/06/trump-wins-2024-election",
+        "published_date": datetime(2024, 11, 6),
+        "category": "World Politics"
+    },
+    {
+        "title": "Impact of Trump presidency on US-Indonesia relations",
+        "content": """
+        As Donald Trump prepares to return to the White House, foreign policy experts in Jakarta are assessing the implications for Indonesia.
+        Historically, Trump's transactional approach to diplomacy has meant a focus on trade balances and bilateral deals.
+        Indonesian officials express confidence that the strategic partnership will remain strong, citing defense cooperation and shared interests in the Indo-Pacific.
+        However, concerns remain about potential protectionist trade policies that could affect Indonesian exports like textiles and commodities.
+        Trump's skepticism towards multilateral climate agreements could also diverge from Indonesia's green energy transition goals.
+        President-elect Prabowo Subianto is expected to seek an early meeting with Trump to establish personal rapport.
+        Both leaders share a nationalist "strongman" political style that could facilitate diplomatic engagement.
+        """,
+        "media_source": "jakarta_post",
+        "url": "https://www.thejakartapost.com/world/2024/11/10/us-indonesia-relations-trump",
+        "published_date": datetime(2024, 11, 10),
+        "category": "Diplomacy"
+    },
+    {
+        "title": "Trump's 'America First' agenda poses challenges for ASEAN",
+        "content": """
+        Southeast Asian leaders are bracing for a renewed 'America First' foreign policy under President-elect Donald Trump.
+        During his first term, Trump's attendance at ASEAN summits was inconsistent, raising questions about US commitment to the region.
+        Trade tariffs and a potential withdrawal from regional economic frameworks are top concerns for export-dependent ASEAN economies.
+        However, some analysts suggest that Trump's tough stance on China could align with the security interests of nations with maritime disputes in the South China Sea.
+        Singapore and Vietnam are expected to maintain strong bilateral ties, while others may face scrutiny over trade deficits.
+        Indonesia, as the largest economy in the bloc, will play a crucial role in navigating the region's relationship with the new Washington administration.
+        """,
+        "media_source": "tempo",
+        "url": "https://en.tempo.co/read/2024/11/15/trump-asean-challenges",
+        "published_date": datetime(2024, 11, 15),
+        "category": "World Politics"
+    },
+    {
+        "title": "US markets rally as Trump vows bold economic reforms",
+        "content": """
+        Wall Street hit record highs following Donald Trump's election victory, driven by investor optimism over promised corporate tax cuts and deregulation.
+        The "Trump Trade" saw sectors like energy, finance, and defense outperforming the broader market.
+        However, economists warn that proposed tariffs on all imports could reignite inflation and trigger trade wars.
+        The Federal Reserve's path on interest rates may be complicated by expansive fiscal policy plans.
+        Indonesian markets also saw a ripple effect, with the Rupiah facing pressure from a strengthening US Dollar.
+        Global investors are watching closely for the appointment of key economic officials in the new Trump administration.
+        """,
+        "media_source": "jakarta_globe",
+        "url": "https://jakartaglobe.id/business/us-markets-rally-trump",
+        "published_date": datetime(2024, 11, 8),
+        "category": "Economy"
+    },
+
+    # =========================================
+    # ADDITIONAL INDONESIA POLITICS
+    # =========================================
+    {
+        "title": "House passes revised Regional Election Law amid protests",
+        "content": """
+        The House of Representatives has passed a controversial revision to the Regional Election Law, sparking protests in several major cities.
+        Critics argue the revision attempts to circumvent recent Constitutional Court rulings on candidate eligibility.
+        Civil society groups claim the move is designed to consolidate power for the ruling coalition in upcoming local elections.
+        Demonstrators gathered outside the parliament building in Jakarta, demanding the protection of democratic principles.
+        Government officials defend the revision as necessary to provide legal certainty and streamline the electoral process.
+        The new law adjusts the threshold for party alliances to nominate governors and mayors.
+        The swift passage of the bill has raised concerns about the lack of public consultation.
+        """,
+        "media_source": "tempo",
+        "url": "https://en.tempo.co/read/2024/08/25/regional-election-law-protests",
+        "published_date": datetime(2024, 8, 25),
+        "category": "Politics"
+    },
+    {
+        "title": "Golkar Party affirms support for Prabowo government",
+        "content": """
+        The Golkar Party, one of Indonesia's oldest and largest political parties, has reaffirmed its unwavering support for the Prabowo-Gibran administration.
+        Under its new leadership, the party aims to secure strategic cabinet positions in the incoming government.
+        The announcement comes after a period of internal restructuring and leadership consolidation.
+        Golkar's support is crucial for the government to maintain a strong majority in the legislature.
+        Party officials emphasized their commitment to the "Golden Indonesia 2045" vision.
+        Analysts suggest that Golkar is positioning itself as the primary stabilizer within the ruling coalition.
+        """,
+        "media_source": "antara",
+        "url": "https://en.antaranews.com/news/2024/09/10/golkar-supports-prabowo",
+        "published_date": datetime(2024, 9, 10),
+        "category": "Politics"
+    },
+    {
+        "title": "Prabowo's approval rating hits 75 percent in first 100 days",
+        "content": """
+        President Prabowo Subianto's approval rating has reached 75 percent as he approaches his first 100 days in office.
+        Polls indicate strong public support for his focus on food security and military modernization.
+        The implementation of the free nutritious meal program for students has been particularly well-received in rural areas.
+        However, some urban voters express concern over the slow pace of bureaucratic reform.
+        The president's assertive foreign policy stance has also garnered domestic praise.
+        Political stability and a steady economy have contributed to the high satisfaction numbers.
+        Opposition parties criticized the polls, arguing that deeper structural issues remain unaddressed.
+        """,
+        "media_source": "jakarta_globe",
+        "url": "https://jakartaglobe.id/news/prabowo-approval-rating-100-days",
+        "published_date": datetime(2025, 1, 28),
+        "category": "Politics"
+    },
+    
+    # =========================================
+    # ADDITIONAL US POLITICS - BATCH 1 (25 Articles)
+    # =========================================
+    {
+        "title": "Trump Inauguration: A vow to dismantle the 'Deep State'",
+        "content": """
+        Donald Trump was sworn in as the 47th President of the United States in a ceremony marked by populist fervor and heavy security.
+        In his inaugural address, Trump doubled down on his campaign promises to overhaul the federal bureaucracy.
+        "We are returning power to you, the American people," he declared, promising to reinstatement Schedule F to reclassify civil servants.
+        Protests erupted in several major US cities, but Washington D.C. remained under tight lockdown.
+        The speech signaled an immediate departure from the policies of the Biden administration.
+        Trump signed a flurry of executive orders on his first day, including one to freeze new regulations.
+        """,
+        "media_source": "jakarta_post",
+        "url": "https://www.thejakartapost.com/world/2025/01/20/trump-inauguration-deep-state",
+        "published_date": datetime(2025, 1, 20),
+        "category": "US Politics"
+    },
+    {
+        "title": "US announces withdrawal from Paris Climate Agreement again",
+        "content": """
+        The United States has formally initiated the process to withdraw from the Paris Climate Agreement for the second time.
+        President Trump called the accord a "disaster" that disadvantages American manufacturing.
+        The move has drawn sharp criticism from European allies and climate activists worldwide.
+        Energy sector stocks rallied on the news, expecting deregulation of fossil fuel industries.
+        The administration announced plans to boost oil and natural gas production to achieve "energy dominance".
+        Environmental groups have vowed to challenge the withdrawal in court.
+        """,
+        "media_source": "tempo",
+        "url": "https://en.tempo.co/read/2025/01/22/us-withdraws-paris-agreement",
+        "published_date": datetime(2025, 1, 22),
+        "category": "Environment"
+    },
+    {
+        "title": "New tariffs on Asian imports send shockwaves through markets",
+        "content": """
+        The Trump administration has announced a blanket 10% tariff on all imports and a targeted 60% tariff on goods from China.
+        Asian markets tumbled in response, with manufacturing hubs expecting a significant hit to exports.
+        The White House argues the tariffs are necessary to reduce the trade deficit and protect US jobs.
+        Economists warn that the costs will likely be passed on to American consumers, fueling inflation.
+        Trade representatives from ASEAN nations are seeking exemptions to shield their economies.
+        Supply chain diversification efforts are expected to accelerate rapidly.
+        """,
+        "media_source": "jakarta_globe",
+        "url": "https://jakartaglobe.id/business/us-tariffs-asian-markets",
+        "published_date": datetime(2025, 2, 5),
+        "category": "Economy"
+    },
+    {
+        "title": "Trump meets Putin in neutral venue to discuss Ukraine ceasefire",
+        "content": """
+        President Trump and Russian President Vladimir Putin met today in Budapest to discuss a potential ceasefire in Ukraine.
+        Details of the "peace plan" remain scarce, but rumors suggest territorial concessions may be on the table.
+        European leaders have expressed alarm, fearing a weakening of NATO's collective security posture.
+        Trump stated that the war "must end now" to stop the flow of US tax dollars abroad.
+        Ukrainian officials have reiterated their refusal to cede any territory to Russia.
+        The summit marks a significant pivot in US foreign policy towards Russia.
+        """,
+        "media_source": "jakarta_post",
+        "url": "https://www.thejakartapost.com/world/2025/02/15/trump-putin-summit",
+        "published_date": datetime(2025, 2, 15),
+        "category": "Diplomacy"
+    },
+    {
+        "title": "Federal Reserve Chair resigns amid pressure from White House",
+        "content": """
+        Fed Chair Jerome Powell has announced his resignation following months of public criticism from President Trump.
+        Trump had repeatedly demanded lower interest rates to stimulate the economy, accusing the Fed of being political.
+        The resignation raises questions about the independence of the US central bank.
+        Markets reacted with volatility, fearing a politicization of monetary policy.
+        The President has nominated a loyalist economist who supports "easy money" policies.
+        Analysts predict a potential spike in inflation if rates are cut prematurely.
+        """,
+        "media_source": "jakarta_globe",
+        "url": "https://jakartaglobe.id/business/fed-chair-resigns-trump",
+        "published_date": datetime(2025, 3, 1),
+        "category": "Economy"
+    },
+    {
+        "title": "US halts funding to WHO citing 'inefficiency'",
+        "content": """
+        The United States has suspended its financial contributions to the World Health Organization effective immediately.
+        President Trump accused the body of being too influenced by China and failing to prevent global pandemics.
+        Global health experts warn the cut could cripple efforts to fight diseases in developing nations.
+        The administration stated it would redirect funds to direct bilateral health programs.
+        This mirrors a similar move made during Trump's first term.
+        The WHO expressed regret and called for global solidarity in health challenges.
+        """,
+        "media_source": "antara",
+        "url": "https://en.antaranews.com/news/2025/03/10/us-halts-who-funding",
+        "published_date": datetime(2025, 3, 10),
+        "category": "Health"
+    },
+    {
+        "title": "Mass deportations begin as National Guard deployed to border",
+        "content": """
+        A large-scale operation to deport undocumented immigrants has begun across several US border states.
+        National Guard units have been deployed to assist Immigration and Customs Enforcement (ICE) agents.
+        Civil rights groups report raids in workplaces and neighborhoods, sparking protests.
+        The administration cites national security and rule of law as justification for the crackdown.
+        Economic sectors reliant on immigrant labor, including agriculture, fear labor shortages.
+        Mexico has lodged a formal diplomatic protest regarding the treatment of its citizens.
+        """,
+        "media_source": "tempo",
+        "url": "https://en.tempo.co/read/2025/04/01/mass-deportations-start",
+        "published_date": datetime(2025, 4, 1),
+        "category": "Social"
+    },
+    {
+        "title": "Trump signs executive order on AI deregulation",
+        "content": """
+        President Trump has signed an executive order repealing the previous administration's AI safety guidelines.
+        The order aims to "unleash American innovation" by removing regulatory hurdles for tech companies.
+        Silicon Valley investors cheered the move, while AI safety ethics researchers expressed concern.
+        The administration argues that over-regulation puts the US at a disadvantage against China.
+        A new "AI Manhattan Project" was announced to accelerate military AI development.
+        Tech giants promised self-regulation in exchange for the lighter government touch.
+        """,
+        "media_source": "jakarta_globe",
+        "url": "https://jakartaglobe.id/tech/trump-ai-deregulation",
+        "published_date": datetime(2025, 4, 15),
+        "category": "Technology"
+    },
+    {
+        "title": "US proposes purchasing Greenland again, Denmark refuses",
+        "content": """
+        In a surprise diplomatic move, the Trump administration has renewed its interest in purchasing Greenland from Denmark.
+        The White House cited the island's strategic location and mineral resources as vital to US interests.
+        Danish officials immediately rejected the proposal as absurd and not up for discussion.
+        The exchange has created awkward tension between the NATO allies.
+        Trump canceled a planned state visit to Copenhagen in response to the rejection.
+        Geologists confirming vast rare earth deposits in Greenland likely motivated the offer.
+        """,
+        "media_source": "jakarta_post",
+        "url": "https://www.thejakartapost.com/world/2025/05/05/us-greenland-purchase-offer",
+        "published_date": datetime(2025, 5, 5),
+        "category": "Diplomacy"
+    },
+    {
+        "title": "Department of Education to be dissolved, powers returned to states",
+        "content": """
+        The Trump administration has unveiled a plan to dismantle the federal Department of Education by 2026.
+        Education block grants will be sent directly to states, with federal oversight largely removed.
+        Teacher unions have vowed to strike nationwide to oppose the restructuring.
+        Conservatives hail the move as a victory for local control and parental rights.
+        Critics fear it will lead to deep inequalities in school funding and curriculum standards.
+        Congressional approval is still required, setting up a major legislative battle.
+        """,
+        "media_source": "tempo",
+        "url": "https://en.tempo.co/read/2025/05/20/education-dept-dissolved",
+        "published_date": datetime(2025, 5, 20),
+        "category": "Education"
+    },
+    {
+        "title": "US unveils 'Strategic Bitcoin Reserve' plan",
+        "content": """
+        The US Treasury has announced plans to accumulate a strategic reserve of Bitcoin, a first for a major economy.
+        President Trump called cryptocurrency the "future of money" and vowed to make the US the "crypto capital of the planet".
+        Bitcoin prices surged to all-time highs on the news.
+        The plan aims to hedge against inflation and modernize the US financial system.
+        Traditional banking regulators have expressed caution about the volatility of digital assets.
+        The move is seen as a direct appeal to the growing crypto-voter demographic.
+        """,
+        "media_source": "jakarta_globe",
+        "url": "https://jakartaglobe.id/business/us-bitcoin-reserve",
+        "published_date": datetime(2025, 6, 1),
+        "category": "Economy"
+    },
+    {
+        "title": "Protests in Portland and Seattle declared 'insurrections'",
+        "content": """
+        Ongoing protests in Portland and Seattle have been formally declared "insurrections" by the Attorney General.
+        The designation allows the President to deploy active-duty military troops to quell the unrest.
+        Civil libertarians warn this sets a dangerous precedent for suppressing dissent.
+        The protests began over federal policing policies but have expanded to anti-government demonstrations.
+        Local mayors have demanded federal troops leave, citing escalation of violence.
+        The White House insists law and order must be restored at any cost.
+        """,
+        "media_source": "tempo",
+        "url": "https://en.tempo.co/read/2025/06/15/portland-protests-insurrection",
+        "published_date": datetime(2025, 6, 15),
+        "category": "US Politics"
+    },
+    {
+        "title": "Space Force unveils plans for permanent Moon base by 2028",
+        "content": """
+        The US Space Force and NASA have accelerated timelines for a permanent lunar base, moving the target to 2028.
+        The "Trump Base 1" project aims to secure strategic water ice resources on the lunar south pole.
+        President Trump stated that "America must own the ultimate high ground."
+        The announcement is seen as a direct response to China's rapid space program advancements.
+        Commercial partners like SpaceX and Blue Origin are receiving massive new contracts.
+        International space treaties may be tested by the assertive US posture.
+        """,
+        "media_source": "jakarta_post",
+        "url": "https://www.thejakartapost.com/sci-tech/2025/07/04/space-force-moon-base",
+        "published_date": datetime(2025, 7, 4),
+        "category": "Technology"
+    },
+    {
+        "title": "Supreme Court strikes down California's EV mandate",
+        "content": """
+        The US Supreme Court has ruled that California cannot enforce its ban on new gasoline cars by 2035.
+        The 6-3 conservative majority opinion stated federal commerce laws preempt state-level bans.
+        Major automakers halted their transition plans, opting to continue internal combustion engine production.
+        President Trump celebrated the ruling as a win for "consumer choice" and the oil industry.
+        Environmentalists called the decision a catastrophic setback for US climate goals.
+        Several other states with similar mandates are also affected by the ruling.
+        """,
+        "media_source": "jakarta_globe",
+        "url": "https://jakartaglobe.id/business/scotus-strikes-ev-mandate",
+        "published_date": datetime(2025, 7, 10),
+        "category": "Legal"
+    },
+    {
+        "title": "US-UK Free Trade Agreement talks resume with urgency",
+        "content": """
+        Negotiations for a comprehensive US-UK Free Trade Agreement have restarted with a goal to sign by year's end.
+        The UK, eager for post-Brexit wins, is reportedly offering concessions on agriculture and healthcare access.
+        US negotiators are pushing for the removal of digital services taxes on American tech firms.
+        Both leaders touted the "Special Relationship" as stronger than ever.
+        British farmers have protested potential imports of chlorinated chicken and hormone-treated beef.
+        A deal would be a major diplomatic victory for the Trump administration's bilateral strategy.
+        """,
+        "media_source": "antara",
+        "url": "https://en.antaranews.com/news/2025/07/20/us-uk-trade-talks",
+        "published_date": datetime(2025, 7, 20),
+        "category": "Diplomacy"
+    },
+    {
+        "title": "Trump announces 'Patriot Party' launch for midterms (Aprils Fool/Rumor)",
+        "content": """
+        Rumors circulated today that Donald Trump might launch a new 'Patriot Party', but were later clarified as a leverage tactic.
+        The President criticized 'RINOs' (Republicans In Name Only) for blocking his legislative agenda.
+        The threat of a third party has forced GOP leadership to align closer with the White House.
+        Political analysts say a split would guarantee Democratic victories, making the threat mutually assured destruction.
+        The incident highlights the continued internal struggle for the soul of the Republican Party.
+        Trump's grip on the conservative base remains the defining factor in US politics.
+        """,
+        "media_source": "jakarta_post",
+        "url": "https://www.thejakartapost.com/world/2025/08/01/trump-patriot-party-rumor",
+        "published_date": datetime(2025, 8, 1),
+        "category": "Politics"
+    },
+    {
+        "title": "US imposes sanctions on ICC officials over Israel investigation",
+        "content": """
+        The US has imposed visa bans and financial sanctions on International Criminal Court (ICC) officials.
+        The move comes in response to the ICC's continued investigation into Israeli military actions.
+        Secretary of State called the court "illegitimate" and a threat to US and allied sovereignty.
+        European allies have expressed "deep regret" over the US actions against the international body.
+        Israel thanked the US for its "unwavering support" in the international arena.
+        Human rights groups condemned the sanctions as an attack on global justice.
+        """,
+        "media_source": "tempo",
+        "url": "https://en.tempo.co/read/2025/08/15/us-sanctions-icc",
+        "published_date": datetime(2025, 8, 15),
+        "category": "Diplomacy"
+    },
+    {
+        "title": "Government shutdown looms as Congress fights over border wall funding",
+        "content": """
+        The US government faces a potential shutdown this week as the President demands $25 billion for border wall completion.
+        Democrats in Congress have refused the demand, offering only technology-based border solutions.
+        Trump warned he would not sign a spending bill without the full funding amount.
+        Federal agencies are preparing contingency plans for essential services.
+        Credit rating agencies warned that another shutdown could downgrade US debt reliability.
+        The standoff reflects the deep polarization remaining in Washington.
+        """,
+        "media_source": "jakarta_globe",
+        "url": "https://jakartaglobe.id/news/us-shutdown-border-funding",
+        "published_date": datetime(2025, 9, 25),
+        "category": "Politics"
+    },
+    {
+        "title": "Obamacare repeal back on the table with new GOP proposal",
+        "content": """
+        Senate Republicans have introduced a new bill to repeal and replace the Affordable Care Act (Obamacare).
+        The proposal centers on Health Savings Accounts and cross-state insurance competition.
+        President Trump endorsed the plan as "much better and cheaper" healthcare for all.
+        Hospital associations and patient advocacy groups warn that millions could lose coverage.
+        The bill faces a tough path in the Senate where the filibuster remains a hurdle.
+        Healthcare stocks were mixed as uncertainty over the sector's future returns.
+        """,
+        "media_source": "jakarta_post",
+        "url": "https://www.thejakartapost.com/world/2025/10/05/obamacare-repeal-proposal",
+        "published_date": datetime(2025, 10, 5),
+        "category": "Health"
+    },
+    {
+        "title": "US energy exports hit record high under 'Drill, Baby, Drill' policy",
+        "content": """
+        US oil and LNG exports have reached unprecedented levels following aggressive deregulation.
+        The administration touted the achievement as fulfilling the promise of energy independence.
+        European markets have become the largest buyers of US LNG, replacing Russian supply.
+        Domestic gas prices have fallen, aiding the President's approval ratings.
+        Climate scientists warn the emissions surge makes meeting global targets impossible.
+        Coastal states are suing over expanded offshore drilling permits.
+        """,
+        "media_source": "antara",
+        "url": "https://en.antaranews.com/news/2025/10/12/us-energy-exports-record",
+        "published_date": datetime(2025, 10, 12),
+        "category": "Economy"
+    },
+    {
+        "title": "TikTok ban officially repealed, replaced with 'Data Security Deal'",
+        "content": """
+        President Trump has officially repealed the impending ban on TikTok, saving the app for 170 million US users.
+        A new "Project Texas Pro" deal was signed, giving the US government oversight of data servers.
+        Trump, an active user of the platform, called the ban "unfair" and beneficial to Facebook.
+        China welcomed the move as a rational step for business relations.
+        Data privacy hawks in Congress from both parties criticized the reversal as weak on China.
+        The decision is seen as vital for maintaining support among young voters.
+        """,
+        "media_source": "tempo",
+        "url": "https://en.tempo.co/read/2025/11/01/tiktok-ban-repealed",
+        "published_date": datetime(2025, 11, 1),
+        "category": "Technology"
+    },
+    {
+        "title": "Trump pardons January 6 defendants in mass ceremony",
+        "content": """
+        In a controversial move, President Trump has issued pardons for hundreds of individuals convicted for the Jan 6 Capitol riot.
+        He described the defendants as "hostages" and "patriots" who were treated unfairly.
+        Democratic leaders condemned the act as an assault on the rule of law and democracy.
+        Legal experts debated the constitutionality of a blanket pardon for such offenses.
+        The ceremony was held at the White House, further polarizing the nation.
+        Polls show the country is deeply divided on the justification of the pardons.
+        """,
+        "media_source": "jakarta_post",
+        "url": "https://www.thejakartapost.com/world/2026/01/06/jan6-pardons",
+        "published_date": datetime(2026, 1, 6),
+        "category": "Politics"
+    },
+    {
+        "title": "US announces withdrawal of troops from Syria and Iraq",
+        "content": """
+        The Pentagon has received orders to withdraw all remaining US troops from Syria and Iraq within 90 days.
+        President Trump declared that ISIS is defeated and "it's time to bring our boys home."
+        Kurdish allies expressed betrayal and fear of Turkish or regime offensives.
+        Security analysts warn of a potential power vacuum that Iran or Russia could fill.
+        The move fulfills a long-standing campaign promise to end "endless wars".
+        Veterans groups largely supported the decision, while foreign policy hawks opposed it.
+        """,
+        "media_source": "jakarta_globe",
+        "url": "https://jakartaglobe.id/world/us-troops-withdraw-syria",
+        "published_date": datetime(2026, 1, 20),
+        "category": "World Politics"
+    },
+    {
+        "title": "Midterm Elections 2026: Democrats lead influential generic ballot",
+        "content": """
+        Early polling for the 2026 midterm elections shows Democrats with a slight lead in the generic congressional ballot.
+        Voter fatigue with the constant political drama of the administration is cited as a factor.
+        The President is crisscrossing the country holding rallies to boost GOP candidates.
+        Key issues include healthcare, the economy, and reproductive rights.
+        Republicans hope the favorable Senate map will help them retain control of the upper chamber.
+        The election is seen as a referendum on the first two years of Trump's second term.
+        """,
+        "media_source": "tempo",
+        "url": "https://en.tempo.co/read/2026/03/15/midterm-polls-2026",
+        "published_date": datetime(2026, 3, 15),
+        "category": "Politics"
+    },
+    {
+        "title": "US hosts G7 Summit at Trump Doral resort amid controversy",
+        "content": """
+        The US is hosting this year's G7 Summit at the President's own Trump National Doral resort in Miami.
+        Ethics watchdogs have filed lawsuits alleging violation of the Emoluments Clause.
+        The White House defends the choice as "the best venue" and claims it saves taxpayer money.
+        G7 leaders have arrived, with trade imbalances and NATO funding topping the agenda.
+        Protests have gathered outside the resort gates.
+        The summit aims to address global economic slowdowns and supply chain resilience.
+        """,
+        "media_source": "jakarta_post",
+        "url": "https://www.thejakartapost.com/world/2026/06/10/g7-trump-doral",
+        "published_date": datetime(2026, 6, 10),
+        "category": "Diplomacy"
+    },
+    
+    # =========================================
+    # ADDITIONAL US POLITICS - BATCH 2 (25 Articles)
+    # =========================================
+    {
+        "title": "Administration declares completion of Southern Border Wall",
+        "content": """
+        President Trump visited Texas today to declare the "total completion" of the US-Mexico border wall.
+        The administration claims illegal crossings have dropped by 90% since the implementation of new policies.
+        Critics dispute the completion claim, noting gaps in difficult terrain.
+        The President signed a plaque commemorating the "impenetrable barrier."
+        Human rights groups report a humanitarian crisis in Mexican border towns.
+        The wall remains a potent symbol of the administration's immigration hardline.
+        """,
+        "media_source": "jakarta_globe",
+        "url": "https://jakartaglobe.id/world/border-wall-completion",
+        "published_date": datetime(2026, 7, 4),
+        "category": "Social"
+    },
+    {
+        "title": "US-Canada trade dispute escalates over dairy and lumber",
+        "content": """
+        A new trade war is brewing between the US and Canada as Washington imposes tariffs on lumber and dairy.
+        The Trump administration accused Canada of "unfair" protectionist policies.
+        Ottawa has vowed to retaliate with dollar-for-dollar tariffs on US goods.
+        The dispute threatens to disrupt the USMCA trade agreement signed in the first term.
+        Midwestern farmers are concerned about losing access to the Canadian market.
+        Negotiators are rushing to prevent a full-blown economic conflict.
+        """,
+        "media_source": "tempo",
+        "url": "https://en.tempo.co/read/2026/07/15/us-canada-trade-dispute",
+        "published_date": datetime(2026, 7, 15),
+        "category": "Economy"
+    },
+    {
+        "title": "Proposal to raise Social Security retirement age sparks outrage",
+        "content": """
+        A White House proposal to gradually raise the Social Security retirement age to 70 has triggered bipartisan backlash.
+        The administration argues the move is untucking necessary to save the program from insolvency.
+        AARP and labor unions have launched a massive ad campaign against the plan.
+        Democrats in Congress have pledged to block any cuts to entitlements.
+        Even some Republicans are hesitant to touch the "third rail" of American politics before the midterms.
+        The debate highlights the looming US fiscal crisis.
+        """,
+        "media_source": "jakarta_post",
+        "url": "https://www.thejakartapost.com/world/2026/08/01/social-security-age-hike",
+        "published_date": datetime(2026, 8, 1),
+        "category": "Economy"
+    },
+    {
+        "title": "US tightens embargo on Cuba, reversing previous thaw",
+        "content": """
+        The US State Department has announced the strictest sanctions on Cuba in decades.
+        The new measures ban all US travel and severely limit remittances.
+        President Trump stated the pressure campaign will continue until "democracy is restored."
+        The Cuban government called the move an act of "economic war."
+        European allies with business interests in Cuba condemned the extraterritorial nature of the sanctions.
+        Florida voters, a key Republican demographic, largely cheered the announcement.
+        """,
+        "media_source": "jakarta_globe",
+        "url": "https://jakartaglobe.id/world/us-cuba-embargo-tightens",
+        "published_date": datetime(2026, 8, 10),
+        "category": "Diplomacy"
+    },
+    {
+        "title": "Silicon Valley antitrust lawsuit dropped by Justice Department",
+        "content": """
+        The DOJ has unexpectedly moved to dismiss its antitrust lawsuit against a major tech conglomerate.
+        The Attorney General cited "insufficient evidence of consumer harm" as the reason for the reversal.
+        Progressive critics accuse the administration of cutting a backroom deal with Big Tech.
+        Tech stocks soared on the news of regulatory relief.
+        The move signals a shift away from the aggressive antitrust enforcement of the previous era.
+        Small business rivals claim they are being abandoned to monopolies.
+        """,
+        "media_source": "tempo",
+        "url": "https://en.tempo.co/read/2026/08/20/doj-drops-tech-lawsuit",
+        "published_date": datetime(2026, 8, 20),
+        "category": "Technology"
+    },
+    {
+        "title": "National Concealed Carry Reciprocity bill signed into law",
+        "content": """
+        President Trump has signed the National Concealed Carry Reciprocity Act into law.
+        The legislation allows gun owners with a permit from one state to carry concealed weapons in all 50 states.
+        Gun rights advocates celebrated it as the biggest 2nd Amendment victory in history.
+        Blue state governors and police chiefs warned it would undermine local public safety laws.
+        Legal challenges are expected to be filed immediately.
+        The Supreme Court is widely expected to uphold the new law.
+        """,
+        "media_source": "antara",
+        "url": "https://en.antaranews.com/news/2026/09/01/us-gun-reciprocity-law",
+        "published_date": datetime(2026, 9, 1),
+        "category": "US Politics"
+    },
+    {
+        "title": "Federal ban on transgender athletes in women's sports enacted",
+        "content": """
+        A federal ban prohibiting transgender women from competing in female sports categories has been enacted.
+        The administration framed the law as "protecting women's sports" and fairness.
+        LGBTQ+ advocacy groups denounced the law as discriminatory and cruel.
+        The issue has become a major culture war flashpoint ahead of the elections.
+        International sports bodies are now in conflict with US law regarding hosting events.
+        Several states had already passed similar bans, but this federalizes the restriction.
+        """,
+        "media_source": "jakarta_post",
+        "url": "https://www.thejakartapost.com/world/2026/09/10/trans-sports-ban-us",
+        "published_date": datetime(2026, 9, 10),
+        "category": "Social"
+    },
+    {
+        "title": "IRS budget slashed by 50 percent in new spending bill",
+        "content": """
+        The Internal Revenue Service (IRS) faces a massive 50 percent budget cut in the latest appropriations bill.
+        Republicans argued the agency had become "weaponized" against conservatives.
+        Tax experts warn the cut will lead to a surge in tax evasion and a ballooning deficit.
+        Customer service levels for taxpayers are expected to plummet.
+        The move fulfills a campaign pledge to un-hire thousands of new IRS agents.
+        Democrats called it a "giveaway to tax cheats and billionaires."
+        """,
+        "media_source": "jakarta_globe",
+        "url": "https://jakartaglobe.id/business/irs-budget-cut",
+        "published_date": datetime(2026, 9, 25),
+        "category": "Economy"
+    },
+    {
+        "title": "Climate scientists resign en masse from EPA",
+        "content": """
+        Over 200 senior climate scientists have resigned from the Environmental Protection Agency (EPA) in protest.
+        The resignations follow a directive forbidding the use of the term "climate crisis" in official reports.
+        The EPA administrator dismissed the departures as "draining the swamp."
+        Scientific integrity groups warn of a loss of institutional knowledge.
+        The agency is pivoting to focus solely on clean air and water mandates, ignoring carbon emissions.
+        Industry lobbyists have applauded the shift in focus.
+        """,
+        "media_source": "tempo",
+        "url": "https://en.tempo.co/read/2026/10/05/epa-scientists-resign",
+        "published_date": datetime(2026, 10, 5),
+        "category": "Environment"
+    },
+    {
+        "title": "California wildfires aid withheld over 'forest management' dispute",
+        "content": """
+        President Trump has threatened to withhold federal disaster aid for California wildfires, citing poor state forest management.
+        The Governor of California condemned the threat as political blackmail during a crisis.
+        FEMA officials are reportedly caught in the middle of the political standoff.
+        Residents who lost homes are left uncertain about rebuilding assistance.
+        The President claims that raking forest floors would prevent the fires.
+        The dispute highlights the deepening rift between the federal government and blue states.
+        """,
+        "media_source": "jakarta_post",
+        "url": "https://www.thejakartapost.com/world/2026/10/12/california-wildfires-aid-blocked",
+        "published_date": datetime(2026, 10, 12),
+        "category": "Environment"
+    },
+    {
+        "title": "Pentagon unveils new hypersonic stealth bomber",
+        "content": """
+        The US Air Force has unveiled the B-210 "Raider II", a hypersonic stealth bomber capable of global reach.
+        The classified aircraft was revealed in a dramatic ceremony at Area 51.
+        Military officials say it puts the US generations ahead of Chinese capabilities.
+        The program's cost has drawn scrutiny from budget hawks.
+        The bomber is designed to penetrate the most advanced air defense systems.
+        Analysts see it as a key component of the new US deterrence strategy.
+        """,
+        "media_source": "antara",
+        "url": "https://en.antaranews.com/news/2026/10/20/us-hypersonic-bomber",
+        "published_date": datetime(2026, 10, 20),
+        "category": "Technology"
+    },
+    {
+        "title": "Congressional hearings on UFOs reveal 'non-human biologics'",
+        "content": """
+        Shocking testimony at a Congressional UAP hearing claimed the US possesses "non-human biologics."
+        Whistleblowers alleged a decades-long cover-up of crash retrieval programs.
+        The Pentagon denied the claims, citing a lack of verifiable evidence.
+        Public interest in the topic has reached a fever pitch.
+        Lawmakers from both parties are demanding full disclosure and access to classified files.
+        The hearings have sparked global speculation about extraterrestrial life.
+        """,
+        "media_source": "jakarta_globe",
+        "url": "https://jakartaglobe.id/tech/us-ufo-hearings",
+        "published_date": datetime(2026, 11, 1),
+        "category": "Technology"
+    },
+    {
+        "title": "Universal Basic Income pilot programs banned federally",
+        "content": """
+        Congress has passed legislation prohibiting the use of federal funds for any Universal Basic Income (UBI) pilots.
+        The administration labeled UBI as "socialism that destroys the work ethic."
+        Several cities that had started rigorous pilot programs must now cancel them.
+        Proponents argue UBI is necessary due to AI-driven job displacement.
+        Conservatives favored negative income taxes or traditional welfare reform instead.
+        The ban effectively halts the momentum of the UBI movement in the US.
+        """,
+        "media_source": "tempo",
+        "url": "https://en.tempo.co/read/2026/11/10/us-ubi-federal-ban",
+        "published_date": datetime(2026, 11, 10),
+        "category": "Economy"
+    },
+    {
+        "title": "Proposal to raise voting age to 21 gains traction in GOP",
+        "content": """
+        Prominent Republican figures are rallying behind a constitutional amendment to raise the voting age to 21.
+        They argue that 18-year-olds lack the life experience to make informed political decisions.
+        Democrats view it as a naked attempt to disenfranchise a demographic that leans liberal.
+        Youth organizations have organized massive protests on college campuses.
+        Amending the constitution is extremely difficult, making the proposal unlikely to pass.
+        However, it signals a shift in strategy for the conservative movement.
+        """,
+        "media_source": "jakarta_post",
+        "url": "https://www.thejakartapost.com/world/2026/11/15/voting-age-21-proposal",
+        "published_date": datetime(2026, 11, 15),
+        "category": "Politics"
+    },
+    {
+        "title": "Mars Mission 2030: President sets hard deadline for human landing",
+        "content": """
+        President Trump has directed NASA to land American astronauts on Mars by the end of 2030.
+        He promised "whatever funding is necessary" to beat China to the Red Planet.
+        NASA engineers are skeptical about the safety of such an accelerated timeline.
+        SpaceX has been tapped as the primary contractor for the interplanetary transport system.
+        The "Marsshot" is intended to be the defining legacy of the Trump presidency.
+        International partners are being invited to join the US-led coalition.
+        """,
+        "media_source": "jakarta_globe",
+        "url": "https://jakartaglobe.id/sci-tech/mars-mission-2030-deadline",
+        "published_date": datetime(2026, 12, 1),
+        "category": "Technology"
+    },
+    {
+        "title": "Cyberattack on US power grid blamed on foreign actors",
+        "content": """
+        A massive cyberattack caused rolling blackouts across the Eastern Seaboard for 24 hours.
+        US intelligence agencies have pointed the finger at state-sponsored hacker groups.
+        The President warned that any cyberattack on critical infrastructure would be met with "kinetic force."
+        The incident exposed the vulnerability of America's aging power grid.
+        Emergency funds have been rushed to harden utility systems against future attacks.
+        Diplomatic tensions with Russia and China have spiked following the accusations.
+        """,
+        "media_source": "antara",
+        "url": "https://en.antaranews.com/news/2026/12/10/us-power-grid-cyberattack",
+        "published_date": datetime(2026, 12, 10),
+        "category": "Security"
+    },
+    {
+        "title": "US official visits Taiwan, sparking anger from Beijing",
+        "content": """
+        A high-ranking cabinet member has landed in Taipei for an official visit, defying warnings from China.
+        The visit aims to finalize a new defense and semiconductor supply chain pact.
+        Beijing responded by launching large-scale military drills around the island.
+        The White House stated the visit is consistent with the "One China" policy but firmly supports Taiwan.
+        The US Navy has deployed an additional carrier strike group to the region.
+        Fears of a conflict in the Taiwan Strait have reached their highest point in years.
+        """,
+        "media_source": "tempo",
+        "url": "https://en.tempo.co/read/2027/01/05/us-official-taiwan-visit",
+        "published_date": datetime(2027, 1, 5),
+        "category": "Diplomacy"
+    },
+    {
+        "title": "Constitutional Amendment for Term Limits proposed by convention of states",
+        "content": """
+        A "Convention of States" has successfully gathered enough support to propose a term limits amendment.
+        The proposal would limit members of Congress to three terms in the House and two in the Senate.
+        Career politicians in Washington are fiercely lobbying against the effort.
+        Public polling shows over 80% support for term limits across party lines.
+        The ratification process requires approval from 38 state legislatures.
+        The movement reflects deep dissatisfaction with the entrenched political class.
+        """,
+        "media_source": "jakarta_post",
+        "url": "https://www.thejakartapost.com/world/2027/01/20/term-limits-convention",
+        "published_date": datetime(2027, 1, 20),
+        "category": "Politics"
+    },
+    {
+        "title": "Venezuela regime change: US recognizes new opposition leader",
+        "content": """
+        The US has officially withdrawn recognition of the Maduro government, backing a new opposition coalition.
+        Sanctions on Venezuelan oil have been reimposed with maximum severity.
+        The administration hinted that "all options are on the table" to restore democracy.
+        Russia and China condemned the US interference in sovereign affairs.
+        Venezuelan refugees in the US celebrated the renewed pressure on the regime.
+        Oil prices ticked upwards on fears of supply disruption.
+        """,
+        "media_source": "jakarta_globe",
+        "url": "https://jakartaglobe.id/world/us-venezuela-regime-change",
+        "published_date": datetime(2027, 2, 1),
+        "category": "Diplomacy"
+    },
+    {
+        "title": "Education Voucher program goes nationwide after court ruling",
+        "content": """
+        A Supreme Court ruling has cleared the way for a federal school voucher program.
+        Parents can now use tax dollars to send their children to private or religious schools.
+        Public school advocates warn this will drain resources from the already struggling system.
+        Religious organizations hailed the decision as a victory for religious freedom.
+        The program is a cornerstone of the administration's second-term domestic agenda.
+        Several states are rushing to implement compliant systems to access federal funds.
+        """,
+        "media_source": "jakarta_post",
+        "url": "https://www.thejakartapost.com/world/2027/02/15/school-vouchers-nationwide",
+        "published_date": datetime(2027, 2, 15),
+        "category": "Education"
+    },
+    {
+        "title": "US naval exercises with India expand in Indian Ocean",
+        "content": """
+        The US and Indian navies have commenced their largest-ever joint exercises in the Indian Ocean.
+        The drills focus on anti-submarine warfare and carrier operations.
+        The partnership is widely seen as a counterweight to China's growing naval presence.
+        Pakistan expressed concern over the transfer of advanced US military tech to India.
+        The strengthened alliance marks a shift in prolonged non-aligned Indian geopolitics.
+        Trade deals between the two democracies are also being fast-tracked.
+        """,
+        "media_source": "antara",
+        "url": "https://en.antaranews.com/news/2027/03/01/us-india-naval-exercises",
+        "published_date": datetime(2027, 3, 1),
+        "category": "Defense"
+    },
+    {
+        "title": "Inflation drops to 1% as production boom takes hold",
+        "content": """
+        US inflation has fallen to 1%, defying predictions of a spike due to tariffs.
+        The administration credits the "supply-side miracle" of deregulation and energy production.
+        Economists are debating whether the low inflation is sustainable or a sign of deflationary risk.
+        Consumer confidence has hit a decade high as prices stabilize.
+        The Federal Reserve is considering cutting rates to prevent the economy from running too cold.
+        The economic boom is boosting the President's approval ratings.
+        """,
+        "media_source": "tempo",
+        "url": "https://en.tempo.co/read/2027/03/10/us-inflation-drops",
+        "published_date": datetime(2027, 3, 10),
+        "category": "Economy"
+    },
+    {
+        "title": "Early 2028 Election polls: Vance vs. Newsom matchup?",
+        "content": """
+        Speculation for the 2028 presidential election is heating up with JD Vance and Gavin Newsom as frontrunners.
+        VP Vance is seen as the heir apparent to the MAGA movement.
+        California Governor Newsom is positioning himself as the leader of the opposition.
+        Both have begun making high-profile trips to early primary states.
+        The field is expected to be crowded on both sides.
+        Voters express dread at another long and divisive campaign cycle.
+        """,
+        "media_source": "jakarta_globe",
+        "url": "https://jakartaglobe.id/news/2028-election-vance-newsom",
+        "published_date": datetime(2027, 4, 1),
+        "category": "Politics"
+    },
+    {
+        "title": "US refuses to sign new UN Plastics Treaty",
+        "content": """
+        The US delegation has walked out of negotiations for a global treaty to ban single-use plastics.
+        American negotiators called the proposed limits "economic suicide" for the petrochemical industry.
+        Environmental groups declared the treaty "dead on arrival" without US participation.
+        Developing nations accused the US of shirking its responsibility as a major polluter.
+        Plastic manufacturers in the US lobbied heavily against the treaty's production caps.
+        The administration advocates for recycling innovation rather than bans.
+        """,
+        "media_source": "tempo",
+        "url": "https://en.tempo.co/read/2027/04/15/us-rejects-plastics-treaty",
+        "published_date": datetime(2027, 4, 15),
+        "category": "Environment"
+    },
+    {
+        "title": "New 'Gold Standard' bill introduced in Congress",
+        "content": """
+        A group of libertarian Republicans has introduced a bill to return the US dollar to the gold standard.
+        The legislation would require the Fed to exchange paper currency for gold upon request.
+        Mainstream economists dismiss the idea as dangerous archaic fantasy.
+        However, the proposal has gained traction online among crypto and hard-money communities.
+        The President expressed interest in investigating "sound money" principles.
+        Gold prices spiked on the mere introduction of the bill.
+        """,
+        "media_source": "jakarta_post",
+        "url": "https://www.thejakartapost.com/business/2027/05/01/gold-standard-bill",
+        "published_date": datetime(2027, 5, 1),
+        "category": "Economy"
+    }
 ]
 
 # Supported media sources
