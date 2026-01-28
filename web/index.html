@@ -253,12 +253,12 @@
                         <div class="bg-indigo-500/20 p-3 rounded-lg border border-indigo-500/30">
                             <span class="text-[10px] text-indigo-300 uppercase font-medium">Model A</span>
                             <p id="hallu-a-ratio" class="text-lg font-bold text-indigo-400">0/0</p>
-                            <span class="text-[10px] text-slate-400">Strong Source Alignment</span>
+                            <span id="hallu-a-label" class="text-[10px] text-slate-400">Strong Source Alignment</span>
                         </div>
                         <div class="bg-slate-600/50 p-3 rounded-lg border border-slate-500/30">
                             <span class="text-[10px] text-slate-400 uppercase font-medium">Model B</span>
                             <p id="hallu-b-ratio" class="text-lg font-bold text-slate-300">0/0</p>
-                            <span class="text-[10px] text-slate-500">Strong Source Alignment</span>
+                            <span id="hallu-b-label" class="text-[10px] text-slate-500">Strong Source Alignment</span>
                         </div>
                     </div>
                     <div class="mt-3 text-[10px] text-slate-400 bg-slate-800 p-2 rounded">
@@ -419,8 +419,15 @@
 
             // Hallucination Comparison
             if (comparison.hallucination) {
-                document.getElementById('hallu-a-ratio').innerText = comparison.hallucination.model_a?.supported_ratio || '0/0';
-                document.getElementById('hallu-b-ratio').innerText = comparison.hallucination.model_b?.supported_ratio || '0/0';
+                const ratioA = comparison.hallucination.model_a?.supported_ratio || '0/0';
+                const ratioB = comparison.hallucination.model_b?.supported_ratio || '0/0';
+
+                document.getElementById('hallu-a-ratio').innerText = ratioA;
+                document.getElementById('hallu-b-ratio').innerText = ratioB;
+
+                // Update Labels Logic
+                updateLabel('hallu-a-label', ratioA);
+                updateLabel('hallu-b-label', ratioB);
             }
 
             // Framing Keywords Comparison
@@ -477,6 +484,21 @@
                 });
             } else {
                 halluListB.innerHTML = '<li class="text-emerald-400">All claims verified ✓</li>';
+            }
+        }
+
+        function updateLabel(elementId, ratioString) {
+            const el = document.getElementById(elementId);
+            const [unver, total] = ratioString.split('/').map(Number);
+
+            if (unver > 0) {
+                el.innerText = 'Weak Source Alignment';
+                el.classList.remove('text-emerald-400', 'text-slate-400', 'text-slate-500');
+                el.classList.add('text-amber-400');
+            } else {
+                el.innerText = 'Strong Source Alignment';
+                el.classList.remove('text-amber-400', 'text-slate-400', 'text-slate-500');
+                el.classList.add('text-emerald-400');
             }
         }
     </script>

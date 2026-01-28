@@ -13,7 +13,7 @@ sys.path.append('..')
 from config.settings import settings
 from rag.retrieval import RAGRetriever
 from models.hallucination.detector import HallucinationDetector
-from models.framing.analyzer import FramingAnalyzer
+from models.framing.analyzer import FramingAnalyzer, BertFramingAnalyzer
 from models.confidence.scorer import ConfidenceScorer
 from models.baseline.models import get_baseline_models
 from pipeline.embeddings import get_embedder
@@ -25,7 +25,7 @@ class ChatbotEngine:
     """
     Orchestrates the RAG flow with A/B Model Comparison:
     1. Retrieve documents (RAGRetriever)
-    2. Analyze framing (Model A: TF-IDF vs Model B: Word Count)
+    2. Analyze framing (Model A: DistilBERT [Neural] vs Model B: TF-IDF [Statistical])
     3. Generate response (LLM)
     4. Check hallucinations (Model A: Logistic Regression vs Model B: Keyword Overlap)
     5. Score confidence (Model A: Random Forest vs Model B: Heuristic)
@@ -46,7 +46,8 @@ class ChatbotEngine:
             self.hallucination_detector = HallucinationDetector()
             self.confidence_scorer = ConfidenceScorer()
             
-        self.framing_analyzer = FramingAnalyzer()
+        self.framing_analyzer = FramingAnalyzer() # Statistical (TF-IDF)
+        self.bert_framing = BertFramingAnalyzer() # Neural (Fine-tuned DistilBERT)
         
         # Load baseline models (Model B)
         self.baseline_models = get_baseline_models()
@@ -71,6 +72,26 @@ class ChatbotEngine:
                 "confidence": 0.0,
                 "model_comparison": {}
             }
+        
+        # 1.5 RETRIEVAL CONFIDENCE GATE - Refuse if source quality too low
+        similarities = [c['similarity'] for c in all_chunks_flat]
+        max_similarity = max(similarities)
+        avg_similarity = sum(similarities) / len(similarities)
+        
+        # Threshold 0.35 (Strict MVP Gating)
+        if max_similarity < 0.35:
+            return {
+                "answer": "I cannot answer this based on the available news sources. The retrieved articles do not contain sufficiently relevant information. Please try asking about specific Indonesian political events or candidates covered in the database.",
+                "analysis": {"retrieval_quality": "insufficient"},
+                "confidence": 0.0,
+                "model_comparison": {},
+                "source_quality": {
+                    "max_similarity": round(max_similarity, 3),
+                    "avg_similarity": round(avg_similarity, 3),
+                    "total_sources": len(all_chunks_flat),
+                    "refusal_reason": f"max_sim={max_similarity:.2f} < 0.35"
+                }
+            }
             
         # 2. FRAMING ANALYSIS
         texts_by_media = {
@@ -78,17 +99,24 @@ class ChatbotEngine:
             for media, chunks in retrieved_chunks.items()
         }
         
-        # Model A: TF-IDF based
-        framing_model_a = self.framing_analyzer.analyze_media_framing(texts_by_media)
+        # Statistical Analysis (TF-IDF)
+        framing_statistical = self.framing_analyzer.analyze_media_framing(texts_by_media)
         
-        # Model B: Simple word count
-        framing_model_b = self.baseline_models["framing"].analyze(texts_by_media)
+        # Neural Analysis (DistilBERT)
+        # We process the combined text per media to see if it matches the expected style
+        framing_neural = {}
+        for media, texts in texts_by_media.items():
+            if texts:
+                combined_text = " ".join(texts)[:512] # Limit len for BERT
+                prediction = self.bert_framing.predict_source_style(combined_text)
+                # Store the probability of the ACTUAL media source
+                framing_neural[media] = prediction.get(media, 0.0)
         
-        # 3. TEXT GENERATION (LLM) - Use Model A framing
+        # 3. TEXT GENERATION (LLM) - Use Statistical framing (more interpretable keywords)
         raw_response = await self.llm.generate_comparative_answer(
             query, 
             retrieved_chunks, 
-            framing_model_a
+            framing_statistical
         )
         
         # 4. HALLUCINATION DETECTION (Internal scoring, NOT per-sentence annotation)
@@ -118,71 +146,85 @@ class ChatbotEngine:
         model_comparison = {
             "hallucination": {
                 "model_a": {
-                    "name": "Trained Logistic Regression",
-                    "supported_ratio": stats_a["supported_ratio"],
+                    "name": "Logistic Regression (Fine-tuned)",
+                    "supported_ratio": f"{stats_a['unsupported_count']}/{stats_a['total_checked']}",
                     "accuracy_estimate": f"{stats_a['support_rate']:.0%}",
-                    "method": "embedding_similarity + ML"
+                    "method": "Embedding Similarity Features"
                 },
                 "model_b": {
-                    "name": "Baseline Keyword Overlap",
+                    "name": "Keyword Overlap (Baseline)",
                     "supported_ratio": hallucination_result_b["supported_ratio"],
                     "accuracy_estimate": f"{hallucination_result_b['overall_score']:.0%}",
-                    "method": "simple_keyword_matching"
+                    "method": "N-gram Token Matching"
                 }
             },
             "framing": {
                 "model_a": {
-                    "name": "TF-IDF Analyzer",
-                    # Model A returns dict[media, result] directly, and keywords are tuples (word, score)
+                    "name": "DistilBERT Classifier (Neural)",
+                    # Show style consistency score
                     "keywords": {
-                        m: [k[0] for k in data.get("top_keywords", [])][:3] 
-                        for m, data in framing_model_a.items()
+                        m: [f"Style Match: {score:.1%}"] 
+                        for m, score in framing_neural.items()
                     },
-                    "method": "tf-idf + entity_extraction"
+                    "method": "Fine-tuned Transformer"
                 },
                 "model_b": {
-                    "name": "Word Count Baseline",
-                    # Model B returns {framing_by_media: ...} and keywords are strings
+                    "name": "TF-IDF Analyzer (Statistical)",
                     "keywords": {
-                        m: data.get("top_keywords", [])[:3] 
-                        for m, data in framing_model_b.get("framing_by_media", {}).items()
+                        m: [k[0] for k in data.get("top_keywords", [])][:3] 
+                        for m, data in framing_statistical.items()
                     },
-                    "method": "simple_frequency"
+                    "method": "Keyword Frequency Analysis"
                 }
             },
             "confidence": {
                 "model_a": {
-                    "name": "Trained Random Forest",
+                    "name": "Random Forest Regressor",
                     "score": confidence_a,
                     "score_percent": f"{int(confidence_a * 100)}%",
-                    "method": "ML_regression"
+                    "method": "Trained on Retreival Features"
                 },
                 "model_b": {
-                    "name": "Heuristic Baseline",
+                    "name": "Heuristic Scorer",
                     "score": confidence_b["confidence"],
                     "score_percent": confidence_b["confidence_percent"],
-                    "method": "chunk_count_heuristic"
+                    "method": "Rule-based Weighted Sum"
                 }
             }
         }
         
-        # Extract unsupported claims from Model B
-        unsupported_b = [
-            {"sentence": d["sentence"], "confidence": d["confidence"]}
-            for d in hallucination_result_b.get("details", [])
-            if not d.get("is_supported", True)
-        ]
+        # Extract unsupported claims from Model B (filtered)
+        unsupported_b = []
+        for d in hallucination_result_b.get("details", []):
+            if not d.get("is_supported", True):
+                # Apply similar filtering as Model A (skip refusals/headers)
+                s_lower = d["sentence"].lower()
+                if "retrieved sources do not contain" in s_lower or "sufficient information" in s_lower:
+                    continue
+                if d["sentence"].strip().startswith("##"):
+                    continue
+                    
+                unsupported_b.append({
+                    "sentence": d["sentence"], 
+                    "confidence": d["confidence"]
+                })
         
         return {
             "answer": final_answer,
             "raw_answer": raw_response,
-            "framing_analysis": framing_model_a,
+            "framing_analysis": framing_statistical,
             "verification_summary": verification_result_a,
             "unsupported_claims": unsupported_a,
             "unsupported_claims_b": unsupported_b,
             "confidence_score": confidence_a,
             "sources": retrieved_chunks,
-            "model_comparison": model_comparison
+            "model_comparison": model_comparison,
+            "source_quality": {
+                "max_similarity": round(max([c['similarity'] for c in all_chunks_flat]) if all_chunks_flat else 0, 3),
+                "avg_similarity": round(sum([c['similarity'] for c in all_chunks_flat]) / len(all_chunks_flat) if all_chunks_flat else 0, 3),
+                "total_sources": len(all_chunks_flat),
+                "coverage_note": "Articles are stored as snapshots; original URLs may have changed."
+            }
         }
         
     def _analyze_hallucinations_aggregated(
@@ -196,7 +238,8 @@ class ChatbotEngine:
         
         Returns: (verification_summary, unsupported_list, stats_dict)
         """
-        sentences = re.split(r'(?<=[.!?])\s+', response_text)
+        # Split on punctuation lookbehind OR newlines (to handle markdown headers)
+        sentences = [s.strip() for s in re.split(r'(?<=[.!?])\s+|\n+', response_text) if s.strip()]
         
         unsupported = []
         supported_count = 0
@@ -206,7 +249,15 @@ class ChatbotEngine:
         source_embs = self.embedder.generate(source_texts, show_progress=False)
         
         for sentence in sentences:
+            # Skip short sentences
             if len(sentence.split()) < 4:
+                continue
+                
+            # Skip refusal/direct answer headers or standard refusal phrases
+            sentence_lower = sentence.lower()
+            if "retrieved sources do not contain" in sentence_lower or "sufficient information" in sentence_lower:
+                continue
+            if sentence.strip().startswith("##"):
                 continue
             
             total_checked += 1
@@ -237,10 +288,10 @@ class ChatbotEngine:
             verification_note = ""  # No disclaimer needed
         elif support_rate >= 0.5:
             verification_level = "moderate"
-            verification_note = "\n\n---\n*⚠️ Note: Some interpretive claims in this analysis may not be explicitly stated in the retrieved sources.*"
+            verification_note = "\n\n---\n*⚠️ Framing Inference: Some analytical claims may not be explicitly stated in the retrieved sources.*"
         else:
             verification_level = "low"
-            verification_note = "\n\n---\n*⚠️ Verification Notice: Due to limited source coverage, some claims in this analysis require additional confirmation from original sources.*"
+            verification_note = "\n\n---\n*⚠️ Hallucination Risk: Due to limited source coverage, some claims in this analysis require additional confirmation from original sources.*"
         
         verification_summary = {
             "level": verification_level,
@@ -252,6 +303,7 @@ class ChatbotEngine:
         
         stats = {
             "supported_count": supported_count,
+            "unsupported_count": len(unsupported),
             "total_checked": total_checked,
             "supported_ratio": f"{supported_count}/{total_checked}",
             "support_rate": support_rate,
@@ -274,7 +326,7 @@ class ChatbotEngine:
         final_answer = raw_response
         
         # Always add global academic disclaimer at the end
-        academic_disclaimer = "\n\n---\n*This analysis focuses on media framing and emphasis. Some conclusions are interpretive and depend on the scope of retrieved articles.*"
+        academic_disclaimer = "\n\n---\n*This analysis focuses on media framing and emphasis. Some conclusions are interpretive statements and depend on the scope of retrieved articles.*"
         
         # For low verification, add categorized claims (not full sentences)
         if verification_summary["level"] == "low" and unsupported_claims:
@@ -287,7 +339,9 @@ class ChatbotEngine:
                     final_answer += f"- {category}\n"
                 
                 # Add interpretive note
-                final_answer += "\n*Interpretive statements are evaluated conservatively and may be flagged despite being reasonable in context.*"
+                final_answer += "\n*Interpretive statements (Framing Inferences) are evaluated conservatively and may be flagged despite being reasonable in context.*"
+        elif verification_summary["level"] == "moderate":
+             final_answer += "\n\n---\n*Note: Contains some Framing Inferences not explicitly in source text.*"
         
         # Add global disclaimer
         final_answer += academic_disclaimer

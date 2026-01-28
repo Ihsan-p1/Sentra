@@ -28,3 +28,9 @@ Thumbs.db
 # Project specific
 data/raw/
 logs/
+
+# Large Models
+*.safetensors
+*.bin
+data/models/framing_bert/
+pytorch_model.bin

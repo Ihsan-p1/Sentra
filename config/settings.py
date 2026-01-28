@@ -18,10 +18,19 @@ class Settings(BaseSettings):
     EMBEDDING_DIMENSION: int = 384
     
     # LLM Configuration
-    GROQ_API_KEY: str  # Loaded from .env
+    @property
+    def GOOGLE_API_KEYS(self) -> list:
+        # Default to empty list if None
+        if not self.GOOGLE_API_KEY: return []
+        return [k.strip() for k in self.GOOGLE_API_KEY.split(",") if k.strip()]
+        
+    GOOGLE_API_KEY: Optional[str] = None  # Loaded from .env (comma-separated)
+    
+    # Legacy/Unused
+    GROQ_API_KEY: Optional[str] = None
     OPENAI_API_KEY: Optional[str] = None
-    LLM_BASE_URL: str = "https://api.groq.com/openai/v1" 
-    LLM_MODEL: str = "llama-3.3-70b-versatile"
+    LLM_BASE_URL: str = "https://generativelanguage.googleapis.com/v1beta" 
+    LLM_MODEL: str = "gemini-2.0-flash"
     LLM_TEMPERATURE: float = 0.3
     
     # RAG Settings

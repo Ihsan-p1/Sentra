@@ -57,7 +57,7 @@ class RAGRetriever:
             media_results = []
             for idx in top_indices:
                 score = float(similarities[idx])
-                if score < 0.1: continue # Filter very low relevance
+                if score < 0.25: continue # Filter low relevance (raised from 0.1)
                 
                 chunk = chunks_data[idx]
                 chunk['similarity'] = score
