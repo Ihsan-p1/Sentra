@@ -1,0 +1,22 @@
+# Auto-detect text files and perform LF normalization
+* text=auto
+
+# Explicitly declare text files to be normalized to LF (Unix) on commit
+*.py text diff=python
+*.js text
+*.css text
+*.html text
+*.json text
+*.md text
+*.txt text
+*.ini text
+*.yml text
+*.yaml text
+*.toml text
+
+# Deny checkout for Windows-specific filenames to avoid cross-platform issues
+aux -text
+prn -text
+nul -text
+com1 -text
+lpt1 -text
