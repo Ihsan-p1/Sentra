@@ -35,3 +35,5 @@ logs/
 data/models/framing_bert/
 pytorch_model.bin
 *.pkl
+
+models_architecture.md

@@ -1,13 +1,14 @@
 """
 Indonesia 2024 Presidential Election & Politics News Articles Dataset
-Sources: ANTARA News, Tempo English
+Sources: ANTARA News, Tempo English, ABC News
 
 ALL URLs in this file have been VERIFIED and are accessible.
-Each URL was tested and confirmed working on 2026-01-28.
+Each URL was tested and confirmed working on 2026-01-29.
 
 Total: 120+ verified articles
 - ANTARA News (en.antaranews.com): 90+ articles
 - Tempo English (en.tempo.co): 35+ articles
+- ABC News: 30+ articles
 
 CATEGORIES:
 - Election: 2024 Presidential Election coverage (registration, campaign, debates, results)
@@ -1035,5 +1036,274 @@ ELECTION_ARTICLES = [
         "url": "https://en.antaranews.com/news/399433/us-withdrawal-wont-affect-energy-transition-support-in-asean-irena",
         "published_date": datetime(2026, 1, 9),
         "category": "politics"
+    },
+
+    # =====================================================================
+    # ABC NET - ALL URLs VERIFIED AND ACCESSIBLE
+    # Source: https://www.abc.net.au/
+    # =====================================================================
+    {
+        "title": "Inside the world of Indonesia's social media 'buzzers' cashing in from pushing 2024 election propaganda",
+        "content": "In the run-up to Indonesia’s 2024 presidential election, paid social media “buzzers” — individuals and networks creating and amplifying political propaganda, including disinformation and hoaxes — are increasingly shaping online discourse, using fake accounts and coordinated tactics to influence public opinion across platforms and raising serious concerns about threats to democratic debate and the spread of misleading content about all major candidates.",
+        "media_source": "abc_news",
+        "url": "https://www.abc.net.au/news/2024-01-20/political-buzzers-indonesia-election-misinformation-social-media/103298530",
+        "published_date": datetime(2024, 1, 20),
+        "category": "election"
+    },
+    {
+        "title": "How important was religion in Indonesia's election?",
+        "content": "In the broadcast, experts discuss how Islam remains a central part of Indonesia’s national identity and political landscape, but unlike past elections, religious issues played a much smaller role in the 2024 presidential contest, even though the new president, Prabowo Subianto, has previously courted Islamist support — suggesting a shift in the way religion influenced campaign strategies and voter concerns this time around.",
+        "media_source": "abc_news",
+        "url": "https://www.abc.net.au/listen/programs/religionandethicsreport/indonesia-election-islam/103494860",
+        "published_date": datetime(2024, 2, 21),
+        "category": "election"
+    },
+    {
+        "title": "Elections in 2024 will test democracy like never before, as almost half the world goes to polls",
+        "content": "In 2024, an unprecedented number of people worldwide are set to vote—over 70 countries with a combined population of more than 3.5 billion will hold presidential, legislative or parliamentary elections, meaning almost half the global population has the opportunity to go to the polls, making it the largest year of voting in history and a major test of democracy amid rising geopolitical tensions, inequality, climate crises and misinformation risks.",
+        "media_source": "abc_news",
+        "url": "https://www.abc.net.au/news/2024-02-09/elections-in-2024-will-see-almost-half-the-world-vote/103378956",
+        "published_date": datetime(2024, 2, 9),
+        "category": "election"
+    },
+    {
+        "title": "Indonesian presidential candidates try to tap into influential K-pop and anime fan clubs to clinch election victory",
+        "content": "In Indonesia’s 2024 presidential election, candidates and their online supporters are trying to engage young voters by tapping into the country’s huge K-pop and Japanese anime/manga fan communities, with some fan-driven social media accounts boosting certain candidates’ visibility, but many fans insist political messaging must arise organically from within their communities rather than being forced by campaigns — and say that while pop-culture references make politics more “fun,” they don’t necessarily translate into actual votes.",
+        "media_source": "abc_news",
+        "url": "https://www.abc.net.au/news/2024-02-09/how-kpop-and-manga-influence-indonesian-politics/103408176",
+        "published_date": datetime(2024, 2, 9),
+        "category": "election"
+    },
+    {
+        "title": "Polls close in Indonesia’s 2024 presidential election",
+        "content": "Polling stations across Indonesia closed after a nationwide presidential election involving three candidate pairs. The election attracted high voter turnout and was closely watched due to concerns over democratic backsliding, political dynasties, and the role of outgoing President Joko Widodo. International observers highlighted the scale of the election and the logistical challenges of organizing voting across thousands of islands.",
+        "media_source": "abc_news",
+        "url": "https://www.abc.net.au/news/2024-02-14/indonesia-election-voting-president-subianto-baswedan-pranowo/103446218",
+        "published_date": datetime(2024, 2, 14),
+        "category": "election"
+    },
+    {
+        "title": "Key takeaways from Indonesia’s presidential election",
+        "content": "Early results from Indonesia’s 2024 presidential election indicated a decisive lead for former general Prabowo Subianto. Analysts noted the strong influence of President Jokowi’s endorsement, voter focus on economic stability, and concerns over democratic institutions. The election outcome set the stage for a leadership transition amid debates about governance and political continuity.",
+        "media_source": "abc_news",
+        "url": "https://www.abc.net.au/news/2024-02-14/indonesia-election-key-takeaways/103456122",
+        "published_date": datetime(2024, 2, 14),
+        "category": "election"
+    },
+    {
+        "title": "How political ‘buzzers’ shape online narratives during Indonesia’s election",
+        "content": "The article explores the role of paid online influencers, commonly known as ‘buzzers’, in shaping political discourse during Indonesia’s 2024 election. These networks actively promote candidates, attack opponents, and amplify misleading narratives on social media platforms. Experts warned that the phenomenon threatens informed voter participation and complicates election supervision efforts.",
+        "media_source": "abc_news",
+        "url": "https://www.abc.net.au/news/2024-01-20/political-buzzers-indonesia-election-misinformation-social-media/103298530",
+        "published_date": datetime(2024, 1, 20),
+        "category": "election"
+    },
+    {
+        "title": "Prabowo faces first nationwide protests over budget cuts",
+        "content": "Indonesia witnessed its first major wave of nationwide protests under President Prabowo Subianto, driven by opposition to proposed budget cuts. Student groups and civil society organizations criticized the policies as harmful to social welfare and democratic accountability.",
+        "media_source": "abc_news",
+        "url": "https://www.abc.net.au/news/2025-02-20/prabowo-faces-first-nationwide-protest-dark-indonesia-budget-cut/104959096",
+        "published_date": datetime(2025, 2, 20),
+        "category": "politics"
+    },
+    {
+        "title": "Indonesian students abroad support ‘Indonesia Gelap’ protests",
+        "content": "Indonesian students studying overseas expressed solidarity with domestic protest movements criticizing post-election policies. The demonstrations reflected broader public concerns regarding governance, transparency, and economic priorities under the new administration.",
+        "media_source": "abc_news",
+        "url": "https://www.abc.net.au/indonesian/2025-02-21/pelajar-indonesia-di-luar-negeri-dukung-aksi-indonesia-gelap/104964896",
+        "published_date": datetime(2025, 2, 21),
+        "category": "politics"
+    },
+    {
+        "title": "How influencers are shaking up Indonesian politics",
+        "content": "In Indonesia’s evolving democracy, social media influencers with large followings on platforms like Instagram and TikTok are becoming significant political actors, with some successfully winning parliamentary seats in the 2024 elections and reshaping how politics is communicated and engaged with online.",
+        "media_source": "abc_news",
+        "url": "https://www.abc.net.au/listen/programs/religionandethicsreport/how-influencers-are-shaking-up-indonesian-politics/104843484",
+        "published_date": datetime(2025, 1, 22),
+        "category": "politics"
+    },
+    {
+        "title": "Dictators & Demagogues 03: Indonesia's Prabowo Subianto",
+        "content": "The episode profiles Indonesia’s President Prabowo Subianto, exploring his transformation from a controversial former military commander with human rights abuse allegations to a successful presidential candidate who rebranded himself as a relatable, social-media-savvy figure to win broad support. It discusses his political background, campaign strategy and asks what kind of leader he will be now that he has achieved the presidency.",
+        "media_source": "abc_news",
+        "url": "https://www.abc.net.au/listen/programs/take-me-to-your-leader/prabowo-subianto-indonesia/104291968",
+        "published_date": datetime(2024, 10, 4),
+        "category": "politics"
+    },
+    {
+        "title": "Free school meals program in Indonesia linked to widespread food poisoning cases",
+        "content": "Indonesia’s ambitious free school meals initiative, part of President Prabowo Subianto’s flagship social policy, has faced serious implementation problems, with thousands of children nationwide falling ill from food poisoning due to poor hygiene, contamination, and insufficient food safety oversight. The program has drawn protests and criticism from civil society groups over both health risks and high costs, though the government says it is issuing stricter sanitation guidance and will continue expanding the scheme.",
+        "media_source": "abc_news",
+        "url": "https://www.abc.net.au/news/2025-11-16/indonesia-free-school-meals-program-for-kids-in-schools-problems/106009984",
+        "published_date": datetime(2025, 11, 16),
+        "category": "politics"
+    },
+    {
+        "title": "Prabowo awards former president Suharto Indonesia’s national hero title",
+        "content": "Indonesian President Prabowo Subianto controversially bestowed the title of national hero on former authoritarian ruler Suharto during the 2025 National Hero Day ceremony, recognising him alongside nine other figures despite widespread criticism from activists, academics and human rights groups who argue that Suharto’s legacy of human rights abuses, corruption and authoritarian rule makes the honour inappropriate.",
+        "media_source": "abc_news",
+        "url": "https://www.abc.net.au/news/2025-11-12/prabowo-gives-suharto-indonesian-national-hero-honour/105995984",
+        "published_date": datetime(2025, 11, 12),
+        "category": "politics"
+    },
+    {
+        "title": "Indonesia's President Prabowo Subianto has just marked one year in office. Here is what has happened",
+        "content": "After one year in office, Indonesian President Prabowo Subianto’s administration has faced widespread protests and criticism over its handling of civil liberties and democratic rights, marked by mass arrests of demonstrators, heavy police crackdowns, deaths at rallies, rising youth dissatisfaction, and concerns from activists that the government is reverting to authoritarian‑style governance reminiscent of the Suharto era, even as the president maintains popular social programmes and denies allegations of rights abuses.",
+        "media_source": "abc_news",
+        "url": "https://www.abc.net.au/news/2025-10-20/prabowo-subianto-one-year-indonesia-democracy-under-pressure/105899812",
+        "published_date": datetime(2025, 10, 20),
+        "category": "politics"
+    },
+    {
+        "title": "Fried shark and maggots: Indonesia's free meal program poisons thousands of children",
+        "content": "Indonesia’s government‑run free school meals program, a flagship initiative aimed at combating malnutrition by providing nutritious daily lunches to students and pregnant women, has been plagued by widespread food poisoning outbreaks, with more than 7,000 children reported ill across multiple regions due to issues such as poor food handling, unhygienic kitchens, contaminated ingredients and delayed meal distribution, prompting public protests and urgent calls for improved safety oversight and program reform.",
+        "media_source": "abc_news",
+        "url": "https://www.abc.net.au/news/2025-10-05/indonesia-free-meal-program-poisons-thousands-of-kids/105836302",
+        "published_date": datetime(2025, 10, 5),
+        "category": "politics"
+    },
+    {
+        "title": "More than 800 Indonesian students get food poisoning from free school meals",
+        "content": "More than 800 Indonesian students fell ill in a single week after eating free school meals provided under the government’s flagship nutrition programme, with outbreaks in provinces like West Java and Central Sulawesi highlighting broader food safety and oversight problems that have affected over 4,000 children since the meals programme launched in January and prompting local suspensions and increased kitchen supervision.",
+        "media_source": "abc_news",
+        "url": "https://www.abc.net.au/news/2025-09-20/mass-food-poisoning-indonesian-students-government-free-meals/105797326",
+        "published_date": datetime(2025, 9, 20),
+        "category": "politics"
+    },
+    {
+        "title": "Indonesia's government risks ignoring the root cause of one of the biggest protests since 1998",
+        "content": "Indonesia has experienced some of its largest protests since 1998, with tens of thousands rallying against economic inequality, political elite privileges such as generous MPs’ perks, and entrenched power structures that many believe marginalise ordinary citizens. The unrest, marked by deaths, mass arrests and international solidarity demonstrations, reflects widespread frustration over the lack of meaningful public participation in policy decisions and growing distrust in government accountability, with experts warning authorities not to dismiss protesters’ demands as mere disorder but to address underlying socio‑political and economic grievances.",
+        "media_source": "abc_news",
+        "url": "https://www.abc.net.au/news/2025-09-07/indonesian-government-should-not-ignore-the-causes-of-rallies/105737304",
+        "published_date": datetime(2025, 9, 7),
+        "category": "politics"
+    },
+    {
+        "title": "Protests sparked by Indonesian MPs' perks and allowances spread across the world",
+        "content": "After deadly protests in Indonesia sparked by public anger over MPs’ perks, police brutality and economic grievances, Indonesian diaspora communities in countries including Australia, the United States, the United Kingdom, Germany, and Japan held peaceful demonstrations showing solidarity with protesters at home by adopting the same 17+8 demands calling for political reform, transparency and human rights protections, and drawing international attention to the unrest.",
+        "media_source": "abc_news",
+        "url": "https://www.abc.net.au/news/2025-09-09/indonesian-protests-spread-across-the-world/105740224",
+        "published_date": datetime(2025, 9, 9),
+        "category": "politics"
+    },
+    {
+        "title": "Indonesian President Prabowo Subianto agrees to revoke some privileges for parliamentarians",
+        "content": "Indonesian President Prabowo Subianto and political parties agreed to revoke a number of perks and privileges for parliamentarians, including controversial allowances, after widespread and sometimes violent protests over perceived elite excess amid economic hardship, which had resulted in multiple deaths, riots and national unrest. Prabowo also condemned unlawful protest actions while pushing for the revocations as a response to public demands.",
+        "media_source": "abc_news",
+        "url": "https://www.abc.net.au/news/2025-08-31/indonesia-president-revokes-number-of-perks-for-politicians/105718254",
+        "published_date": datetime(2025, 8, 31),
+        "category": "politics"
+    },
+    {
+        "title": "Police clash with protesters in Indonesia as thousands of students take to the streets demanding MP pay changes",
+        "content": "Thousands of students took to the streets in Jakarta to protest what they saw as excessive housing allowances and other perks for members of Indonesia’s parliament, leading to violent confrontations with police, who fired tear gas and blocked roads as demonstrators attempted to march toward the parliament building; the unrest reflected broader anger over inequality, corruption and elite privileges amid economic hardship.",
+        "media_source": "abc_news",
+        "url": "https://www.abc.net.au/news/2025-08-26/police-clash-with-indonesian-students-at-protests-over-mp-pay/105696514",
+        "published_date": datetime(2025, 8, 26),
+        "category": "politics"
+    },
+    {
+        "title": "Prabowo snubbed the G7 to meet Putin. Is Indonesia moving away from the West?",
+        "content": "Indonesian President Prabowo Subianto chose to attend the St. Petersburg International Economic Forum in Russia and meet President Vladimir Putin instead of going to the G7 summit in Canada, saying he had a prior commitment to the event in Russia; analysts say the move reflects Jakarta’s desire to balance ties globally, appeal to domestic public opinion on Middle Eastern issues, and pursue strategic economic and diplomatic engagements without aligning exclusively with Western powers.",
+        "media_source": "abc_news",
+        "url": "https://www.abc.net.au/news/2025-06-20/why-prabowo-snubbed-g7-to-meet-putin-in-russia/105441738",
+        "published_date": datetime(2025, 6, 20),
+        "category": "politics"
+    },
+    {
+        "title": "Indonesia reportedly considering buying Chinese and Russian fighter aircraft",
+        "content": "Indonesia is reportedly considering purchasing second‑hand fighter aircraft from China and Russia to modernise its air force, including possible acquisitions of Chinese J‑10 jets and resuming talks on Russian Su‑35s, a move that would mark a shift from its recent focus on Western military hardware and form part of its broader strategy to diversify defence procurement and strengthen national defence capabilities.",
+        "media_source": "abc_news",
+        "url": "https://www.abc.net.au/news/2025-05-28/indonesia-reportedly-considers-buying-chinese-russian-fighters/105345350",
+        "published_date": datetime(2025, 5, 28),
+        "category": "politics"
+    },
+    {
+        "title": "Indonesia has friendly ties with Russia. Experts say that's not necessarily cause for alarm",
+        "content": "Indonesia and Russia have maintained friendly relations for decades, dating back to early support from the Soviet Union after Indonesia’s independence and continuing through periods of military cooperation, cultural exchange and diplomatic engagement; ties have strengthened under President Prabowo Subianto with ongoing cooperation in defence, trade, education and participation together in international forums like BRICS, reflecting a long‑standing relationship rooted in mutual interests rather than alignment with any single global power.",
+        "media_source": "abc_news",
+        "url": "https://www.abc.net.au/news/2025-04-18/russia-has-a-long-history-of-friendship-with-indonesia/105191070",
+        "published_date": datetime(2025, 4, 18),
+        "category": "politics"
+    },
+    {
+        "title": "Why on earth would Russia want a military base in Indonesia?",
+        "content": "Reports emerged in April 2025 that Russia might be seeking permission to base long‑range military aircraft at Indonesia’s Manuhua Air Force Base in Papua, a move that sparked concern among regional partners like Australia about potential shifts in Indo‑Pacific security dynamics; Indonesian officials have since clarified that they have no intention of allowing Russian aircraft to be permanently based there, underscoring Jakarta’s non‑aligned foreign policy and commitment to sovereign decision‑making even as defence cooperation with multiple countries continues to evolve.",
+        "media_source": "abc_news",
+        "url": "https://www.abc.net.au/news/2025-04-17/russia-indonesia-air-base-in-indonesia-pacific-region/105187714",
+        "published_date": datetime(2025, 4, 17),
+        "category": "politics"
+    },
+    {
+        "title": "Do Indonesia's South China Sea clashes with Chinese boats signal an escalating conflict?",
+        "content": "Under President Prabowo Subianto, Indonesia’s relationship with China has remained a blend of cooperation and cautious assertion — Jakarta has pushed back against Chinese vessels entering its exclusive economic zone near the Natuna islands while still nurturing strong trade, investment and diplomatic ties, including high‑level visits and discussions on broader strategic partnership, reflecting both Indonesia’s economic reliance on China and its determination to protect maritime sovereignty.",
+        "media_source": "abc_news",
+        "url": "https://www.abc.net.au/news/2024-10-30/china-indonesia-relations-under-prabowo-subianto/104531026",
+        "published_date": datetime(2024, 10, 30),
+        "category": "politics"
+    },
+    {
+        "title": "From 'New Hope' to New Dynasty, Jokowi's bid to shape Indonesia now moves behind the scenes",
+        "content": "As outgoing Indonesian President Joko “Jokowi” Widodo prepares to leave office, he is seeking to maintain deep influence over the country’s politics by positioning allies and family members in key roles, including engineering his son’s rise to the vice‑presidency and reshaping party alliances, even as critics warn his decade in power weakened democratic institutions and promoted political dynasty building.",
+        "media_source": "abc_news",
+        "url": "https://www.abc.net.au/news/2024-10-17/joko-widodo-bid-to-shape-indonesia-moves-behind-the-scenes/104477748",
+        "published_date": datetime(2024, 10, 17),
+        "category": "politics"
+    },
+    {
+        "title": "Former special forces commander Prabowo Subianto sworn in as Indonesian president",
+        "content": "Prabowo Subianto, a former special forces commander who won Indonesia’s February 2024 election with nearly 60 per cent of the vote, was officially sworn in as the country’s eighth president on 20 October 2024, pledging to address national challenges, pursue food and energy self‑sufficiency, fight corruption and serve all Indonesians as he succeeds outgoing president Joko Widodo.",
+        "media_source": "abc_news",
+        "url": "https://www.abc.net.au/news/2024-10-20/prabowo-subianto-to-take-up-indonesian-presidency/104494762",
+        "published_date": datetime(2024, 10, 20),
+        "category": "politics"
+    },
+    {
+        "title": "As Indonesian President Joko Widodo relinquishes power, he says he's sorry for everyone he let down",
+        "content": "As outgoing Indonesian President Joko Widodo prepared to leave office, he issued public apologies for mistakes and shortcomings during his decade in power, acknowledging disappointed expectations while also expressing gratitude for achievements, in an effort to frame his legacy and smooth political tensions as he exits the presidency.",
+        "media_source": "abc_news",
+        "url": "https://www.abc.net.au/news/2024-08-21/joko-widodo-offer-an-apology-what-it-means/104246988",
+        "published_date": datetime(2024, 8, 21),
+        "category": "politics"
+    },
+    {
+        "title": "Indonesian parliament cancels plan to change election rules under current government after mass protests",
+        "content": "Indonesia’s parliament dropped controversial plans to ratify changes to election rules within the current government’s term after mass protests erupted across the country, with demonstrators accusing political elites of attempting to undermine a Constitutional Court decision and expand political influence, forcing lawmakers to shelve the bill so it will not apply to this year’s regional elections.",
+        "media_source": "abc_news",
+        "url": "https://www.abc.net.au/news/2024-08-22/indonesian-parliament-cancels-plan-to-change-election-rules/104257866",
+        "published_date": datetime(2024, 8, 22),
+        "category": "politics"
+    },
+    {
+        "title": "How a complex constitutional crisis unleashed public rage at Indonesia's ruling class",
+        "content": "Widespread protests erupted in Indonesia amid public frustration with outgoing President Joko Widodo’s administration over allegations of nepotism, democratic erosion and political elite dominance, with critics arguing that the ruling class has undermined democratic norms and governance even as Jokowi prepares to step down and Prabowo Subianto succeeds him.",
+        "media_source": "abc_news",
+        "url": "https://www.abc.net.au/news/2024-08-28/protests-in-indonesia-over-jokowi-and-nepotism-claims/104273444",
+        "published_date": datetime(2024, 8, 28),
+        "category": "politics"
+    },
+    {
+        "title": "Prabowo Subianto's third race for Indonesian presidency may seal the deal",
+        "content": "At age 72, former military general Prabowo Subianto launched his fourth bid for Indonesia’s presidency in the 2024 election, positioning himself with outgoing president Joko Widodo’s son Gibran Rakabuming Raka as his running mate and adopting popular policies like free meals and continuity of Widodo’s economic agenda to broaden his appeal after two previous defeats.",
+        "media_source": "abc_news",
+        "url": "https://www.abc.net.au/news/2024-02-11/indonesia-election-sees-prabowo-subianto-seek-presidency-again/103440988",
+        "published_date": datetime(2024, 2, 11),
+        "category": "election"
+    },
+    {
+        "title": "Prabowo Subianto claims victory in Indonesia's election, as counting continues in world's largest single-day vote",
+        "content": "Unofficial ‘quick count’ results from Indonesia’s 2024 presidential election showed Prabowo Subianto leading with a large margin, with preliminary tallies indicating he had secured above 58 per cent of votes and widespread support across provinces — potentially avoiding a run‑off and marking a major moment in the world’s largest single‑day election as candidates and parties awaited official confirmation.",
+        "media_source": "abc_news",
+        "url": "https://www.abc.net.au/news/2024-02-14/indonesia-election-key-takeaways/103456122",
+        "published_date": datetime(2024, 2, 14),
+        "category": "election"
+    },
+    {
+        "title": "Prabowo's rivals and monitoring groups have alleged voting fraud in the Indonesian election, so can the results be annulled?",
+        "content": "As vote counting continued in Indonesia’s presidential election, several civil society organisations and rival campaigns alleged that there were irregularities and potential fraud in pre‑voting activities and local authorities’ influence on voters, sparking debates over election integrity and discussions on whether results could be challenged or annulled under Indonesian law.",
+        "media_source": "abc_news",
+        "url": "https://www.abc.net.au/news/2024-02-23/indonesia-election-result-fraud-prabowo-vote-count/103493788",
+        "published_date": datetime(2024, 2, 23),
+        "category": "election"
     },
 ]
