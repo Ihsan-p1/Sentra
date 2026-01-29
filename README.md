@@ -1,122 +1,96 @@
-# Sentra - AI Election Chatbot 🗳️
+# Sentra
+Media Framing Analysis Chatbot
 
-**Sentra** is an advanced **RAG-based (Retrieval Augmented Generation)** chatbot designed to analyze media framing in Indonesian political news. It uniquely employs a **Comparative Verification Framework**, contrasting Neural Machine Learning models against Statistical Baselines to ensure robust and explainable answers.
+Sentra is a Retrieval-Augmented Generation (RAG) chatbot designed to analyze and compare media framing in Indonesian news. It uses a hybrid AI approach, combining Large Language Models (Google Gemini 2.0 Flash) with custom-trained machine learning models to provide grounded, fact-checked, and confidence-scored answers.
 
----
+## Install
 
-## 🚀 Key Features
+1.  Clone the repository and navigate to the project directory.
 
-### 1. RAG-Based Knowledge Engine
-*   **Source:** 100+ Curated Articles (Jakarta Post, Tempo, Antara, Jakarta Globe).
-*   **Engine:** PostgreSQL with `pgvector` for high-speed semantic retrieval.
-*   **Gating:** Intelligent **Relevance Thresholding (<0.35)** prevents hallucinations on out-of-domain queries.
+2.  Create and activate a virtual environment:
+    ```bash
+    python -m venv venv
+    # Windows
+    .\venv\Scripts\activate
+    # Linux/Mac
+    source venv/bin/activate
+    ```
 
-### 2. A/B Model Comparison System
-Sentra evaluates every response using two competing approaches:
+3.  Install dependencies:
+    ```bash
+    pip install -r requirements.txt
+    ```
 
-| Component | Model A (Neural / ML) 🧠 | Model B (Statistical / Baseline) 📊 |
-|:---|:---|:---|
-| **Framing Analysis** | **Fine-Tuned DistilBERT** (Style Classification) | **TF-IDF Keyword Extraction** (Frequency Analysis) |
-| **Hallucination** | **Logistic Regression** (Embedding Features) | **N-gram Overlap** (Token Matching) |
-| **Confidence** | **Random Forest** (Retrieval Density) | **Weighted Heuristic** (Simple Sum) |
+4.  Configure environment variables:
+    Create a `.env` file in the root directory (see `.env.example`) and add your API keys:
+    ```ini
+    GOOGLE_API_KEY=your_gemini_api_key
+    DATABASE_URL=postgresql://user:password@localhost/sentra_db
+    ```
 
-### 3. Gemini 2.0 Flash Integration
-*   Powered by Google's latest **Gemini 2.0 Flash** model for high-speed, context-aware generation.
-*   Uses a strict **Markdown-structured prompt** to separate factual summary from interpretive analysis.
+## Usage
 
-### 4. Academic-Grade Transparency
-*   **Sidebar Analytics:** Real-time dashboard showing Model A vs Model B scores.
-*   **Refined Terminology:** Distinguishes between "Hallucination Risk" and "Framing Inference".
-
----
-
-## 🛠️ Tech Stack
-
-*   **LLM:** Google Gemini 2.0 Flash (`google-generativeai`)
-*   **Backend:** FastAPI, Uvicorn
-*   **Database:** PostgreSQL (`pgvector` extension)
-*   **NLP & ML:** PyTorch, Transformers (Hugging Face), Scikit-Learn
-*   **Embeddings:** `sentence-transformers/all-MiniLM-L6-v2`
-*   **Frontend:** Vanilla JS + TailwindCSS (Glassmorphism UI)
-
----
-
-## 📦 Installation
-
-### 1. Clone & Setup
+### Starting the Application
+Run the FastAPI server:
 ```bash
-git clone https://github.com/Ihsan-p1/Sentra.git
-cd Sentra
-python -m venv venv
-# Windows:
-.\venv\Scripts\activate
-# Linux/Mac:
-source venv/bin/activate
+python -m api.main
+# OR directly with uvicorn
+uvicorn api.main:app --reload
 ```
 
-### 2. Install Dependencies
-```bash
-pip install -r requirements.txt
-pip install google-generativeai  # Required for Gemini
+The API will start at `http://localhost:8000`.
+The web interface is served at the root URL `http://localhost:8000/`.
+
+### Features
+*   **Media Framing Analysis**: Compares how different media outlets (e.g., Tempo vs. Detik) frame political events using TF-IDF and DistilBERT.
+*   **A/B Model Comparison**: Compares results between "Model A" (Custom ML) and "Model B" (Baseline/Heuristic) for hallucination detection and confidence scoring.
+*   **Hallucination Detection**: Verifies generated answers against retrieved news chunks using Logistic Regression.
+*   **Confidence Scoring**: Predicts answer reliability using a Random Forest model based on retrieval metrics.
+
+## Architecture
+
+The system uses a multi-stage pipeline:
+
+1.  **Retrieval**: `sentence-transformers/all-MiniLM-L6-v2` embeds queries and retrieves relevant news chunks (stored in PostgreSQL/pgvector).
+2.  **Generation**: Google Gemini 2.0 Flash generates the response and comparative analysis.
+3.  **Evaluation (Model A)**:
+    *   **Hallucination Detector**: Logistic Regression model trained on similarity features.
+    *   **Confidence Scorer**: Random Forest Regressor trained on retrieval inconsistencies.
+    *   **Framing Analyzer**: DistilBERT fine-tuned for media style classification.
+4.  **Evaluation (Model B - Baseline)**:
+    *   Keyword Overlap for fact-checking.
+    *   Heuristic scoring for confidence.
+    *   TF-IDF for keyword framing.
+
+See [models_architecture.md](models_architecture.md) for a deep dive into the model specifications.
+
+## Storage Layout
+
+```text
+d:\College Project\Project AI\Sem5\Sentra\
+├── api/                # FastAPI routes and server logic
+├── chatbot/            # Core RAG engine and prompt management
+├── data/               # Datasets and raw articles
+│   └── models/         # Pickle files for custom trained models
+├── database/           # Database connection and schema
+├── models/             # ML model definitions (Framing, Confidence, Hallucination)
+├── pipeline/           # Data ingestion and embedding pipeline
+├── rag/                # Vector retrieval logic
+├── scraper/            # News scrapers
+├── web/                # Frontend static files (HTML/JS/CSS)
+├── models_architecture.md # Technical documentation
+├── requirements.txt    # Python dependencies
+└── setup_vector.py     # Script to initialize vector database
 ```
 
-### 3. Environment Variables
-Create a `.env` file based on `.env.example`:
-```ini
-DATABASE_URL=postgresql://user:pass@localhost:5432/Sentra1
-GOOGLE_API_KEY=your_gemini_api_key_here
-LLM_MODEL=gemini-2.0-flash
-```
+## Contributing
 
-### 4. Initialize Database
-Scrape and ingest data into PostgreSQL:
-```bash
-python refresh_database.py
-```
+1.  Fork the project.
+2.  Create your feature branch.
+3.  Commit your changes.
+4.  Push to the branch.
+5.  Open a Pull Request.
 
-### 5. Train Models (Optional)
-The repo comes with pre-trained models, but you can retrain them:
-```bash
-python scripts/train_framing_bert.py  # Fine-tune DistilBERT
-python scripts/train_models.py        # Train Hallucination/Confidence models
-```
+## Status
 
----
-
-## ▶️ Usage
-
-### Start the Server
-```bash
-python -m uvicorn api.main:app --reload --port 8000
-```
-Open **http://localhost:8000** in your browser.
-
-### Sample Questions
-1.  *"How did the media frame Prabowo's cabinet selection?"* (Triggers Framing Analysis)
-2.  *"What are the economic implications of the new policies?"*
-3.  *"Who won the 2014 world cup?"* (Should trigger **Refusal Gating**)
-
----
-
-## 📂 Project Structure
-
-```
-Sentra/
-├── api/                # FastAPI routes
-├── chatbot/            # Engine, LLM Client, Gating Logic
-├── config/             # Settings & Env vars
-├── data/               # Raw JSON data & Datasets
-│   └── models/         # Saved ML models (BERT .bin, .pkl)
-├── database/           # PostgreSQL connection & Schema
-├── models/             # The Analysis Modules
-│   ├── framing/        # DistilBERT & TF-IDF Analyzers
-│   ├── hallucination/  # Logistic Regression Detector
-│   └── confidence/     # Random Forest Scorer
-├── rag/                # Retrieval (Embeddings + Pgvector)
-├── scripts/            # Training & Scraper scripts
-├── web/                # HTML/JS Frontend
-└── requirements.txt    # Python deps
-```
-
----
-
+Experimental. The project is currently in the prototype phase, focusing on Indonesian political news analysis.
