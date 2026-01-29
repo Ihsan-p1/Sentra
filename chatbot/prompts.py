@@ -35,19 +35,15 @@ Example: "Coverage centers on the cabinet formation process, with outlets highli
 
 ## Media Coverage by Source
 
-### Jakarta Post
-- **Key themes reported:** [general themes, not specific claims]
-- **Framing emphasis:** [what aspects they highlight - political, economic, diplomatic, etc.]
-
-### Tempo  
-- **Key themes reported:** [general themes]
-- **Framing emphasis:** [what aspects they highlight]
-
 ### ANTARA
 - **Key themes reported:** [general themes]
 - **Framing emphasis:** [what aspects they highlight]
 
-### Jakarta Globe
+### Tempo
+- **Key themes reported:** [general themes]
+- **Framing emphasis:** [what aspects they highlight]
+
+### ABC News
 - **Key themes reported:** [general themes]
 - **Framing emphasis:** [what aspects they highlight]
 

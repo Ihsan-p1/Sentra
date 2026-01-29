@@ -43,7 +43,7 @@ class Settings(BaseSettings):
     MIN_WORDS_FOR_CHECK: int = 4
     
     # Media Sources (English-language Indonesian news)
-    SUPPORTED_MEDIA: list = ["jakarta_post", "tempo", "antara", "jakarta_globe"]
+    SUPPORTED_MEDIA: list = ["antaranews", "tempo", "abc_news"]
     
     # Paths
     DATA_DIR: str = "data"

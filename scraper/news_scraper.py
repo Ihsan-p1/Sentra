@@ -1,6 +1,7 @@
 """
 News Scraper for Indonesian English-Language News Sources
 Topic: Indonesia's Presidential Election Aftermath
+Sources: ANTARA News, Tempo English, ABC News
 """
 import requests
 from bs4 import BeautifulSoup
@@ -40,77 +41,6 @@ class NewsScraper:
             return BeautifulSoup(response.text, 'html.parser')
         except Exception as e:
             print(f"  ⚠️ Failed to fetch {url}: {e}")
-            return None
-    
-    # =========================================
-    # THE JAKARTA POST
-    # =========================================
-    def scrape_jakarta_post(self, query: str = "presidential election", max_articles: int = 10) -> List[Dict]:
-        """Scrape articles from The Jakarta Post"""
-        print(f"\n📰 Scraping The Jakarta Post...")
-        articles = []
-        
-        # Search URL
-        search_url = f"https://www.thejakartapost.com/search?q={query.replace(' ', '+')}"
-        soup = self._fetch_page(search_url)
-        
-        if not soup:
-            return articles
-            
-        # Find article links
-        article_links = []
-        for link in soup.select('a[href*="/paper/"]'):
-            href = link.get('href', '')
-            if href and href not in article_links:
-                if not href.startswith('http'):
-                    href = f"https://www.thejakartapost.com{href}"
-                article_links.append(href)
-                
-        article_links = article_links[:max_articles]
-        print(f"  Found {len(article_links)} article links")
-        
-        for url in article_links:
-            article = self._parse_jakarta_post_article(url)
-            if article:
-                articles.append(article)
-            time.sleep(1)  # Rate limiting
-            
-        return articles
-    
-    def _parse_jakarta_post_article(self, url: str) -> Optional[Dict]:
-        """Parse a single Jakarta Post article"""
-        soup = self._fetch_page(url)
-        if not soup:
-            return None
-            
-        try:
-            title = soup.select_one('h1')
-            title = title.get_text(strip=True) if title else "Untitled"
-            
-            # Get article body
-            content_div = soup.select_one('article') or soup.select_one('.detail-content')
-            if not content_div:
-                print(f"    ❌ JP Content div not found for {url}")
-            
-            if content_div:
-                paragraphs = content_div.select('p')
-                content = ' '.join([p.get_text(strip=True) for p in paragraphs])
-            else:
-                content = ""
-                
-            if not content or len(content) < 100:
-                print(f"    ⚠️ JP Content too short ({len(content)} chars) for {url}")
-                return None
-                
-            return {
-                'title': self._clean_text(title),
-                'content': self._clean_text(content),
-                'media_source': 'jakarta_post',
-                'url': url,
-                'published_date': datetime.now()
-            }
-        except Exception as e:
-            print(f"  ⚠️ Error parsing {url}: {e}")
             return None
     
     # =========================================
@@ -173,7 +103,7 @@ class NewsScraper:
             return {
                 'title': self._clean_text(title),
                 'content': self._clean_text(content),
-                'media_source': 'antara',
+                'media_source': 'antaranews',
                 'url': url,
                 'published_date': datetime.now()
             }
@@ -232,6 +162,7 @@ class NewsScraper:
                 content = ""
                 
             if not content or len(content) < 100:
+                print(f"    ⚠️ Tempo Content too short for {url}")
                 return None
                 
             return {
@@ -246,61 +177,76 @@ class NewsScraper:
             return None
     
     # =========================================
-    # JAKARTA GLOBE
+    # ABC NEWS
     # =========================================
-    def scrape_jakarta_globe(self, query: str = "presidential election", max_articles: int = 10) -> List[Dict]:
-        """Scrape articles from Jakarta Globe"""
-        print(f"\n📰 Scraping Jakarta Globe...")
+    def scrape_abc_news(self, query: str = "Indonesia election", max_articles: int = 10) -> List[Dict]:
+        """Scrape articles from ABC News (abc.net.au)"""
+        print(f"\n📰 Scraping ABC News...")
         articles = []
         
-        search_url = f"https://jakartaglobe.id/?s={query.replace(' ', '+')}"
+        # ABC News Search URL
+        search_url = f"https://www.abc.net.au/search?q={query.replace(' ', '+')}"
         soup = self._fetch_page(search_url)
         
         if not soup:
             return articles
             
         article_links = []
-        for link in soup.select('a[href*="jakartaglobe.id/"]'):
+        # Find links that look like news articles
+        for link in soup.select('a[href*="/news/"]'):
             href = link.get('href', '')
-            if href and '/?s=' not in href and href not in article_links:
-                if '/news/' in href or '/politics/' in href or '/business/' in href:
-                    article_links.append(href)
-                    
+            # Filter for likely article links (containing year often indicates article)
+            if href and '/news/20' in href and href not in article_links:
+                if not href.startswith('http'):
+                    href = f"https://www.abc.net.au{href}"
+                article_links.append(href)
+                
         article_links = article_links[:max_articles]
         print(f"  Found {len(article_links)} article links")
         
         for url in article_links:
-            article = self._parse_jakarta_globe_article(url)
+            article = self._parse_abc_article(url)
             if article:
                 articles.append(article)
             time.sleep(1)
             
         return articles
     
-    def _parse_jakarta_globe_article(self, url: str) -> Optional[Dict]:
-        """Parse a single Jakarta Globe article"""
+    def _parse_abc_article(self, url: str) -> Optional[Dict]:
+        """Parse a single ABC News article"""
         soup = self._fetch_page(url)
         if not soup:
             return None
             
         try:
+            # Try typical title selectors
             title = soup.select_one('h1')
             title = title.get_text(strip=True) if title else "Untitled"
             
-            content_div = soup.select_one('.content-inner') or soup.select_one('article')
+            # ABC News often puts content in a unique container, or standard article types
+            content_div = soup.select_one('[data-component="FeatureMedia"] + div') \
+                          or soup.select_one('#body-container') \
+                          or soup.select_one('article')
+            
             if content_div:
                 paragraphs = content_div.select('p')
                 content = ' '.join([p.get_text(strip=True) for p in paragraphs])
             else:
-                content = ""
-                
+                # Fallback: grab all paragraphs in text layout if specific container not found
+                # This might be noisy so we try to be specific first, or use a broader select if needed
+                paragraphs = soup.select('div[data-component="LayoutContainer"] p')
+                if not paragraphs:
+                     paragraphs = soup.select('article p')
+                content = ' '.join([p.get_text(strip=True) for p in paragraphs])
+
             if not content or len(content) < 100:
+                print(f"    ⚠️ ABC Content too short for {url}")
                 return None
                 
             return {
                 'title': self._clean_text(title),
                 'content': self._clean_text(content),
-                'media_source': 'jakarta_globe',
+                'media_source': 'abc_news',
                 'url': url,
                 'published_date': datetime.now()
             }
@@ -311,16 +257,15 @@ class NewsScraper:
 
 def scrape_all_sources(query: str = "presidential election aftermath", max_per_source: int = 10) -> List[Dict]:
     """
-    Scrape articles from all configured sources.
+    Scrape articles from all configured sources: ANTARA, Tempo, ABC News.
     """
     scraper = NewsScraper()
     all_articles = []
     
     # Scrape each source
-    all_articles.extend(scraper.scrape_jakarta_post(query, max_per_source))
     all_articles.extend(scraper.scrape_antara_news(query, max_per_source))
     all_articles.extend(scraper.scrape_tempo_english(query, max_per_source))
-    all_articles.extend(scraper.scrape_jakarta_globe(query, max_per_source))
+    all_articles.extend(scraper.scrape_abc_news(query, max_per_source))
     
     print(f"\n✅ Total articles scraped: {len(all_articles)}")
     return all_articles
@@ -328,7 +273,7 @@ def scrape_all_sources(query: str = "presidential election aftermath", max_per_s
 
 if __name__ == "__main__":
     # Test scraping
-    articles = scrape_all_sources("Indonesia presidential election", max_per_source=5)
+    articles = scrape_all_sources("Indonesia presidential election", max_per_source=3)
     
     # Save to JSON for inspection
     with open('data/scraped_articles.json', 'w', encoding='utf-8') as f:
