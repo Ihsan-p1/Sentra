@@ -62,7 +62,7 @@ The system uses a multi-stage pipeline:
     *   Heuristic scoring for confidence.
     *   TF-IDF for keyword framing.
 
-See [models_architecture.md](models_architecture.md) for a deep dive into the model specifications.
+
 
 ## Storage Layout
 
@@ -78,7 +78,7 @@ d:\College Project\Project AI\Sem5\Sentra\
 ├── rag/                # Vector retrieval logic
 ├── scraper/            # News scrapers
 ├── web/                # Frontend static files (HTML/JS/CSS)
-├── models_architecture.md # Technical documentation
+
 ├── requirements.txt    # Python dependencies
 └── setup_vector.py     # Script to initialize vector database
 ```
