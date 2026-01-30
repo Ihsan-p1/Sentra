@@ -18,12 +18,12 @@ def init_components():
     """Initialize chatbot and ingestor components"""
     global chatbot, ingestor
     if chatbot is None:
-        print("🔄 Initializing Chatbot Engine...")
+        print("Initializing Chatbot Engine...")
         chatbot = ChatbotEngine()
     if ingestor is None:
-        print("🔄 Initializing Article Ingestor...")
+        print("Initializing Article Ingestor...")
         ingestor = ArticleIngestor()
-    print("✅ Components initialized")
+    print("Components initialized.")
 
 class ChatRequest(BaseModel):
     message: str

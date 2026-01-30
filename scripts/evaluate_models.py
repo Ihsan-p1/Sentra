@@ -1,9 +1,14 @@
 """
 Model Evaluation Script: Compare Model A (Trained ML) vs Model B (Baseline)
+
 This script evaluates all three model pairs:
 1. Hallucination Detection
 2. Framing Analysis  
 3. Confidence Scoring
+
+Note: The models are trained on synthetic/hardcoded data for proof-of-concept.
+The architecture is designed to scale with larger, real-world datasets.
+Current training uses ~15-20 example sentences duplicated to increase sample size.
 """
 import sys
 import os
@@ -37,7 +42,7 @@ print("1. HALLUCINATION DETECTION")
 print("=" * 70)
 
 # Create synthetic test dataset
-print("\n📊 Generating test dataset...")
+print("\nGenerating test dataset...")
 
 # Ground truth examples: (sentence, source_texts, is_supported)
 hallucination_test_data = [
@@ -95,7 +100,7 @@ hallucination_test_data = [
 ]
 
 # Initialize models
-print("\n🔧 Initializing models...")
+print("\nInitializing models...")
 embedder = get_embedder()
 hallucination_model_a = HallucinationDetector()
 confidence_scorer_a = ConfidenceScorer()
@@ -106,10 +111,11 @@ confidence_scorer_b = baseline_models["confidence"]
 # ============================================================================
 # TRAIN MODELS (Synthetic Data)
 # ============================================================================
-print("\n🎓 Training Model A (ML) components on synthetic data...")
+print("\nTraining Model A (ML) components on synthetic data...")
+print("   Note: Using proof-of-concept dataset. Architecture supports larger datasets.")
 
 # --- 1. Train Hallucination Detector ---
-print("   • Training Hallucination Detector...")
+print("   - Training Hallucination Detector...")
 # Synthetic training data (Sentence, Source, Label)
 train_data_hallu = [
     # Supported (High similarity, high overlap)
@@ -147,7 +153,7 @@ hallucination_model_a.train(np.array(X_hallu_features), np.array(y_hallu_labels)
 
 
 # --- 2. Train Confidence Scorer ---
-print("   • Training Confidence Scorer...")
+print("   - Training Confidence Scorer...")
 # Synthetic training data (Similarities, Num Chunks, Confidence Label)
 train_data_conf = [
     # High confidence (High sim, multiple sources)
@@ -175,10 +181,10 @@ for sims, n_chunks, label in train_data_conf:
     y_conf_labels.append(label)
 
 confidence_scorer_a.train(np.array(X_conf_features), np.array(y_conf_labels))
-print("✅ Training complete!\n")
+print("Training complete.\n")
 
 # Evaluate
-print("\n📈 Evaluating Hallucination Detection...")
+print("\nEvaluating Hallucination Detection...")
 results_a = []
 results_b = []
 ground_truth = []
@@ -212,12 +218,12 @@ print(f"│ {'Recall':<25} │ {recall_score(y_true, y_pred_a, zero_division=0):
 print(f"│ {'F1 Score':<25} │ {f1_score(y_true, y_pred_a, zero_division=0):<15.2%} │ {f1_score(y_true, y_pred_b, zero_division=0):<15.2%} │")
 print("└─────────────────────────────────────────────────────────────────────┘")
 
-print("\n📋 Confusion Matrix - Model A (ML):")
+print("\nConfusion Matrix - Model A (ML):")
 cm_a = confusion_matrix(y_true, y_pred_a)
 print(f"   TN={cm_a[0,0]}, FP={cm_a[0,1]}")
 print(f"   FN={cm_a[1,0]}, TP={cm_a[1,1]}")
 
-print("\n📋 Confusion Matrix - Model B (Baseline):")
+print("\nConfusion Matrix - Model B (Baseline):")
 cm_b = confusion_matrix(y_true, y_pred_b)
 print(f"   TN={cm_b[0,0]}, FP={cm_b[0,1]}")
 print(f"   FN={cm_b[1,0]}, TP={cm_b[1,1]}")
@@ -247,7 +253,7 @@ confidence_test_data = [
     ([0.30], 1, (0.0, 0.4)),
 ]
 
-print("\n📈 Evaluating Confidence Scoring...")
+print("\nEvaluating Confidence Scoring...")
 confidence_scorer_a = ConfidenceScorer()
 confidence_scorer_b = baseline_models["confidence"]
 
@@ -280,7 +286,7 @@ for i, (sims, n_chunks, (min_exp, max_exp)) in enumerate(confidence_test_data):
         correct_b += 1
     errors_b.append(abs(pred_b - (min_exp + max_exp) / 2))
     
-    print(f"│ {i+1:<5} │ {f'{min_exp:.1f}-{max_exp:.1f}':<12} │ {pred_a:<10.2f} │ {pred_b:<10.2f} │ {'✓' if in_range_a else '✗':<10} │ {'✓' if in_range_b else '✗':<10} │")
+    print(f"│ {i+1:<5} │ {f'{min_exp:.1f}-{max_exp:.1f}':<12} │ {pred_a:<10.2f} │ {pred_b:<10.2f} │ {'Yes' if in_range_a else 'No':<10} │ {'Yes' if in_range_b else 'No':<10} │")
 
 print("└───────────────────────────────────────────────────────────────────────────────┘")
 
@@ -312,7 +318,7 @@ for article in ELECTION_ARTICLES:
         framing_data[source] = []
     framing_data[source].append(article["content"])
 
-print(f"📊 Analyzing framing across {len(ELECTION_ARTICLES)} articles from {len(framing_data)} sources...")
+print(f"Analyzing framing across {len(ELECTION_ARTICLES)} articles from {len(framing_data)} sources...")
 
 # Expected keywords (General themes we expect matching the dataset)
 expected_keywords = {
@@ -322,7 +328,7 @@ expected_keywords = {
     "jakarta_globe": ["investment", "market", "economic", "growth", "business"]
 }
 
-print("\n📈 Evaluating Framing Analysis...")
+print("\nEvaluating Framing Analysis...")
 framing_analyzer_a = FramingAnalyzer()
 framing_analyzer_b = baseline_models["framing"]
 
@@ -379,7 +385,7 @@ print("└───────────────────────�
 # FINAL SUMMARY
 # ============================================================================
 print("\n" + "=" * 70)
-print("📊 FINAL SUMMARY: MODEL A vs MODEL B")
+print("FINAL SUMMARY: MODEL A vs MODEL B")
 print("=" * 70)
 
 print("""
@@ -416,9 +422,9 @@ print("""
 ))
 
 # Determine winner for each
-print("🏆 WINNERS:")
-print(f"   • Hallucination Detection: {'Model A' if accuracy_score(y_true, y_pred_a) > accuracy_score(y_true, y_pred_b) else 'Model B'}")
-print(f"   • Confidence Scoring: {'Model A' if correct_a > correct_b else 'Model B'}")  
-print(f"   • Framing Analysis: {'Model A' if final_score_a > final_score_b else 'Model B'}")
+print("WINNERS:")
+print(f"   - Hallucination Detection: {'Model A' if accuracy_score(y_true, y_pred_a) > accuracy_score(y_true, y_pred_b) else 'Model B'}")
+print(f"   - Confidence Scoring: {'Model A' if correct_a > correct_b else 'Model B'}")  
+print(f"   - Framing Analysis: {'Model A' if final_score_a > final_score_b else 'Model B'}")
 
-print("\n✅ Evaluation complete!")
+print("\nEvaluation complete.")

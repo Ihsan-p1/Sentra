@@ -40,9 +40,9 @@ class ChatbotEngine:
         try:
             self.hallucination_detector = HallucinationDetector("data/models/hallucination_detector.pkl")
             self.confidence_scorer = ConfidenceScorer("data/models/confidence_scorer.pkl")
-            print("✅ Loaded custom evaluation models (Model A)")
+            print("[INFO] Loaded custom evaluation models (Model A)")
         except:
-            print("⚠️ Custom models not found, using untrained instance")
+            print("[WARN] Custom models not found, using untrained instance")
             self.hallucination_detector = HallucinationDetector()
             self.confidence_scorer = ConfidenceScorer()
             
@@ -51,7 +51,7 @@ class ChatbotEngine:
         
         # Load baseline models (Model B)
         self.baseline_models = get_baseline_models()
-        print("✅ Loaded baseline models (Model B)")
+        print("[INFO] Loaded baseline models (Model B)")
         
     async def process_query(self, query: str, mode: str = "default") -> Dict[str, Any]:
         """
@@ -324,10 +324,10 @@ class ChatbotEngine:
             verification_note = ""  # No disclaimer needed
         elif support_rate >= 0.5:
             verification_level = "moderate"
-            verification_note = "\n\n---\n*⚠️ Framing Inference: Some analytical claims may not be explicitly stated in the retrieved sources.*"
+            verification_note = "\n\n---\n*[!] Framing Inference: Some analytical claims may not be explicitly stated in the retrieved sources.*"
         else:
             verification_level = "low"
-            verification_note = "\n\n---\n*⚠️ Hallucination Risk: Due to limited source coverage, some claims in this analysis require additional confirmation from original sources.*"
+            verification_note = "\n\n---\n*[!] Hallucination Risk: Due to limited source coverage, some claims in this analysis require additional confirmation from original sources.*"
         
         verification_summary = {
             "level": verification_level,

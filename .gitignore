@@ -37,3 +37,8 @@ pytorch_model.bin
 *.pkl
 
 models_architecture.md
+
+# Local artifacts (not for git)
+implementation_plan.md
+presentation_notes.md
+task.md

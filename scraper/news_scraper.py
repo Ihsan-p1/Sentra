@@ -40,7 +40,7 @@ class NewsScraper:
             response.raise_for_status()
             return BeautifulSoup(response.text, 'html.parser')
         except Exception as e:
-            print(f"  ⚠️ Failed to fetch {url}: {e}")
+            print(f"  [WARN] Failed to fetch {url}: {e}")
             return None
     
     # =========================================
@@ -48,7 +48,7 @@ class NewsScraper:
     # =========================================
     def scrape_antara_news(self, query: str = "presidential election", max_articles: int = 10) -> List[Dict]:
         """Scrape articles from ANTARA News English"""
-        print(f"\n📰 Scraping ANTARA News English...")
+        print(f"\nScraping ANTARA News English...")
         articles = []
         
         search_url = f"https://en.antaranews.com/search?q={query.replace(' ', '+')}"
@@ -88,7 +88,7 @@ class NewsScraper:
             
             content_div = soup.select_one('.post-content') or soup.select_one('article')
             if not content_div:
-                print(f"    ❌ Antara Content div not found for {url}")
+                print(f"    [WARN] Antara Content div not found for {url}")
 
             if content_div:
                 paragraphs = content_div.select('p')
@@ -97,7 +97,7 @@ class NewsScraper:
                 content = ""
                 
             if not content or len(content) < 100:
-                print(f"    ⚠️ Antara Content too short ({len(content)} chars) for {url}")
+                print(f"    [WARN] Antara Content too short ({len(content)} chars) for {url}")
                 return None
                 
             return {
@@ -108,7 +108,7 @@ class NewsScraper:
                 'published_date': datetime.now()
             }
         except Exception as e:
-            print(f"  ⚠️ Error parsing {url}: {e}")
+            print(f"  [WARN] Error parsing {url}: {e}")
             return None
     
     # =========================================
@@ -116,7 +116,7 @@ class NewsScraper:
     # =========================================
     def scrape_tempo_english(self, query: str = "presidential election", max_articles: int = 10) -> List[Dict]:
         """Scrape articles from Tempo.co English"""
-        print(f"\n📰 Scraping Tempo.co English...")
+        print(f"\nScraping Tempo.co English...")
         articles = []
         
         search_url = f"https://en.tempo.co/search?q={query.replace(' ', '+')}"
@@ -162,7 +162,7 @@ class NewsScraper:
                 content = ""
                 
             if not content or len(content) < 100:
-                print(f"    ⚠️ Tempo Content too short for {url}")
+                print(f"    [WARN] Tempo Content too short for {url}")
                 return None
                 
             return {
@@ -173,7 +173,7 @@ class NewsScraper:
                 'published_date': datetime.now()
             }
         except Exception as e:
-            print(f"  ⚠️ Error parsing {url}: {e}")
+            print(f"  [WARN] Error parsing {url}: {e}")
             return None
     
     # =========================================
@@ -181,7 +181,7 @@ class NewsScraper:
     # =========================================
     def scrape_abc_news(self, query: str = "Indonesia election", max_articles: int = 10) -> List[Dict]:
         """Scrape articles from ABC News (abc.net.au)"""
-        print(f"\n📰 Scraping ABC News...")
+        print(f"\nScraping ABC News...")
         articles = []
         
         # ABC News Search URL
@@ -240,7 +240,7 @@ class NewsScraper:
                 content = ' '.join([p.get_text(strip=True) for p in paragraphs])
 
             if not content or len(content) < 100:
-                print(f"    ⚠️ ABC Content too short for {url}")
+                print(f"    [WARN] ABC Content too short for {url}")
                 return None
                 
             return {
@@ -251,7 +251,7 @@ class NewsScraper:
                 'published_date': datetime.now()
             }
         except Exception as e:
-            print(f"  ⚠️ Error parsing {url}: {e}")
+            print(f"  [WARN] Error parsing {url}: {e}")
             return None
 
 
@@ -267,7 +267,7 @@ def scrape_all_sources(query: str = "presidential election aftermath", max_per_s
     all_articles.extend(scraper.scrape_tempo_english(query, max_per_source))
     all_articles.extend(scraper.scrape_abc_news(query, max_per_source))
     
-    print(f"\n✅ Total articles scraped: {len(all_articles)}")
+    print(f"\nTotal articles scraped: {len(all_articles)}")
     return all_articles
 
 
@@ -279,4 +279,4 @@ if __name__ == "__main__":
     with open('data/scraped_articles.json', 'w', encoding='utf-8') as f:
         json.dump(articles, f, indent=2, default=str)
     
-    print(f"\n📁 Saved {len(articles)} articles to data/scraped_articles.json")
+    print(f"\nSaved {len(articles)} articles to data/scraped_articles.json")

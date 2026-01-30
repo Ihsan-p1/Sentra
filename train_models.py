@@ -37,15 +37,15 @@ def generate_hallucination_data(n_samples: int = 1000) -> Tuple[np.ndarray, np.n
     
     # Mock data source
     base_texts = [
-        "Jokowi meresmikan jalan tol baru di Sumatera Utara kemarin sore.",
-        "Inflasi Indonesia mencapai angka terendah dalam lima tahun terakhir.",
-        "Timnas Indonesia menang telak melawan Vietnam di kualifikasi Piala Dunia.",
-        "Harga beras mengalami kenaikan signifikan menjelang bulan Ramadan.",
-        "KPK melakukan operasi tangkap tangan terhadap pejabat daerah.",
-        "Gempa bumi berkekuatan 5.0 skala richter mengguncang wilayah Jawa Barat.",
-        "Perusahaan teknologi besar mengumumkan pemutusan hubungan kerja massal.",
-        "Pemerintah memberikan subsidi kendaraan listrik mulai tahun depan.",
-        "Cuaca ekstrem diprediksi akan melanda Jakarta sepekan ke depan."
+        "President Jokowi inaugurated the new toll road in North Sumatra yesterday afternoon.",
+        "Indonesia's inflation reached its lowest figure in the last five years.",
+        "The Indonesian National Team won convincingly against Vietnam in the World Cup qualifiers.",
+        "Rice prices experienced a significant increase approaching the month of Ramadan.",
+        " The KPK conducted a sting operation against regional officials.",
+        "A 5.0 magnitude earthquake shook the West Java region.",
+        "Major technology companies announced mass layoffs affecting local employees.",
+        "The government will provide electric vehicle subsidies starting next year.",
+        "Extreme weather is predicted to hit Jakarta for the next week."
     ]
     
     X_features_list = []
@@ -145,7 +145,7 @@ def generate_confidence_data(n_samples: int = 1000) -> Tuple[np.ndarray, np.ndar
     return np.array(X_features_list), np.array(y_labels_list)
 
 def main():
-    print("🚀 Starting Model Training (From Scratch)...")
+    print("Starting Model Training (From Scratch)...")
     
     # 1. Train Hallucination Detector
     print("\n--- Training Hallucination Detector ---")
@@ -163,7 +163,7 @@ def main():
     scorer.train(X_conf, y_conf)
     scorer.save(f"{MODELS_DIR}/confidence_scorer.pkl")
     
-    print("\n✅ All custom models trained and saved!")
+    print("\nAll custom models trained and saved.")
 
 if __name__ == "__main__":
     main()

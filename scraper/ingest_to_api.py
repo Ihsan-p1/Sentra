@@ -14,7 +14,7 @@ def ingest_articles():
     with open('data/scraped_articles.json', 'r', encoding='utf-8') as f:
         articles = json.load(f)
     
-    print(f"📦 Loading {len(articles)} articles...")
+    print(f"Loading {len(articles)} articles...")
     
     success = 0
     failed = 0
@@ -37,21 +37,21 @@ def ingest_articles():
             if response.status_code == 200:
                 success += 1
                 if (i + 1) % 10 == 0:
-                    print(f"  ✅ Processed {i+1}/{len(articles)}")
+                    print(f"  [OK] Processed {i+1}/{len(articles)}")
             else:
                 failed += 1
-                print(f"  ❌ Failed article {i+1}: {response.status_code}")
+                print(f"  [ERROR] Failed article {i+1}: {response.status_code}")
                 
         except Exception as e:
             failed += 1
-            print(f"  ❌ Error on article {i+1}: {e}")
+            print(f"  [ERROR] Error on article {i+1}: {e}")
         
         # Small delay to avoid overwhelming the API
         time.sleep(0.1)
     
-    print(f"\n📊 Results:")
-    print(f"  ✅ Success: {success}")
-    print(f"  ❌ Failed: {failed}")
+    print(f"\nResults:")
+    print(f"  Success: {success}")
+    print(f"  Failed: {failed}")
 
 if __name__ == "__main__":
     ingest_articles()

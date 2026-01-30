@@ -57,7 +57,7 @@ class DirectArticleFetcher:
             response.raise_for_status()
             return BeautifulSoup(response.text, 'html.parser')
         except Exception as e:
-            print(f"  ⚠️ Failed to fetch {url}: {e}")
+            print(f"  [WARN] Failed to fetch {url}: {e}")
             return None
     
     def _parse_generic_article(self, url: str, media_source: str) -> Optional[Dict]:
@@ -95,10 +95,10 @@ class DirectArticleFetcher:
                 content = ' '.join([p.get_text(strip=True) for p in all_paragraphs if len(p.get_text(strip=True)) > 50])
             
             if not content or len(content) < 100:
-                print(f"  ⚠️ Content too short for {url}")
+                print(f"  [WARN] Content too short for {url}")
                 return None
             
-            print(f"  ✅ Fetched: {title[:50]}...")
+            print(f"  [OK] Fetched: {title[:50]}...")
             return {
                 'title': self._clean_text(title),
                 'content': self._clean_text(content)[:5000],  # Limit content length
@@ -107,7 +107,7 @@ class DirectArticleFetcher:
                 'published_date': datetime.now().isoformat()
             }
         except Exception as e:
-            print(f"  ⚠️ Error parsing {url}: {e}")
+            print(f"  [WARN] Error parsing {url}: {e}")
             return None
     
     def fetch_all(self) -> List[Dict]:
@@ -115,14 +115,14 @@ class DirectArticleFetcher:
         all_articles = []
         
         for media_source, urls in ELECTION_ARTICLES.items():
-            print(f"\n📰 Fetching from {media_source.upper()}...")
+            print(f"\nFetching from {media_source.upper()}...")
             for url in urls:
                 article = self._parse_generic_article(url, media_source)
                 if article:
                     all_articles.append(article)
                 time.sleep(1)  # Rate limiting
         
-        print(f"\n✅ Total articles fetched: {len(all_articles)}")
+        print(f"\nTotal articles fetched: {len(all_articles)}")
         return all_articles
 
 
@@ -134,4 +134,4 @@ if __name__ == "__main__":
     with open('data/scraped_articles.json', 'w', encoding='utf-8') as f:
         json.dump(articles, f, indent=2, ensure_ascii=False)
     
-    print(f"\n📁 Saved {len(articles)} articles to data/scraped_articles.json")
+    print(f"\nSaved {len(articles)} articles to data/scraped_articles.json")

@@ -22,11 +22,12 @@ class FramingAnalyzer:
     
     def __init__(self):
         # Indonesian Stopwords (Simple list, can be expanded)
+        # English Stopwords (Simple list)
         self.stop_words = [
-            'yang', 'dan', 'di', 'dari', 'ke', 'ini', 'itu', 'untuk', 'adalah',
-            'dengan', 'tidak', 'akan', 'juga', 'pada', 'ia', 'dia', 'mereka',
-            'kami', 'kita', 'saya', 'anda', 'bisa', 'ada', 'sebagai', 'sudah',
-            'news', 'said', 'has', 'have', 'that', 'with', 'from', 'for' # English stops too
+            'the', 'is', 'at', 'which', 'on', 'a', 'an', 'and', 'or', 'but', 
+            'in', 'to', 'of', 'for', 'with', 'from', 'by', 'that', 'this', 'it',
+            'as', 'are', 'was', 'were', 'be', 'been', 'has', 'have', 'had',
+            'not', 'news', 'said', 'report', 'jakarta', 'indonesia' # Domain specific stops
         ]
         
     def analyze_media_framing(
@@ -145,11 +146,11 @@ class BertFramingAnalyzer:
                     self.id_to_label = {int(k): v for k, v in self.id_to_label.items()}
                 
                 self.is_loaded = True
-                print("✅ specific BertFramingAnalyzer loaded.")
+                print("[INFO] BertFramingAnalyzer loaded.")
             else:
-                print(f"⚠️ BERT model not found at {model_path}")
+                print(f"[WARN] BERT model not found at {model_path}")
         except Exception as e:
-            print(f"❌ Error loading BERT model: {e}")
+            print(f"[ERROR] Loading BERT model: {e}")
 
     def predict_source_style(self, text: str) -> Dict[str, float]:
         """

@@ -31,13 +31,13 @@ def convert_to_json():
         src = a["media_source"]
         sources[src] = sources.get(src, 0) + 1
     
-    print("📊 Dataset Summary:")
+    print("Dataset Summary:")
     print("=" * 40)
     for src, count in sorted(sources.items()):
         print(f"  {src}: {count} articles")
     print("=" * 40)
     print(f"  TOTAL: {len(articles_json)} articles")
-    print(f"\n📁 Saved to data/scraped_articles.json")
+    print(f"\nSaved to data/scraped_articles.json")
 
 if __name__ == "__main__":
     convert_to_json()

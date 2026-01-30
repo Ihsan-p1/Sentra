@@ -16,7 +16,7 @@ class LLMClient:
         self.api_key = settings.GOOGLE_API_KEY or os.getenv("GOOGLE_API_KEY")
         
         if not self.api_key:
-            print("⚠️ GOOGLE_API_KEY not found! LLM features will fail.")
+            print("[WARN] GOOGLE_API_KEY not found. LLM features will fail.")
             self.model = None
         else:
             try:
@@ -24,9 +24,9 @@ class LLMClient:
                 # Use model from settings, or fallback to 'gemini-2.0-flash'
                 model_name = settings.LLM_MODEL or "gemini-2.0-flash"
                 self.model = genai.GenerativeModel(model_name)
-                print(f"🔧 LLM Config: Model={model_name} (Gemini)")
+                print(f"[INFO] LLM Config: Model={model_name} (Gemini)")
             except Exception as e:
-                print(f"❌ Error configuring Gemini: {e}")
+                print(f"[ERROR] Configuring Gemini: {e}")
                 self.model = None
 
     async def generate_comparative_answer(
@@ -75,7 +75,7 @@ class LLMClient:
             response = await self.model.generate_content_async(full_prompt)
             return response.text
         except Exception as e:
-            print(f"❌ LLM Generation Error: {e}")
+            print(f"[ERROR] LLM Generation: {e}")
             return f"Error interacting with AI model: {str(e)}"
 
     async def safe_generate(self, prompt: str) -> str:
