@@ -5,21 +5,21 @@ from config.settings import settings
 async def setup_db():
     try:
         conn = await asyncpg.connect(settings.DATABASE_URL)
-        print("✅ Database connected successfully")
+        print("[INFO] Database connected successfully.")
         
         # Try to enable pgvector expansion
         try:
             await conn.execute("CREATE EXTENSION IF NOT EXISTS vector;")
-            print("✅ 'vector' extension enabled successfully")
+            print("[INFO] 'vector' extension enabled successfully.")
         except Exception as e:
-            print(f"❌ Failed to enable 'vector' extension: {e}")
-            print("\n⚠️  Possible issue: pgvector is not installed on this PostgreSQL instance.")
-            print("👉 Since you are on Windows, installing pgvector can be complex.")
-            print("👉 I can switch to a 'Simulated Vector Search' mode (Python-based) which doesn't require pgvector.")
+            print(f"[ERROR] Failed to enable 'vector' extension: {e}")
+            print("\n[WARN] Possible issue: pgvector is not installed on this PostgreSQL instance.")
+            print("[INFO] Since you are on Windows, installing pgvector can be complex.")
+            print("[INFO] Consider switching to 'Simulated Vector Search' mode (Python-based) which doesn't require pgvector.")
             
         await conn.close()
     except Exception as e:
-        print(f"❌ Connection error: {e}")
+        print(f"[ERROR] Connection error: {e}")
 
 if __name__ == "__main__":
     asyncio.run(setup_db())

@@ -11,25 +11,25 @@ from data.election_articles import ELECTION_ARTICLES
 
 async def clear_old_data():
     """Remove all existing articles and chunks from database"""
-    print("🗑️  Clearing old data from database...")
+    print("Clearing old data from database...")
     
     await db_manager.execute("DELETE FROM article_chunks")
     await db_manager.execute("DELETE FROM articles")
     
-    print("✅ Old data cleared successfully")
+    print("Old data cleared successfully.")
 
 async def ingest_election_dataset():
     """Ingest the curated election articles dataset"""
-    print("📦 Ingesting election aftermath dataset...")
+    print("Ingesting election aftermath dataset...")
     
     ingestor = ArticleIngestor()
     article_ids = await ingestor.ingest_batch(ELECTION_ARTICLES)
     
-    print(f"\n✅ Ingested {len(article_ids)} articles successfully")
+    print(f"\nIngested {len(article_ids)} articles successfully.")
     
     # Show summary
     counts = await ingestor.get_article_count()
-    print("\n📊 Articles per media source:")
+    print("\nArticles per media source:")
     for media, count in counts.items():
         print(f"   - {media.upper()}: {count} articles")
     
@@ -53,7 +53,7 @@ async def main():
     # Disconnect
     await db_manager.disconnect()
     
-    print("\n🎉 Database refresh complete!")
+    print("\nDatabase refresh complete.")
 
 if __name__ == "__main__":
     asyncio.run(main())

@@ -54,17 +54,17 @@ class ArticleDataset(Dataset):
         }
 
 def train():
-    print("🚀 Starting DistilBERT Fine-tuning for Framing Analysis...")
+    print("Starting DistilBERT Fine-tuning for Framing Analysis...")
     
     # 1. Load Data
     if not os.path.exists(DATA_FILE):
-        print(f"❌ Data file not found: {DATA_FILE}")
+        print(f"[ERROR] Data file not found: {DATA_FILE}")
         return
 
     with open(DATA_FILE, 'r') as f:
         articles = json.load(f)
         
-    print(f"📚 Loaded {len(articles)} articles.")
+    print(f"Loaded {len(articles)} articles.")
     
     # 2. Prepare Data (Chunking headlines + snippets for training)
     texts = []
@@ -97,7 +97,7 @@ def train():
         texts.append(content_snippet)
         labels.append(label)
         
-    print(f"📊 Training samples: {len(texts)}")
+    print(f"Training samples: {len(texts)}")
     
     # 3. Train/Test Split
     X_train, X_test, y_train, y_test = train_test_split(texts, labels, test_size=0.2, random_state=42)
@@ -111,7 +111,7 @@ def train():
     
     # Use GPU if available, else CPU
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    print(f"⚙️ Using device: {device}")
+    print(f"Using device: {device}")
     model.to(device)
     
     # 5. Data Loaders
@@ -149,10 +149,10 @@ def train():
             optimizer.step()
             
         avg_loss = total_loss / len(train_loader)
-        print(f"📉 Average Loss: {avg_loss:.4f}")
+        print(f"Average Loss: {avg_loss:.4f}")
         
     # 7. Evaluation
-    print("\n🧪 Evaluating...")
+    print("\nEvaluating...")
     model.eval()
     predictions = []
     real_values = []
@@ -185,7 +185,7 @@ def train():
     with open(os.path.join(MODEL_SAVE_DIR, 'label_map.json'), 'w') as f:
         json.dump(id_to_label, f)
         
-    print(f"✅ Model saved to {MODEL_SAVE_DIR}")
+    print(f"Model saved to {MODEL_SAVE_DIR}")
 
 if __name__ == "__main__":
     train()

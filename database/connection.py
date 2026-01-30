@@ -24,9 +24,9 @@ class DatabaseManager:
                 min_size=2,
                 max_size=10
             )
-            print(f"✅ Connected to database: {settings.DATABASE_NAME}")
+            print(f"[INFO] Connected to database: {settings.DATABASE_NAME}")
         except Exception as e:
-            print(f"❌ Failed to connect to database: {e}")
+            print(f"[ERROR] Failed to connect to database: {e}")
             raise e
         return self
     
@@ -34,7 +34,7 @@ class DatabaseManager:
         """Close connection pool"""
         if self.pool:
             await self.pool.close()
-            print("🔌 Database connection closed")
+            print("Database connection closed.")
     
     @asynccontextmanager
     async def acquire(self):
@@ -87,10 +87,10 @@ async def init_database():
                     except Exception as e:
                         # Ignore benign errors
                         if 'already exists' not in str(e):
-                            print(f"⚠️ Schema execution warning: {e}")
+                            print(f"[WARN] Schema execution warning: {e}")
                             
-        print("✅ Database schema initialized (Standard Array Mode)")
+        print("Database schema initialized (Standard Array Mode).")
     except FileNotFoundError:
-        print(f"⚠️ Scheama file not found: {schema_path}")
+        print(f"[WARN] Schema file not found: {schema_path}")
         
     return db_manager

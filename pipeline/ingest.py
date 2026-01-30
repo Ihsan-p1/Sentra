@@ -98,7 +98,7 @@ class ArticleIngestor:
                     json.dumps(chunk.metadata)
                 )
         
-        print(f"✅ Ingested article: {article.get('title', '')[:50]}... ({len(chunks)} chunks)")
+        print(f"Ingested article: {article.get('title', '')[:50]}... ({len(chunks)} chunks)")
         return article_id
     
     async def ingest_batch(
@@ -115,7 +115,7 @@ class ArticleIngestor:
                 article_id = await self.ingest_article(article, db)
                 article_ids.append(article_id)
             except Exception as e:
-                print(f"❌ Failed to ingest article: {e}")
+                print(f"[ERROR] Failed to ingest article: {e}")
         
         return article_ids
     
@@ -143,7 +143,7 @@ async def ingest_sample_articles():
     article_ids = await ingestor.ingest_batch(SAMPLE_ARTICLES)
     
     counts = await ingestor.get_article_count()
-    print(f"\n📊 Article counts: {counts}")
+    print(f"\nArticle counts: {counts}")
     
     await db_manager.disconnect()
     return article_ids

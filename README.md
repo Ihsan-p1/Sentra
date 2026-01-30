@@ -33,16 +33,14 @@ Sentra is a Retrieval-Augmented Generation (RAG) chatbot designed to analyze and
 ### Starting the Application
 Run the FastAPI server:
 ```bash
-python -m api.main
-# OR directly with uvicorn
-uvicorn api.main:app --reload
+python -m uvicorn api.main:app --reload
 ```
 
 The API will start at `http://localhost:8000`.
 The web interface is served at the root URL `http://localhost:8000/`.
 
 ### Features
-*   **Media Framing Analysis**: Compares how different media outlets (e.g., Tempo vs. Detik) frame political events using TF-IDF and DistilBERT.
+*   **Media Framing Analysis**: Compares how different media outlets frame political events using TF-IDF and DistilBERT.
 *   **A/B Model Comparison**: Compares results between "Model A" (Custom ML) and "Model B" (Baseline/Heuristic) for hallucination detection and confidence scoring.
 *   **Hallucination Detection**: Verifies generated answers against retrieved news chunks using Logistic Regression.
 *   **Confidence Scoring**: Predicts answer reliability using a Random Forest model based on retrieval metrics.
@@ -51,23 +49,23 @@ The web interface is served at the root URL `http://localhost:8000/`.
 
 The system uses a multi-stage pipeline:
 
-1.  **Retrieval**: `sentence-transformers/all-MiniLM-L6-v2` embeds queries and retrieves relevant news chunks (stored in PostgreSQL/pgvector).
+1.  **Retrieval**: `sentence-transformers/all-MiniLM-L6-v2` embeds queries and retrieves relevant news chunks (stored in PostgreSQL).
 2.  **Generation**: Google Gemini 2.0 Flash generates the response and comparative analysis.
 3.  **Evaluation (Model A)**:
     *   **Hallucination Detector**: Logistic Regression model trained on similarity features.
-    *   **Confidence Scorer**: Random Forest Regressor trained on retrieval inconsistencies.
+    *   **Confidence Scorer**: Random Forest Regressor trained on retrieval metrics.
     *   **Framing Analyzer**: DistilBERT fine-tuned for media style classification.
 4.  **Evaluation (Model B - Baseline)**:
     *   Keyword Overlap for fact-checking.
     *   Heuristic scoring for confidence.
     *   TF-IDF for keyword framing.
 
-
+> **Note**: The custom ML models (Model A) are currently trained on synthetic/proof-of-concept data. The architecture is designed to scale with larger, real-world datasets when available.
 
 ## Storage Layout
 
 ```text
-d:\College Project\Project AI\Sem5\Sentra\
+Sentra/
 ├── api/                # FastAPI routes and server logic
 ├── chatbot/            # Core RAG engine and prompt management
 ├── data/               # Datasets and raw articles
@@ -76,12 +74,19 @@ d:\College Project\Project AI\Sem5\Sentra\
 ├── models/             # ML model definitions (Framing, Confidence, Hallucination)
 ├── pipeline/           # Data ingestion and embedding pipeline
 ├── rag/                # Vector retrieval logic
-├── scraper/            # News scrapers
+├── scraper/            # News scrapers (ANTARA, Tempo, ABC News)
+├── scripts/            # Training and evaluation scripts
 ├── web/                # Frontend static files (HTML/JS/CSS)
-
 ├── requirements.txt    # Python dependencies
 └── setup_vector.py     # Script to initialize vector database
 ```
+
+## Data Sources
+
+The system currently supports the following news sources:
+- **ANTARA News** (en.antaranews.com) - Indonesian national news agency
+- **Tempo English** (en.tempo.co) - Indonesian investigative journalism
+- **ABC News** (abc.net.au) - Australian international perspective
 
 ## Contributing
 
@@ -93,4 +98,4 @@ d:\College Project\Project AI\Sem5\Sentra\
 
 ## Status
 
-Experimental. The project is currently in the prototype phase, focusing on Indonesian political news analysis.
+MVP/Prototype. The project demonstrates a working proof-of-concept for media framing analysis in Indonesian political news. Training data is currently synthetic; the architecture supports expansion to larger datasets.

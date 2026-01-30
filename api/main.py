@@ -15,13 +15,13 @@ from api.routes import router, init_components
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
-    print("🚀 Starting Sentra API...")
+    print("Starting Sentra API...")
     await init_database()
     init_components()  # Initialize models
     yield
     # Shutdown
     await db_manager.disconnect()
-    print("👋 Shutting down Sentra API")
+    print("Shutting down Sentra API.")
 
 app = FastAPI(
     title="Sentra - Media Framing Analysis",
