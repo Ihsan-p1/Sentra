@@ -1,9 +1,9 @@
-
 const chatForm = document.getElementById('chat-form');
 const userInput = document.getElementById('user-input');
 const chatContainer = document.getElementById('chat-container');
-const analysisDashboard = document.getElementById('analysis-dashboard');
-const analysisEmpty = document.getElementById('analysis-empty');
+
+// CONFIRMATION OF UPDATE
+console.log("APP JS V2 LOADED");
 
 chatForm.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -28,79 +28,88 @@ chatForm.addEventListener('submit', async (e) => {
         });
 
         const data = await response.json();
-
-        // Remove loading
         document.getElementById(loadingId).remove();
 
-        // Add Assistant Message
+        // Add Bot Message
         appendMessage(marked.parse(data.answer), 'bot');
 
-        // Update Sidebar with Comparison
-        updateDashboard(data);
+        // Update Sidebar
+        updateSidebar(data);
 
     } catch (error) {
         console.error(error);
         document.getElementById(loadingId).remove();
-        appendMessage("Sorry, there was a connection error.", 'bot');
+        appendMessage("Sorry, connection error. Please try again.", 'bot');
     }
 });
 
 function appendMessage(text, sender) {
     const div = document.createElement('div');
-    div.className = `flex gap-4 ${sender === 'user' ? 'flex-row-reverse' : ''}`;
+    div.className = `flex gap-3 ${sender === 'user' ? 'flex-row-reverse' : ''} animate-fade`;
 
     const avatar = document.createElement('div');
-    avatar.className = `w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 ${sender === 'user' ? 'bg-slate-600 text-white' : 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white'}`;
-    avatar.innerText = sender === 'user' ? 'U' : 'AI';
+    if (sender === 'user') {
+        avatar.className = 'w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center text-white text-sm font-bold flex-shrink-0';
+        avatar.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
+    } else {
+        avatar.className = 'w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400 to-purple-600 flex items-center justify-center text-white text-sm font-bold flex-shrink-0 logo-glow';
+        avatar.innerText = 'AI';
+    }
 
     const bubble = document.createElement('div');
-    bubble.className = `chat-bubble p-4 rounded-2xl shadow-lg text-sm leading-relaxed ${sender === 'user' ? 'bg-indigo-600 text-white rounded-tr-none' : 'bg-slate-800 border border-slate-700 text-slate-300 rounded-tl-none'}`;
-
-    if (sender === 'bot') {
-        bubble.innerHTML = text;
-    } else {
+    if (sender === 'user') {
+        bubble.className = 'bubble-user p-4 rounded-2xl rounded-tr-none text-white text-sm max-w-[85%]';
         bubble.innerText = text;
+    } else {
+        bubble.className = 'bubble-bot p-4 rounded-2xl rounded-tl-none text-slate-300 text-sm leading-relaxed max-w-[85%] response-content';
+        bubble.innerHTML = text;
     }
 
     div.appendChild(avatar);
     div.appendChild(bubble);
     chatContainer.appendChild(div);
-    chatContainer.scrollTop = chatContainer.scrollHeight;
+
+    // Smooth scroll to bottom
+    chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' });
 }
 
 function appendLoading() {
     const id = 'loading-' + Date.now();
     const div = document.createElement('div');
     div.id = id;
-    div.className = 'flex gap-4';
+    div.className = 'flex gap-3 animate-fade';
     div.innerHTML = `
-        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">AI</div>
-        <div class="bg-slate-800 border border-slate-700 p-4 rounded-2xl rounded-tl-none shadow-lg flex items-center gap-2">
-            <div class="w-2 h-2 bg-indigo-400 rounded-full animate-bounce"></div>
-            <div class="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
-            <div class="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style="animation-delay: 0.4s"></div>
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400 to-purple-600 flex items-center justify-center text-white text-sm font-bold flex-shrink-0 logo-glow">AI</div>
+        <div class="bubble-bot p-4 rounded-2xl rounded-tl-none flex items-center gap-2">
+            <div class="loading-dot w-2.5 h-2.5 bg-cyan-400 rounded-full"></div>
+            <div class="loading-dot w-2.5 h-2.5 bg-purple-400 rounded-full"></div>
+            <div class="loading-dot w-2.5 h-2.5 bg-pink-400 rounded-full"></div>
+            <span class="text-slate-400 text-sm ml-2">Analyzing sources...</span>
         </div>
     `;
     chatContainer.appendChild(div);
-    chatContainer.scrollTop = chatContainer.scrollHeight;
+    chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' });
     return id;
 }
 
-function updateDashboard(data) {
-    analysisEmpty.classList.add('hidden');
-    analysisDashboard.classList.remove('hidden');
+function updateSidebar(data) {
+    const emptyState = document.getElementById('sidebar-empty');
+    const content = document.getElementById('sidebar-content');
+
+    emptyState.classList.add('hidden');
+    content.classList.remove('hidden');
 
     const comparison = data.model_comparison || {};
 
-    // Confidence Comparison
+    // Confidence
     if (comparison.confidence) {
-        document.getElementById('confidence-a').innerText = comparison.confidence.model_a?.score_percent || '0%';
-        document.getElementById('confidence-b').innerText = comparison.confidence.model_b?.score_percent || '0%';
-        document.getElementById('confidence-a-method').innerText = comparison.confidence.model_a?.name || 'ML Model';
-        document.getElementById('confidence-b-method').innerText = comparison.confidence.model_b?.name || 'Baseline';
+        animateValue('confidence-a', comparison.confidence.model_a?.score_percent || '0%');
+        animateValue('confidence-b', comparison.confidence.model_b?.score_percent || '0%');
+        document.getElementById('confidence-a-method').innerText = comparison.confidence.model_a?.name || 'Random Forest';
+        document.getElementById('confidence-b-method').innerText = comparison.confidence.model_b?.name || 'Heuristic';
     }
 
-    // Hallucination Comparison
+    // Hallucination
     if (comparison.hallucination) {
         const ratioA = comparison.hallucination.model_a?.supported_ratio || '0/0';
         const ratioB = comparison.hallucination.model_b?.supported_ratio || '0/0';
@@ -108,12 +117,11 @@ function updateDashboard(data) {
         document.getElementById('hallu-a-ratio').innerText = ratioA;
         document.getElementById('hallu-b-ratio').innerText = ratioB;
 
-        // Update Labels Logic
         updateLabel('hallu-a-label', ratioA);
         updateLabel('hallu-b-label', ratioB);
     }
 
-    // Framing Keywords Comparison
+    // Framing
     const framingDiv = document.getElementById('framing-comparison');
     framingDiv.innerHTML = '';
 
@@ -125,14 +133,14 @@ function updateDashboard(data) {
             const keywordsB = comparison.framing.model_b?.keywords[media] || [];
 
             const item = document.createElement('div');
-            item.className = 'bg-slate-800 p-2 rounded-lg';
+            item.className = 'bg-slate-800/50 p-2 rounded border border-slate-700/50';
             item.innerHTML = `
-                <span class="text-[10px] font-bold uppercase text-slate-400">${media.replace('_', ' ')}</span>
+                <span class="text-[10px] font-bold uppercase text-cyan-400">${media.replace('_', ' ')}</span>
                 <div class="grid grid-cols-2 gap-2 mt-1">
                     <div class="text-[10px] text-indigo-300 bg-indigo-500/10 p-1.5 rounded">
                         <strong>A:</strong> ${keywordsA.join(', ') || 'N/A'}
                     </div>
-                    <div class="text-[10px] text-slate-400 bg-slate-700 p-1.5 rounded">
+                    <div class="text-[10px] text-slate-400 bg-slate-700/50 p-1.5 rounded">
                         <strong>B:</strong> ${keywordsB.join(', ') || 'N/A'}
                     </div>
                 </div>
@@ -141,32 +149,65 @@ function updateDashboard(data) {
         });
     }
 
-    // Hallucination List - Model A
-    const halluListA = document.getElementById('hallucination-list-a');
-    halluListA.innerHTML = '';
+    // Hallucination Lists
+    try {
+        updateHallucinationList('hallucination-list-a', data.unsupported_claims || []);
+        updateHallucinationList('hallucination-list-b', data.unsupported_claims_b || []);
+    } catch (err) { console.error("Hallucination update failed", err); }
 
-    if (data.unsupported_claims && data.unsupported_claims.length > 0) {
-        data.unsupported_claims.slice(0, 4).forEach(claim => {
-            const li = document.createElement('li');
-            li.innerText = `"${claim.sentence.substring(0, 40)}..."`;
-            halluListA.appendChild(li);
-        });
-    } else {
-        halluListA.innerHTML = '<li class="text-emerald-400">All claims verified ✓</li>';
+    // Sources
+    try {
+        updateSourcesList(data.sources || {});
+    } catch (err) { console.error("Sources update failed", err); }
+}
+
+function animateValue(elementId, targetValue) {
+    const el = document.getElementById(elementId);
+    const target = parseInt(targetValue) || 0;
+    const duration = 800;
+    const start = parseInt(el.innerText) || 0;
+    const startTime = performance.now();
+
+    // Get corresponding progress circle
+    const progressId = elementId === 'confidence-a' ? 'progress-a' : 'progress-b';
+    const progressCircle = document.getElementById(progressId);
+    const circumference = 220; // 2 * PI * 35
+
+    function update(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        // Easing function for smoother animation
+        const easeProgress = 1 - Math.pow(1 - progress, 3);
+        const current = Math.round(start + (target - start) * easeProgress);
+        el.innerText = current + '%';
+
+        // Update circular progress
+        if (progressCircle) {
+            const offset = circumference - (current / 100 * circumference);
+            progressCircle.style.strokeDashoffset = offset;
+        }
+
+        if (progress < 1) {
+            requestAnimationFrame(update);
+        }
     }
 
-    // Hallucination List - Model B
-    const halluListB = document.getElementById('hallucination-list-b');
-    halluListB.innerHTML = '';
+    requestAnimationFrame(update);
+}
 
-    if (data.unsupported_claims_b && data.unsupported_claims_b.length > 0) {
-        data.unsupported_claims_b.slice(0, 4).forEach(claim => {
+function updateHallucinationList(listId, claims) {
+    const list = document.getElementById(listId);
+    list.innerHTML = '';
+
+    if (claims && claims.length > 0) {
+        claims.slice(0, 3).forEach(claim => {
             const li = document.createElement('li');
-            li.innerText = `"${claim.sentence.substring(0, 40)}..."`;
-            halluListB.appendChild(li);
+            li.className = 'text-amber-300';
+            li.innerText = `"${claim.sentence.substring(0, 30)}..."`;
+            list.appendChild(li);
         });
     } else {
-        halluListB.innerHTML = '<li class="text-emerald-400">All claims verified ✓</li>';
+        list.innerHTML = '<li class="text-emerald-400">All claims verified ✓</li>';
     }
 }
 
@@ -174,16 +215,110 @@ function updateLabel(elementId, ratioString) {
     const el = document.getElementById(elementId);
     const [unver, total] = ratioString.split('/').map(Number);
 
-    // Now format is Unsupported / Total
-    // 0 is good, > 0 is bad
-    
     if (unver > 0) {
-        el.innerText = 'Weak Source Alignment';
-        el.classList.remove('text-emerald-400', 'text-slate-400', 'text-slate-500');
-        el.classList.add('text-amber-400');
+        el.innerText = 'Weak Alignment';
+        el.className = 'text-[10px] text-amber-400';
     } else {
-        el.innerText = 'Strong Source Alignment';
-        el.classList.remove('text-amber-400', 'text-slate-400', 'text-slate-500');
-        el.classList.add('text-emerald-400');
+        el.innerText = 'Strong Alignment';
+        el.className = 'text-[10px] text-emerald-400';
     }
+}
+
+function updateSourcesList(sources) {
+    const list = document.getElementById('sources-list');
+    const count = document.getElementById('source-count');
+
+    console.log("[DEBUG] Updating Sources List:", sources);
+
+    if (!sources || typeof sources !== 'object') {
+        console.warn("[WARN] Sources is invalid:", sources);
+        list.innerHTML = '<p class="text-slate-500 text-[10px] text-center py-4">No sources data</p>';
+        count.innerText = '(0)';
+        return;
+    }
+
+    const keys = Object.keys(sources);
+    // DEBUG: Dump raw structure to check data
+    // list.innerHTML = `<pre class="text-[8px] text-slate-400 overflow-x-auto">${JSON.stringify(sources, null, 2)}</pre>`;
+
+    if (keys.length === 0) {
+        list.innerHTML = '<p class="text-slate-500 text-[10px] text-center py-4">No sources found (Empty Keys)</p>';
+        count.innerText = '(0)';
+        return;
+    }
+
+    list.innerHTML = '';
+    let totalCount = 0;
+
+    try {
+        for (const [media, chunks] of Object.entries(sources)) {
+            console.log(`[DEBUG] Processing media: ${media}, Chunks:`, chunks);
+
+            if (Array.isArray(chunks) && chunks.length > 0) {
+                chunks.forEach(chunk => {
+                    try {
+                        totalCount++;
+                        const card = document.createElement('div');
+                        const url = chunk.url || '#';
+                        const hasUrl = url && url.startsWith('http');
+
+                        card.className = `source-card glass-panel p-3 rounded-xl mb-2 ${hasUrl ? 'cursor-pointer hover:border-cyan-400/50' : ''}`;
+
+                        const badgeColor = getBadgeColor(media);
+                        const similarity = Math.round((chunk.similarity || 0) * 100);
+                        const title = chunk.title || 'Untitled Article';
+                        const text = chunk.text || 'No preview available';
+
+                        card.innerHTML = `
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-700/50 ${badgeColor}">${formatMediaName(media)}</span>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-[10px] text-cyan-400 font-medium">${similarity}%</span>
+                                    ${hasUrl ? '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-cyan-400"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>' : ''}
+                                </div>
+                            </div>
+                            <p class="text-xs text-white font-medium mb-1 line-clamp-1">${truncateText(title, 60)}</p>
+                            <p class="text-[11px] text-slate-400 leading-relaxed line-clamp-2">${truncateText(text, 100)}</p>
+                        `;
+
+                        if (hasUrl) {
+                            card.addEventListener('click', () => window.open(url, '_blank'));
+                        }
+
+                        list.appendChild(card);
+                    } catch (innerErr) {
+                        console.error("[ERROR] Rendering chunk:", innerErr, chunk);
+                    }
+                });
+            } else {
+                console.log(`[DEBUG] No chunks for ${media} or invalid array`);
+            }
+        }
+        console.log("[DEBUG] Total sources rendered:", totalCount);
+    } catch (e) {
+        console.error("[ERROR] updating sources:", e);
+    }
+
+    count.innerText = `(${totalCount})`;
+}
+
+function getBadgeColor(media) {
+    const lower = media.toLowerCase();
+    if (lower.includes('antara')) return 'text-emerald-400';
+    if (lower.includes('tempo')) return 'text-red-400';
+    if (lower.includes('abc')) return 'text-cyan-400';
+    return 'text-slate-400';
+}
+
+function formatMediaName(media) {
+    const lower = media.toLowerCase();
+    if (lower.includes('antara')) return 'ANTARA';
+    if (lower.includes('tempo')) return 'Tempo';
+    if (lower.includes('abc')) return 'ABC News';
+    return media;
+}
+
+function truncateText(text, maxLen) {
+    if (!text) return '';
+    return text.length > maxLen ? text.substring(0, maxLen) + '...' : text;
 }
