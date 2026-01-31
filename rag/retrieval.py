@@ -57,7 +57,7 @@ class RAGRetriever:
             media_results = []
             for idx in top_indices:
                 score = float(similarities[idx])
-                if score < 0.25: continue # Filter low relevance (raised from 0.1)
+                if score < 0.15: continue # Filter low relevance (Covering user revert)
                 
                 chunk = chunks_data[idx]
                 chunk['similarity'] = score
@@ -81,7 +81,7 @@ class RAGRetriever:
                 a.published_date
             FROM article_chunks ac
             JOIN articles a ON ac.article_id = a.id
-            WHERE a.media_source = $1
+            WHERE LOWER(a.media_source) = LOWER($1)
         """
         
         rows = await self.db.fetch(query, media_source)

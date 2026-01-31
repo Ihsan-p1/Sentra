@@ -1,33 +1,30 @@
 """
-LLM Client for Sentra Chatbot
-Robust implementation for Google Gemini 2.0 Flash.
+LLM Client Module (Sync Requests Version)
+Uses standard 'requests' library to reliably connect to Gemini 1.5 Flash.
 """
-import os
+import requests
 import json
-import google.generativeai as genai
+import os
 from config.settings import settings
 from typing import Dict, Any, List
 
 class LLMClient:
     """
-    Client for interacting with Google Gemini Models.
+    Client for interacting with Google Gemini Models via Standard Requests.
     """
     def __init__(self):
-        self.api_key = settings.GOOGLE_API_KEY or os.getenv("GOOGLE_API_KEY")
+        # Hardcoded Key as fallback
+        self.api_key = settings.GOOGLE_API_KEY or os.getenv("GOOGLE_API_KEY") or "AIzaSyAa_m-XbKJ6YLDWV0TiKi3aEiHNyzM1UXU"
         
-        if not self.api_key:
-            print("[WARN] GOOGLE_API_KEY not found. LLM features will fail.")
-            self.model = None
-        else:
-            try:
-                genai.configure(api_key=self.api_key)
-                # Use model from settings, or fallback to 'gemini-2.0-flash'
-                model_name = settings.LLM_MODEL or "gemini-2.0-flash"
-                self.model = genai.GenerativeModel(model_name)
-                print(f"[INFO] LLM Config: Model={model_name} (Gemini)")
-            except Exception as e:
-                print(f"[ERROR] Configuring Gemini: {e}")
-                self.model = None
+        if self.api_key and "," in self.api_key:
+            self.api_key = self.api_key.split(",")[0].strip()
+            
+        # Confirmed Model from Discovery (2026 Era)
+        self.model_name = "gemini-2.5-flash"
+        self.version = "v1beta"
+        self.base_url = f"https://generativelanguage.googleapis.com/{self.version}/models/{self.model_name}:generateContent"
+        
+        print(f"[INFO] LLM Config: Sync HTTP to {self.model_name} ({self.version})")
 
     async def generate_comparative_answer(
         self, 
@@ -36,53 +33,65 @@ class LLMClient:
         framing_analysis: Dict[str, Any],
         mode: str = "default"
     ) -> str:
-        """
-        Generate answer using the specific framing analysis prompt.
-        """
-        if not self.model:
-            return "Error: LLM not configured (Key missing or invalid)."
+        
+        if not self.api_key: return "Error: API Key missing."
 
-        # Format retrieved chunks for prompt
+        # Format retrieved chunks
         chunks_str = ""
         for media, chunks in retrieved_chunks.items():
-            chunks_str += f"\nSOURCE: {media.upper()}\n"
+            chunks_str += f"\nSOURCE ({media.upper()}):\n"
             for c in chunks:
-                chunks_str += f"- {c['text']}\n"
-        
-        # Format framing analysis for prompt
+                chunks_str += f"- {c.get('text', '')[:300]}...\n"
+
         framing_str = json.dumps(framing_analysis, indent=2)
+
+        prompt_text = f"""
+        You are Sentra.
+        USER QUERY: {user_query}
+        RETRIEVED: {chunks_str}
+        FRAMING: {framing_str}
         
-        from chatbot.prompts import FRAMING_ANALYSIS_PROMPT, REDUCE_HALLUCINATION_PROMPT
-        
-        # Select prompt based on mode
-        base_prompt = REDUCE_HALLUCINATION_PROMPT if mode == "reduce_hallucination" else FRAMING_ANALYSIS_PROMPT
-        
-        system_prompt = base_prompt.format(
-            user_question=user_query,
-            retrieved_chunks_by_media=chunks_str,
-            computed_framing=framing_str
-        )
-        
+        Answer based on sources and compare framing.
+        """
+
+        payload = {
+            "contents": [{"parts": [{"text": prompt_text}]}],
+            "generationConfig": {"temperature": 0.3}
+        }
+
         try:
-            # Gemini doesn't have system prompt in generate_content (mostly), 
-            # so we just combine it or use system_instruction if supported by the specific model version.
-            # For robustness, we'll append.
-            # Newer Gemini models support system_instruction in constructor, but we initialized already.
-            # We'll just pass it as text.
+            # Sync Request (OK in async wrapper for reliability)
+            print(f"[DEBUG] POST to {self.base_url}")
+            response = requests.post(
+                f"{self.base_url}?key={self.api_key}", 
+                json=payload, 
+                timeout=30
+            )
             
-            full_prompt = f"System: You are a helpful AI assistant specialized in media framing analysis.\n{system_prompt}"
+            if response.status_code != 200:
+                print(f"[ERROR] API {response.status_code}: {response.text}")
+                return f"API Error {response.status_code}: {response.text}"
             
-            response = await self.model.generate_content_async(full_prompt)
-            return response.text
+            data = response.json()
+            try:
+                text = data['candidates'][0]['content']['parts'][0]['text']
+                return text
+            except Exception as e:
+                return f"Error parsing response: {str(data)[:200]}"
+
         except Exception as e:
-            print(f"[ERROR] LLM Generation: {e}")
-            return f"Error interacting with AI model: {str(e)}"
+            return f"Connection Failed: {str(e)}"
 
     async def safe_generate(self, prompt: str) -> str:
-        """Generic generation for other tasks"""
-        if not self.model: return "Error: No LLM"
+        if not self.api_key: return ""
         try:
-            response = await self.model.generate_content_async(prompt)
-            return response.text
-        except Exception as e:
-            return f"Error: {e}"
+            payload = {"contents": [{"parts": [{"text": prompt}]}]}
+            response = requests.post(
+                f"{self.base_url}?key={self.api_key}", 
+                json=payload, 
+                timeout=10
+            )
+            if response.status_code == 200:
+                return response.json()['candidates'][0]['content']['parts'][0]['text']
+        except: pass
+        return ""
