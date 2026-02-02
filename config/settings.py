@@ -24,7 +24,8 @@ class Settings(BaseSettings):
         if not self.GOOGLE_API_KEY: return []
         return [k.strip() for k in self.GOOGLE_API_KEY.split(",") if k.strip()]
         
-    GOOGLE_API_KEY: Optional[str] = None  # Loaded from .env (comma-separated)
+    GOOGLE_API_KEY: Optional[str] = None
+    OPENROUTER_API_KEY: Optional[str] = None  # Loaded from .env
     
     # Legacy/Unused
     GROQ_API_KEY: Optional[str] = None

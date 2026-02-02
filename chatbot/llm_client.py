@@ -1,7 +1,6 @@
 """
-LLM Client Module (Groq API Version)
+LLM Client Module (OpenRouter / OpenAI Compatible)
 Optimized for multi-turn conversational RAG chatbot.
-Perfect for Indonesian Election 2024 news analysis.
 """
 import requests
 import json
@@ -12,20 +11,25 @@ from chatbot.prompts import FRAMING_ANALYSIS_PROMPT, REDUCE_HALLUCINATION_PROMPT
 
 class LLMClient:
     """
-    Groq API Client optimized for multi-turn conversations.
-    Uses OpenAI-compatible API format.
+    OpenRouter API Client (OpenAI-compatible).
+    Supports multiple providers (Google, Meta, etc.) via a single interface.
     """
     def __init__(self):
-        self.api_key = settings.GROQ_API_KEY or os.getenv("GROQ_API_KEY")
+        # Prioritize OpenRouter, then fallback to others
+        self.api_key = settings.OPENROUTER_API_KEY or os.getenv("OPENROUTER_API_KEY")
         
         if not self.api_key:
-            print("[ERROR] GROQ_API_KEY not found!")
+            # Fallback legacy checks
+            self.api_key = settings.GROQ_API_KEY or os.getenv("GROQ_API_KEY")
+            
+        if not self.api_key:
+            print("[ERROR] API_KEY not found! (Checked OpenRouter & Groq)")
         else:
-            print("[INFO] Groq API key loaded")
+            print("[INFO] API Key loaded successfully")
         
-        self.model_name = settings.LLM_MODEL or "llama-3.1-70b-versatile"
-        self.base_url = settings.LLM_BASE_URL or "https://api.groq.com/openai/v1"
-        print(f"[INFO] LLM: {self.model_name}")
+        self.model_name = settings.LLM_MODEL or "google/gemini-2.0-flash-lite-preview-02-05:free"
+        self.base_url = settings.LLM_BASE_URL or "https://openrouter.ai/api/v1"
+        print(f"[INFO] LLM: {self.model_name} via {self.base_url}")
 
     async def generate_conversational_response(
         self, 
@@ -39,7 +43,7 @@ class LLMClient:
         Generate response using proper multi-turn conversation format.
         """
         if not self.api_key: 
-            return "Error: GROQ_API_KEY not configured."
+            return "Error: API_KEY not configured."
 
         # Format news sources context
         news_context = self._format_news_context(retrieved_chunks)
@@ -86,7 +90,7 @@ class LLMClient:
 
         messages.append({"role": "user", "content": current_prompt})
 
-        # Groq API request (OpenAI-compatible format)
+        # OpenRouter / OpenAI API request
         payload = {
             "model": self.model_name,
             "messages": messages,
@@ -95,14 +99,18 @@ class LLMClient:
             "top_p": 0.9
         }
 
-        url = f"{self.base_url}/chat/completions"
+        # Headers required for OpenRouter
         headers = {
             "Content-Type": "application/json",
-            "Authorization": f"Bearer {self.api_key}"
+            "Authorization": f"Bearer {self.api_key}",
+            "HTTP-Referer": "http://localhost:8000", # Required by OpenRouter
+            "X-Title": "Sentra News Analysis"        # Required by OpenRouter
         }
 
+        url = f"{self.base_url}/chat/completions"
+
         try:
-            print(f"[DEBUG] Sending {len(messages)} messages to Groq")
+            print(f"[DEBUG] Sending {len(messages)} messages to OpenRouter")
             response = requests.post(
                 url, 
                 json=payload,
@@ -111,13 +119,16 @@ class LLMClient:
             )
             
             if response.status_code != 200:
-                print(f"[ERROR] Groq {response.status_code}: {response.text[:200]}")
+                print(f"[ERROR] API {response.status_code}: {response.text[:200]}")
                 return f"API Error: {response.text[:200]}"
             
             data = response.json()
             # Extract text from OpenAI-compatible response format
-            text = data['choices'][0]['message']['content']
-            return text
+            if 'choices' in data and len(data['choices']) > 0:
+                text = data['choices'][0]['message']['content']
+                return text
+            else:
+                return "Error: Empty response from LLM provider."
 
         except Exception as e:
             print(f"[ERROR] {str(e)}")
@@ -177,22 +188,6 @@ class LLMClient:
         # Limit to last 6 messages to avoid token overflow
         return messages[-6:]
 
-    # Legacy method
-    async def generate_comparative_answer(
-        self, 
-        user_query: str, 
-        retrieved_chunks: Dict[str, List[Dict]], 
-        framing_analysis: Dict[str, Any],
-        mode: str = "default",
-        conversation_history: str = ""
-    ) -> str:
-        return await self.generate_conversational_response(
-            user_query=user_query,
-            retrieved_chunks=retrieved_chunks,
-            conversation_history=conversation_history,
-            mode=mode
-        )
-
     async def safe_generate(self, prompt: str) -> str:
         if not self.api_key: return ""
         try:
@@ -204,7 +199,9 @@ class LLMClient:
             url = f"{self.base_url}/chat/completions"
             headers = {
                 "Content-Type": "application/json",
-                "Authorization": f"Bearer {self.api_key}"
+                "Authorization": f"Bearer {self.api_key}",
+                "HTTP-Referer": "http://localhost:8000",
+                "X-Title": "Sentra"
             }
             response = requests.post(url, json=payload, headers=headers, timeout=10)
             if response.status_code == 200:
