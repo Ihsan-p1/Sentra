@@ -1,0 +1,522 @@
+/* =====================================================
+   SENTRA - Media Bias Analysis & AI Hallucination Detection
+   Semantic Color System for Academic Analysis
+   
+   COLOR PHILOSOPHY:
+   - Beige/Sand: Media neutrality, clean slate for analysis
+   - Deep Brown: Data credibility, source authority
+   - Muted Green: Factual strength, verified claims
+   - Muted Red: Hallucination risk, potential misinformation
+   - Chestnut: Secondary emphasis, highlighting
+   ===================================================== */
+
+/* =====================================================
+   Theme Variables - Semantic Color Palette
+   ===================================================== */
+
+:root {
+    /* === BASE COLORS (Neutrality & Analysis) === */
+    --color-sand: #F3E9DC;
+    /* Background - Media Neutrality */
+    --color-camel: #DAB49D;
+    /* Secondary - Card surfaces */
+    --color-coffee: #5E3023;
+    /* Primary text - Data authority */
+    --color-chestnut: #895737;
+    /* Accent - Secondary emphasis */
+
+    /* === SEMANTIC COLORS (Analysis Results) === */
+    --color-factual: #4F6F52;
+    /* Factual Confidence - Verified */
+    --color-factual-light: #6B8E5A;
+    /* Factual highlight */
+    --color-hallucination: #9E2A2B;
+    /* Hallucination Risk - Warning */
+    --color-hallucination-light: #B23A3A;
+    /* Hallucination highlight */
+
+    /* === BACKGROUND === */
+    --bg-primary: #F3E9DC;
+    /* Sand - neutral analysis space */
+    --bg-secondary: #EDE4D7;
+    /* Slightly darker sand */
+    --bg-card: #FFFFFF;
+    /* White cards for contrast */
+
+    /* === TEXT === */
+    --text-primary: #5E3023;
+    /* Coffee - authoritative data */
+    --text-secondary: #895737;
+    /* Chestnut - supporting info */
+    --text-muted: #A08068;
+    /* Muted brown */
+
+    /* === BORDERS === */
+    --border-color: #DAB49D;
+    /* Camel - subtle divisions */
+    --border-focus: #5E3023;
+    /* Coffee on focus */
+
+    /* === CHAT BUBBLES === */
+    --bubble-user-bg: linear-gradient(135deg, #5E3023, #895737);
+    --bubble-user-text: #F3E9DC;
+    --bubble-bot-bg: #FFFFFF;
+    --bubble-bot-border: #DAB49D;
+
+    /* === UI ELEMENTS === */
+    --input-bg: #FFFFFF;
+    --input-border: #DAB49D;
+    --btn-primary-bg: linear-gradient(135deg, #5E3023, #6B3D2E);
+    --btn-primary-text: #F3E9DC;
+
+    /* === SHADOWS === */
+    --shadow-sm: 0 1px 3px rgba(94, 48, 35, 0.08);
+    --shadow-md: 0 4px 12px rgba(94, 48, 35, 0.12);
+    --shadow-lg: 0 8px 24px rgba(94, 48, 35, 0.16);
+
+    /* === HEADER === */
+    --header-bg: #5E3023;
+    --header-text: #F3E9DC;
+    --header-accent: #DAB49D;
+
+    /* === LOGO === */
+    --logo-bg: linear-gradient(135deg, #5E3023, #895737);
+
+    /* === ANALYSIS INDICATORS === */
+    --factual-bg: rgba(79, 111, 82, 0.12);
+    --factual-border: rgba(79, 111, 82, 0.3);
+    --hallucination-bg: rgba(158, 42, 43, 0.12);
+    --hallucination-border: rgba(158, 42, 43, 0.3);
+
+    /* === SCROLLBAR === */
+    --scrollbar-track: #EDE4D7;
+    --scrollbar-thumb: #DAB49D;
+}
+
+[data-theme="dark"] {
+    /* === DARK MODE - Scholarly Night === */
+    --bg-primary: #1A1410;
+    /* Deep coffee */
+    --bg-secondary: #2A2018;
+    /* Warm dark */
+    --bg-card: #2A2018;
+
+    --text-primary: #F3E9DC;
+    /* Sand text */
+    --text-secondary: #DAB49D;
+    /* Camel text */
+    --text-muted: #A08068;
+
+    --border-color: #3D2E24;
+    /* Dark brown border */
+
+    --bubble-user-bg: linear-gradient(135deg, #895737, #5E3023);
+    --bubble-bot-bg: #2A2018;
+    --bubble-bot-border: #3D2E24;
+
+    --input-bg: #2A2018;
+    --input-border: #3D2E24;
+
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+
+    --header-bg: #1A1410;
+
+    --factual-bg: rgba(79, 111, 82, 0.2);
+    --factual-border: rgba(107, 142, 90, 0.4);
+    --hallucination-bg: rgba(158, 42, 43, 0.2);
+    --hallucination-border: rgba(178, 58, 58, 0.4);
+
+    --scrollbar-track: #2A2018;
+    --scrollbar-thumb: #3D2E24;
+}
+
+/* =====================================================
+   Base Styles
+   ===================================================== */
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    transition: background-color 0.3s ease, color 0.3s ease;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* =====================================================
+   Card Styles
+   ===================================================== */
+
+.glass-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    box-shadow: var(--shadow-md);
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.glass-card:hover {
+    box-shadow: var(--shadow-lg);
+}
+
+.glass-panel {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    transition: border-color 0.2s ease;
+}
+
+.glass-panel:hover {
+    border-color: var(--color-chestnut);
+}
+
+/* =====================================================
+   Header Styles
+   ===================================================== */
+
+.header-title {
+    color: var(--text-primary);
+    font-weight: 700;
+}
+
+.header-subtitle {
+    color: var(--color-chestnut);
+    font-weight: 500;
+}
+
+.logo-container {
+    background: var(--logo-bg);
+    border-radius: 12px;
+}
+
+.logo-glow {
+    box-shadow: 0 4px 16px rgba(94, 48, 35, 0.35);
+}
+
+/* =====================================================
+   Chat Bubbles
+   ===================================================== */
+
+.bubble-user {
+    background: var(--bubble-user-bg);
+    color: var(--bubble-user-text);
+    box-shadow: 0 3px 12px rgba(94, 48, 35, 0.25);
+}
+
+.bubble-bot {
+    background: var(--bubble-bot-bg);
+    border: 1px solid var(--bubble-bot-border);
+    box-shadow: var(--shadow-sm);
+}
+
+.chat-text {
+    color: var(--text-primary);
+}
+
+.chat-text-secondary {
+    color: var(--text-secondary);
+}
+
+/* =====================================================
+   Input Styles
+   ===================================================== */
+
+.input-glow {
+    background: var(--input-bg);
+    border: 2px solid var(--input-border);
+    color: var(--text-primary);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.input-glow::placeholder {
+    color: var(--text-muted);
+}
+
+.input-glow:focus {
+    border-color: var(--border-focus);
+    box-shadow: 0 0 0 3px rgba(94, 48, 35, 0.15);
+    outline: none;
+}
+
+/* =====================================================
+   Button Styles
+   ===================================================== */
+
+.theme-btn,
+.action-btn {
+    background: var(--btn-primary-bg);
+    border: none;
+    color: var(--btn-primary-text);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.theme-btn:hover,
+.action-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(94, 48, 35, 0.35);
+}
+
+.theme-icon,
+.btn-icon {
+    color: var(--btn-primary-text);
+}
+
+.btn-text,
+.theme-text {
+    color: var(--btn-primary-text);
+}
+
+/* =====================================================
+   Status Badge - Factual Confidence
+   ===================================================== */
+
+.status-badge {
+    background: var(--factual-bg) !important;
+    border-color: var(--factual-border) !important;
+}
+
+.status-badge span:last-child {
+    color: var(--color-factual) !important;
+}
+
+/* =====================================================
+   Semantic Analysis Indicators
+   ===================================================== */
+
+/* Factual/Verified State */
+.factual-indicator,
+.verified-state {
+    background: var(--factual-bg);
+    border: 1px solid var(--factual-border);
+    color: var(--color-factual);
+}
+
+/* Hallucination/Warning State */
+.hallucination-indicator,
+.warning-state {
+    background: var(--hallucination-bg);
+    border: 1px solid var(--hallucination-border);
+    color: var(--color-hallucination);
+}
+
+/* =====================================================
+   Neon Border (Model A - Primary)
+   ===================================================== */
+
+.neon-border {
+    border: 2px solid var(--color-chestnut);
+    box-shadow: 0 0 12px rgba(137, 87, 55, 0.25);
+}
+
+/* =====================================================
+   Progress Ring
+   ===================================================== */
+
+.progress-ring {
+    transform: rotate(-90deg);
+}
+
+.progress-ring-circle {
+    transition: stroke-dashoffset 0.6s ease;
+    stroke-linecap: round;
+}
+
+/* =====================================================
+   Source Card
+   ===================================================== */
+
+.source-card {
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.source-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--color-chestnut);
+}
+
+/* =====================================================
+   Loading Animation
+   ===================================================== */
+
+@keyframes bounce {
+
+    0%,
+    80%,
+    100% {
+        transform: scale(0.8);
+        opacity: 0.6;
+    }
+
+    40% {
+        transform: scale(1.2);
+        opacity: 1;
+    }
+}
+
+.loading-dot {
+    animation: bounce 1.4s infinite ease-in-out both;
+    background: var(--color-chestnut) !important;
+}
+
+.loading-dot:nth-child(1) {
+    animation-delay: -0.32s;
+}
+
+.loading-dot:nth-child(2) {
+    animation-delay: -0.16s;
+}
+
+/* =====================================================
+   Fade Animation
+   ===================================================== */
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-fade {
+    animation: fadeIn 0.3s ease forwards;
+}
+
+/* =====================================================
+   Markdown Content
+   ===================================================== */
+
+.response-content {
+    color: var(--text-primary);
+    line-height: 1.7;
+}
+
+.response-content h2 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--color-coffee);
+    margin: 1rem 0 0.5rem;
+    padding-bottom: 0.25rem;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.response-content h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-top: 0.75rem;
+}
+
+.response-content ul,
+.response-content ol {
+    margin-left: 1.25rem;
+    margin-top: 0.5rem;
+}
+
+.response-content li {
+    margin-bottom: 0.25rem;
+    color: var(--text-primary);
+}
+
+.response-content li::marker {
+    color: var(--color-chestnut);
+}
+
+.response-content strong {
+    color: var(--color-coffee);
+    font-weight: 700;
+}
+
+.response-content p {
+    color: var(--text-primary);
+    margin-bottom: 0.75rem;
+}
+
+/* =====================================================
+   Scrollbar
+   ===================================================== */
+
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--scrollbar-track);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--color-chestnut);
+}
+
+/* =====================================================
+   Analysis Result Colors (Applied via JS/HTML)
+   ===================================================== */
+
+/* Strong Alignment - Factual */
+.text-factual,
+.text-verified {
+    color: var(--color-factual) !important;
+}
+
+.bg-factual {
+    background: var(--factual-bg) !important;
+    border: 1px solid var(--factual-border) !important;
+}
+
+/* Weak Alignment - Hallucination Risk */
+.text-hallucination,
+.text-warning {
+    color: var(--color-hallucination) !important;
+}
+
+.bg-hallucination {
+    background: var(--hallucination-bg) !important;
+    border: 1px solid var(--hallucination-border) !important;
+}
+
+/* =====================================================
+   Responsive
+   ===================================================== */
+
+@media (max-width: 1024px) {
+    .glass-card {
+        border-radius: 12px;
+    }
+}
+
+@media (max-width: 768px) {
+    body {
+        font-size: 14px;
+    }
+}
+
+/* =====================================================
+   Reduced Motion
+   ===================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}

@@ -36,12 +36,12 @@ data/models/framing_bert/
 pytorch_model.bin
 *.pkl
 
-models_architecture.md
-
 # Local artifacts (not for git)
+models_architecture.md
 implementation_plan.md
 presentation_notes.md
 task.md
+walkthrough.md
 
 # Evaluation results
 Models Eval.ini

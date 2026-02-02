@@ -19,8 +19,8 @@ from models.baseline.models import get_baseline_models
 from pipeline.embeddings import get_embedder
 
 # For LLM generation (using OpenAI or Ollama)
-from chatbot.llm_client import LLMClient
-from chatbot.conversation_memory import conversation_memory
+from chatbot.llm_client import LLMClient 
+from chatbot.conversation_memory import conversation_memory 
 
 class ChatbotEngine:
     """
@@ -54,9 +54,8 @@ class ChatbotEngine:
         self.baseline_models = get_baseline_models()
         print("[INFO] Loaded baseline models (Model B)")
         
-        # Conversation memory for multi-turn chat
+        # Initialize conversation memory
         self.memory = conversation_memory
-        print("[INFO] Conversation memory initialized")
         
     async def process_query(
         self, 
@@ -77,7 +76,8 @@ class ChatbotEngine:
                     "analysis": {"error": "query_too_short"},
                     "confidence": 0.0,
                     "model_comparison": {}, 
-                    "mode": mode
+                    "mode": mode,
+                    "session_id": session_id
                 }
 
         # 0.5 CONTEXTUAL QUERY ENHANCEMENT
@@ -148,7 +148,8 @@ class ChatbotEngine:
                 "answer": "Sorry, I couldn't find relevant information in the news database.",
                 "analysis": {},
                 "confidence": 0.0,
-                "model_comparison": {}
+                "model_comparison": {},
+                "session_id": session_id
             }
         
         # 1.5 RETRIEVAL CONFIDENCE GATE - Refuse if source quality too low
@@ -167,16 +168,14 @@ class ChatbotEngine:
                 "analysis": {"retrieval_quality": "insufficient"},
                 "confidence": 0.0,
                 "model_comparison": {},
-                "sources": retrieved_chunks, # Return chunks even if low relevance
-                "unsupported_claims": [],
-                "unsupported_claims_b": [],
                 "source_quality": {
                     "max_similarity": round(max_similarity, 3),
                     "avg_similarity": round(avg_similarity, 3),
                     "total_sources": len(all_chunks_flat),
                     "refusal_reason": f"max_sim={max_similarity:.2f} < {threshold}",
                     "mode": mode
-                }
+                },
+                "session_id": session_id
             }
 
         # Reduce Chunks Per Media (Context Saturation Control)
@@ -206,13 +205,13 @@ class ChatbotEngine:
         # 2.5 GET CONVERSATION HISTORY for context
         conversation_history = self.memory.format_for_llm(session_id, num_turns=5)
         
-        # 3. TEXT GENERATION (LLM) - Use conversational prompt with history
+        # 3. TEXT GENERATION (LLM) - Use Conversational Prompt
         raw_response = await self.llm.generate_conversational_response(
             user_query=query, 
             retrieved_chunks=retrieved_chunks, 
             conversation_history=conversation_history,
             mode=mode,
-            focus_topic=extracted_topic  # Pass the specific topic to focus on
+            focus_topic=extracted_topic
         )
         
         # 4. HALLUCINATION DETECTION (Internal scoring, NOT per-sentence annotation)
@@ -305,14 +304,9 @@ class ChatbotEngine:
                     "confidence": d["confidence"]
                 })
         
-        # Store this conversation turn in memory
-        self.memory.add_message(session_id, "user", query)
-        self.memory.add_message(session_id, "assistant", final_answer)
-        
         return {
             "answer": final_answer,
             "raw_answer": raw_response,
-            "session_id": session_id,
             "framing_analysis": framing_statistical,
             "verification_summary": verification_result_a,
             "unsupported_claims": unsupported_a,

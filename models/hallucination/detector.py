@@ -116,29 +116,37 @@ class HallucinationDetector:
         overlap = features[4]
         
         # 1. Strong Match Override (Almost exact quote)
-        if max_sim > 0.75: 
+        if max_sim > 0.82: 
             prob[1] = max(prob[1], 0.95) # Force high confidence
             
         # 2. Moderate Match Override (Paraphrased but supported)
-        elif max_sim > 0.55 and overlap > 0.4:
+        elif max_sim > 0.70 and overlap > 0.4:
             prob[1] = max(prob[1], 0.85)
             
         # 3. Weak Match but high overlap (Rare, but possible)
-        elif overlap > 0.7:
+        elif overlap > 0.8:
              prob[1] = max(prob[1], 0.80)
         
         # -----------------------------------------------------------
         
-        # Lower threshold (0.35) to be more lenient for interpretive/analytical content
-        # Original academic research often paraphrases and interprets, not just quotes
-        is_supported = prob[1] > 0.40  # Slightly adjusted threshold
-        
+        # HARD GATE: Trust issues with the ML model
+        # If the semantic similarity is objectively low (< 0.65), 
+        # we mark it as unsupported regardless of what the ML model thinks.
+        if features[0] < 0.65:
+            is_supported = False
+            reason = "Hard Gate: Low semantic similarity (< 0.65)"
+        else:
+            # Stricter threshold (0.70) for sentences that pass the hard gate
+            is_supported = prob[1] > 0.70
+            
         # Determine reason if not supported
         if not is_supported:
-            if features[0] < 0.3:  # max_similarity
+            if features[0] < 0.3:  # max_similarity really low
                 reason = "Low semantic similarity to retrieved sources"
             elif features[4] < 0.2:  # overlap
                 reason = "Limited keyword overlap with sources"
+            elif features[0] < 0.65:
+                reason = f"Similarity ({features[0]:.2f}) below strict verification threshold"
             else:
                 reason = "Claim appears to extend beyond source material"
         else:

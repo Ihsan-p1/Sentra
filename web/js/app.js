@@ -136,10 +136,12 @@ async function startNewChat() {
     // Add welcome message back
     const welcomeHtml = `
         <div class="flex gap-3 animate-fade">
-            <div class="w-10 h-10 rounded-xl logo-container flex items-center justify-center text-white text-sm font-bold flex-shrink-0 logo-glow">AI</div>
+            <div class="w-10 h-10 rounded-xl overflow-hidden flex-shrink-0">
+                <img src="img/sentra-logo.png" alt="AI" class="w-full h-full object-cover" style="filter: sepia(100%) saturate(300%) hue-rotate(-10deg) brightness(0.7);">
+            </div>
             <div class="bubble-bot p-4 rounded-2xl rounded-tl-none max-w-[85%]">
-                <p class="chat-text font-semibold mb-1">👋 New conversation started!</p>
-                <p class="chat-text-secondary text-sm">I'm ready to help with your questions about Indonesian politics and media framing. What would you like to know?</p>
+                <p class="chat-text font-semibold mb-1">New conversation started!</p>
+                <p class="chat-text-secondary text-sm">I'm ready to help analyze media bias and detect AI hallucinations. What would you like to know?</p>
             </div>
         </div>
     `;
@@ -185,11 +187,12 @@ function appendMessage(text, sender) {
 
     const avatar = document.createElement('div');
     if (sender === 'user') {
-        avatar.className = 'w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center text-white text-sm font-bold flex-shrink-0';
-        avatar.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
+        avatar.className = 'w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold flex-shrink-0';
+        avatar.style.background = 'var(--btn-primary-bg)';
+        avatar.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F3E9DC" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
     } else {
-        avatar.className = 'w-10 h-10 rounded-xl logo-container flex items-center justify-center text-white text-sm font-bold flex-shrink-0 logo-glow';
-        avatar.innerText = 'AI';
+        avatar.className = 'w-10 h-10 rounded-xl overflow-hidden flex-shrink-0';
+        avatar.innerHTML = '<img src="img/sentra-logo.png" alt="AI" class="w-full h-full object-cover" style="filter: sepia(100%) saturate(300%) hue-rotate(-10deg) brightness(0.7);">';
     }
 
     const bubble = document.createElement('div');
@@ -215,11 +218,13 @@ function appendLoading() {
     div.id = id;
     div.className = 'flex gap-3 animate-fade';
     div.innerHTML = `
-        <div class="w-10 h-10 rounded-xl logo-container flex items-center justify-center text-white text-sm font-bold flex-shrink-0 logo-glow">AI</div>
+        <div class="w-10 h-10 rounded-xl overflow-hidden flex-shrink-0">
+            <img src="img/sentra-logo.png" alt="AI" class="w-full h-full object-cover" style="filter: sepia(100%) saturate(300%) hue-rotate(-10deg) brightness(0.7);">
+        </div>
         <div class="bubble-bot p-4 rounded-2xl rounded-tl-none flex items-center gap-2">
-            <div class="loading-dot w-2.5 h-2.5 rounded-full" style="background: var(--text-accent)"></div>
-            <div class="loading-dot w-2.5 h-2.5 rounded-full" style="background: var(--glass-border)"></div>
-            <div class="loading-dot w-2.5 h-2.5 rounded-full" style="background: var(--text-accent)"></div>
+            <div class="loading-dot w-2.5 h-2.5 rounded-full"></div>
+            <div class="loading-dot w-2.5 h-2.5 rounded-full"></div>
+            <div class="loading-dot w-2.5 h-2.5 rounded-full"></div>
             <span class="chat-text-secondary text-sm ml-2">Analyzing sources...</span>
         </div>
     `;
@@ -269,14 +274,15 @@ function updateSidebar(data) {
             const keywordsB = comparison.framing.model_b?.keywords[media] || [];
 
             const item = document.createElement('div');
-            item.className = 'bg-slate-800/50 p-2 rounded border border-slate-700/50';
+            item.className = 'p-2 rounded-lg';
+            item.style.cssText = 'background: var(--bg-secondary); border: 1px solid var(--border-color);';
             item.innerHTML = `
-                <span class="text-[10px] font-bold uppercase text-cyan-400">${media.replace('_', ' ')}</span>
+                <span class="text-[10px] font-bold uppercase" style="color: var(--color-chestnut);">${media.replace('_', ' ')}</span>
                 <div class="grid grid-cols-2 gap-2 mt-1">
-                    <div class="text-[10px] text-indigo-300 bg-indigo-500/10 p-1.5 rounded">
+                    <div class="text-[10px] p-1.5 rounded" style="color: var(--text-secondary); background: var(--factual-bg); border: 1px solid var(--factual-border);">
                         <strong>A:</strong> ${keywordsA.join(', ') || 'N/A'}
                     </div>
-                    <div class="text-[10px] text-slate-400 bg-slate-700/50 p-1.5 rounded">
+                    <div class="text-[10px] p-1.5 rounded" style="color: var(--text-secondary); background: var(--glass-panel-bg); border: 1px solid var(--border-color);">
                         <strong>B:</strong> ${keywordsB.join(', ') || 'N/A'}
                     </div>
                 </div>
@@ -353,10 +359,12 @@ function updateLabel(elementId, ratioString) {
 
     if (unver > 0) {
         el.innerText = 'Weak Alignment';
-        el.className = 'text-[10px] text-amber-400';
+        el.className = 'text-[10px] font-medium';
+        el.style.color = 'var(--color-hallucination)';  // Red - Hallucination risk
     } else {
         el.innerText = 'Strong Alignment';
-        el.className = 'text-[10px] text-emerald-400';
+        el.className = 'text-[10px] font-medium';
+        el.style.color = 'var(--color-factual)';  // Green - Factual confidence
     }
 }
 
