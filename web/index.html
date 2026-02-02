@@ -4,526 +4,58 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sentra - Media Framing Analysis</title>
+    <title>Sentra - Media Bias Analysis & AI Hallucination Detection</title>
+    <meta name="description"
+        content="Analyze media bias and detect AI hallucinations using RAG-powered chatbot for Indonesian election coverage">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="img/favicon.png">
+    <link rel="apple-touch-icon" href="img/favicon.png">
+
+    <!-- External Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
-        rel="stylesheet">
-    <style>
-        /* Theme Variables */
-        :root {
-            /* Light Theme - Complete Palette: F5E8C7, F7E7BD, DEBA9D, D9C6A5, C7B7A3, EADBC8 */
-            --bg-primary: linear-gradient(135deg, #F5E8C7 0%, #EADBC8 30%, #F7E7BD 60%, #F5E8C7 100%);
-            --aurora-1: rgba(222, 186, 157, 0.3);
-            --aurora-2: rgba(199, 183, 163, 0.25);
-            --aurora-3: rgba(234, 219, 200, 0.2);
-            --orb-1: rgba(222, 186, 157, 0.35);
-            --orb-2: rgba(217, 198, 165, 0.3);
-            --orb-3: rgba(199, 183, 163, 0.3);
-            --orb-blend: multiply;
-            --glass-bg: linear-gradient(135deg, #EADBC8, #F7E7BD);
-            --glass-border: #C7B7A3;
-            --glass-shadow: rgba(150, 120, 90, 0.2);
-            --glass-panel-bg: #F7E7BD;
-            --glow-color: rgba(199, 183, 163, 0.5);
-            --glow-accent: rgba(217, 198, 165, 0.4);
-            --bubble-user: linear-gradient(135deg, #C7B7A3, #D9C6A5);
-            --bubble-user-shadow: rgba(150, 120, 90, 0.3);
-            --bubble-bot: #ffffff;
-            --bubble-bot-border: #D9C6A5;
-            --bubble-bot-shadow: rgba(100, 70, 40, 0.1);
-            --text-primary: #1a1410;
-            --text-secondary: #2d2319;
-            --text-accent: #3d3028;
-            --text-heading: #1a1410;
-            --scrollbar-track: #EADBC8;
-            --scrollbar-thumb: linear-gradient(180deg, #DEBA9D, #C7B7A3);
-            --input-bg: #ffffff;
-            --input-border: #D9C6A5;
-            --header-title: #1a1410;
-            --header-subtitle: #3d3028;
-            --btn-gradient: linear-gradient(to right, #DEBA9D, #D9C6A5);
-            --btn-border: #C7B7A3;
-            --btn-text: #1a1410;
-            --logo-gradient: linear-gradient(to bottom right, #DEBA9D, #C7B7A3, #D9C6A5);
-        }
 
-        [data-theme="dark"] {
-            /* Dark Theme (Original Purple/Cyan) */
-            --bg-primary: linear-gradient(135deg, #030712 0%, #0c0a1f 30%, #120a28 60%, #030712 100%);
-            --aurora-1: rgba(139, 92, 246, 0.4);
-            --aurora-2: rgba(6, 182, 212, 0.35);
-            --aurora-3: rgba(236, 72, 153, 0.25);
-            --orb-1: rgba(139, 92, 246, 0.5);
-            --orb-2: rgba(6, 182, 212, 0.4);
-            --orb-3: rgba(236, 72, 153, 0.4);
-            --orb-blend: screen;
-            --glass-bg: linear-gradient(135deg, rgba(15, 23, 42, 0.9), rgba(30, 27, 75, 0.7));
-            --glass-border: rgba(139, 92, 246, 0.3);
-            --glass-shadow: rgba(0, 0, 0, 0.4);
-            --glass-panel-bg: rgba(15, 23, 42, 0.6);
-            --glow-color: rgba(6, 182, 212, 0.5);
-            --glow-accent: rgba(139, 92, 246, 0.3);
-            --bubble-user: linear-gradient(135deg, #6366f1, #8b5cf6, #a855f7);
-            --bubble-user-shadow: rgba(99, 102, 241, 0.4);
-            --bubble-bot: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(51, 65, 85, 0.7));
-            --bubble-bot-border: rgba(6, 182, 212, 0.2);
-            --bubble-bot-shadow: rgba(0, 0, 0, 0.3);
-            --text-primary: #e2e8f0;
-            --text-secondary: #94a3b8;
-            --text-accent: #22d3ee;
-            --text-heading: #a78bfa;
-            --scrollbar-track: rgba(15, 23, 42, 0.5);
-            --scrollbar-thumb: linear-gradient(180deg, #06b6d4, #8b5cf6);
-            --input-bg: rgba(15, 23, 42, 0.8);
-            --input-border: rgba(139, 92, 246, 0.3);
-            --header-title: #ffffff;
-            --header-subtitle: rgba(6, 182, 212, 0.8);
-            --btn-gradient: linear-gradient(to right, rgba(6, 182, 212, 0.2), rgba(139, 92, 246, 0.2));
-            --btn-border: rgba(6, 182, 212, 0.4);
-            --btn-text: #22d3ee;
-            --logo-gradient: linear-gradient(to bottom right, #06b6d4, #8b5cf6, #ec4899);
-        }
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-        * {
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background: var(--bg-primary);
-            background-attachment: fixed;
-            overflow: hidden;
-            transition: background 0.3s ease;
-        }
-
-        /* Aurora Background */
-        .bg-aurora {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background:
-                radial-gradient(ellipse 100% 80% at 10% 20%, var(--aurora-1), transparent 50%),
-                radial-gradient(ellipse 80% 60% at 90% 80%, var(--aurora-2), transparent 50%),
-                radial-gradient(ellipse 60% 50% at 50% 100%, var(--aurora-3), transparent 50%);
-            animation: aurora 10s ease-in-out infinite alternate;
-            pointer-events: none;
-            z-index: 0;
-            transition: background 0.5s ease;
-        }
-
-        @keyframes aurora {
-            0% {
-                filter: hue-rotate(0deg) brightness(1);
-            }
-
-            100% {
-                filter: hue-rotate(15deg) brightness(1.1);
-            }
-        }
-
-        /* Floating Orbs */
-        .orb {
-            position: fixed;
-            border-radius: 50%;
-            filter: blur(80px);
-            pointer-events: none;
-            mix-blend-mode: var(--orb-blend);
-            z-index: 0;
-            transition: background 0.5s ease;
-        }
-
-        .orb-1 {
-            width: 500px;
-            height: 500px;
-            background: radial-gradient(circle, var(--orb-1), transparent 60%);
-            top: -150px;
-            left: -100px;
-            animation: float1 15s ease-in-out infinite;
-        }
-
-        .orb-2 {
-            width: 400px;
-            height: 400px;
-            background: radial-gradient(circle, var(--orb-2), transparent 60%);
-            bottom: -100px;
-            right: -50px;
-            animation: float2 18s ease-in-out infinite;
-        }
-
-        .orb-3 {
-            width: 300px;
-            height: 300px;
-            background: radial-gradient(circle, var(--orb-3), transparent 60%);
-            top: 50%;
-            left: 40%;
-            animation: float3 12s ease-in-out infinite;
-        }
-
-        @keyframes float1 {
-
-            0%,
-            100% {
-                transform: translate(0, 0);
-            }
-
-            50% {
-                transform: translate(60px, 40px);
-            }
-        }
-
-        @keyframes float2 {
-
-            0%,
-            100% {
-                transform: translate(0, 0);
-            }
-
-            50% {
-                transform: translate(-50px, -60px);
-            }
-        }
-
-        @keyframes float3 {
-
-            0%,
-            100% {
-                transform: translate(0, 0) scale(1);
-            }
-
-            50% {
-                transform: translate(80px, -40px) scale(1.1);
-            }
-        }
-
-        /* Glass Cards */
-        .glass-card {
-            background: var(--glass-bg);
-            backdrop-filter: blur(20px) saturate(180%);
-            border: 1px solid var(--glass-border);
-            border-radius: 20px;
-            box-shadow: 0 8px 32px var(--glass-shadow), inset 0 1px 0 rgba(255, 255, 255, 0.3);
-            transition: background 0.3s ease, border 0.3s ease, box-shadow 0.3s ease;
-        }
-
-        .glass-panel {
-            background: var(--glass-panel-bg);
-            backdrop-filter: blur(16px);
-            border: 1px solid var(--glass-border);
-            border-radius: 16px;
-            transition: background 0.3s ease, border 0.3s ease;
-        }
-
-        /* Circular Progress */
-        .progress-ring {
-            transform: rotate(-90deg);
-        }
-
-        .progress-ring-circle {
-            transition: stroke-dashoffset 0.6s ease;
-            stroke-linecap: round;
-        }
-
-        /* Warm Glow Border */
-        .neon-border {
-            box-shadow: 0 0 20px rgba(180, 140, 100, 0.3), inset 0 0 20px rgba(180, 140, 100, 0.05);
-            animation: neon-pulse 3s ease-in-out infinite;
-        }
-
-        @keyframes neon-pulse {
-
-            0%,
-            100% {
-                box-shadow: 0 0 20px rgba(180, 140, 100, 0.3);
-            }
-
-            50% {
-                box-shadow: 0 0 40px rgba(180, 140, 100, 0.5);
-            }
-        }
-
-        /* Logo Glow - Warm tones */
-        .logo-glow {
-            animation: logo-pulse 3s ease-in-out infinite;
-        }
-
-        @keyframes logo-pulse {
-
-            0%,
-            100% {
-                box-shadow: 0 0 20px rgba(180, 140, 100, 0.5), 0 0 40px rgba(160, 100, 80, 0.3);
-            }
-
-            50% {
-                box-shadow: 0 0 30px rgba(180, 140, 100, 0.7), 0 0 60px rgba(160, 100, 80, 0.4);
-            }
-        }
-
-        /* Text Glow */
-        .text-glow {
-            text-shadow: 0 0 10px var(--glow-accent), 0 0 30px var(--glow-accent);
-        }
-
-        /* Chat Bubbles */
-        .bubble-user {
-            background: var(--bubble-user);
-            box-shadow: 0 4px 20px var(--bubble-user-shadow);
-            transition: background 0.3s ease, box-shadow 0.3s ease;
-        }
-
-        .bubble-bot {
-            background: var(--bubble-bot);
-            border: 1px solid var(--bubble-bot-border);
-            box-shadow: 0 4px 20px var(--bubble-bot-shadow);
-            transition: background 0.3s ease, border 0.3s ease, box-shadow 0.3s ease;
-        }
-
-        /* Input Glow */
-        .input-glow {
-            transition: all 0.3s ease;
-        }
-
-        .input-glow:focus {
-            box-shadow: 0 0 0 3px rgba(180, 140, 100, 0.3), 0 0 30px rgba(180, 140, 100, 0.2);
-        }
-
-        /* Scrollbar - Warm theme */
-        ::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: rgba(250, 240, 225, 0.5);
-            border-radius: 3px;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: linear-gradient(180deg, #c4956a, #8b6252);
-            border-radius: 3px;
-        }
-
-        /* Loading Animation */
-        @keyframes bounce {
-
-            0%,
-            80%,
-            100% {
-                transform: scale(0.8);
-            }
-
-            40% {
-                transform: scale(1.2);
-            }
-        }
-
-        .loading-dot {
-            animation: bounce 1.4s infinite ease-in-out both;
-        }
-
-        .loading-dot:nth-child(1) {
-            animation-delay: -0.32s;
-        }
-
-        .loading-dot:nth-child(2) {
-            animation-delay: -0.16s;
-        }
-
-        /* Fade In */
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(15px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .animate-fade {
-            animation: fadeIn 0.4s ease-out forwards;
-        }
-
-        /* Source Card Hover */
-        .source-card {
-            transition: all 0.3s ease;
-        }
-
-        .source-card:hover {
-            transform: translateY(-2px);
-            border-color: rgba(6, 182, 212, 0.5);
-            box-shadow: 0 8px 25px rgba(6, 182, 212, 0.15);
-        }
-
-        /* Markdown - Theme aware */
-        .response-content {
-            color: var(--text-primary);
-        }
-
-        .response-content h2 {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: var(--text-heading);
-            margin: 1rem 0 0.5rem;
-            border-bottom: 1px solid var(--glass-border);
-            padding-bottom: 0.25rem;
-        }
-
-        .response-content h3 {
-            font-size: 1rem;
-            font-weight: 600;
-            color: var(--text-heading);
-            margin-top: 0.75rem;
-        }
-
-        .response-content ul,
-        .response-content ol {
-            margin-left: 1.25rem;
-            margin-top: 0.5rem;
-        }
-
-        .response-content li {
-            margin-bottom: 0.25rem;
-            color: var(--text-primary);
-        }
-
-        .response-content li::marker {
-            color: var(--text-accent);
-        }
-
-        .response-content strong {
-            color: var(--text-primary);
-            font-weight: 700;
-        }
-
-        .response-content p {
-            color: var(--text-primary);
-            margin-bottom: 0.75rem;
-        }
-
-        /* Status Badge */
-        .status-badge {
-            animation: status-pulse 2s ease-in-out infinite;
-        }
-
-        @keyframes status-pulse {
-
-            0%,
-            100% {
-                opacity: 1;
-                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
-            }
-
-            50% {
-                opacity: 0.8;
-                box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
-            }
-        }
-
-        /* Theme-aware classes */
-        .header-title {
-            color: var(--header-title);
-            transition: color 0.3s ease;
-        }
-
-        .header-subtitle {
-            color: var(--header-subtitle);
-            transition: color 0.3s ease;
-        }
-
-        .theme-btn {
-            background: var(--btn-gradient);
-            border-color: var(--btn-border);
-        }
-
-        .theme-btn:hover {
-            opacity: 0.8;
-        }
-
-        .theme-icon {
-            color: var(--btn-text);
-        }
-
-        .theme-text {
-            color: var(--btn-text);
-        }
-
-        .action-btn {
-            background: var(--btn-gradient);
-            border-color: var(--btn-border);
-        }
-
-        .action-btn:hover {
-            opacity: 0.8;
-        }
-
-        .logo-container {
-            background: var(--logo-gradient);
-            transition: background 0.3s ease;
-        }
-
-        .btn-icon {
-            color: var(--btn-text);
-        }
-
-        .btn-text {
-            color: var(--btn-text);
-        }
-
-        .chat-text {
-            color: var(--text-primary);
-        }
-
-        .chat-text-secondary {
-            color: var(--text-secondary);
-        }
-    </style>
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="css/styles.css">
 </head>
 
-<body class="h-screen flex relative overflow-hidden">
-    <!-- Aurora Background -->
-    <div class="bg-aurora"></div>
-    <div class="orb orb-1"></div>
-    <div class="orb orb-2"></div>
-    <div class="orb orb-3"></div>
+<body class="h-screen flex overflow-hidden">
 
     <!-- Main Container -->
-    <div class="flex w-full h-full p-4 gap-4 relative z-10">
+    <div class="flex w-full h-full p-4 gap-4">
 
         <!-- Left: Chat Panel -->
         <div class="flex-1 flex flex-col glass-card p-0 overflow-hidden">
-            <!-- Header Inside Chat -->
-            <div class="flex items-center justify-between px-6 py-4 border-b border-amber-700/20">
-                <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 logo-container rounded-2xl flex items-center justify-center logo-glow">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 100 100" fill="none"
-                            stroke="white" stroke-width="4">
-                            <path
-                                d="M50 15 C30 15 15 35 15 50 C15 65 30 80 50 65 C70 80 85 65 85 50 C85 35 70 15 50 15" />
-                            <path d="M50 15 C35 30 35 55 50 65 C65 55 65 30 50 15" />
-                            <ellipse cx="50" cy="65" rx="20" ry="15" />
-                        </svg>
+
+            <!-- Header -->
+            <div class="flex items-center justify-between px-6 py-4 border-b"
+                style="border-color: var(--border-color);">
+                <div class="flex items-center gap-3">
+                    <!-- Logo - Using Sentra Image with color filter to match theme -->
+                    <div class="w-11 h-11 rounded-xl overflow-hidden">
+                        <img src="img/sentra-logo.png" alt="Sentra Logo" class="w-full h-full object-cover"
+                            style="filter: sepia(100%) saturate(300%) hue-rotate(-10deg) brightness(0.7);">
                     </div>
                     <div>
-                        <h1 class="text-2xl font-bold header-title text-glow">SENTRA</h1>
-                        <p class="text-xs header-subtitle">Indonesia Election Media Framing Analysis</p>
+                        <h1 class="text-xl font-bold header-title">SENTRA</h1>
+                        <p class="text-xs header-subtitle">Media Bias Analysis & AI Hallucination Detection</p>
                     </div>
                 </div>
+
                 <div class="flex items-center gap-3">
-                    <!-- Theme Toggle Button -->
+                    <!-- Theme Toggle -->
                     <button id="theme-toggle" onclick="toggleTheme()"
-                        class="flex items-center gap-2 theme-btn border rounded-full px-4 py-1.5 transition-all group">
-                        <!-- Sun Icon (Light Mode) -->
+                        class="flex items-center gap-2 theme-btn rounded-full px-3 py-1.5 transition-all text-sm">
                         <svg id="sun-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
                             fill="none" stroke="currentColor" stroke-width="2" class="theme-icon hidden">
                             <circle cx="12" cy="12" r="5" />
                             <path
                                 d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
                         </svg>
-                        <!-- Moon Icon (Dark Mode) -->
                         <svg id="moon-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14"
                             viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="theme-icon">
                             <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
@@ -531,9 +63,9 @@
                         <span id="theme-label" class="text-xs font-medium theme-text">Dark</span>
                     </button>
 
-                    <!-- New Chat Button -->
+                    <!-- New Chat -->
                     <button onclick="startNewChat()"
-                        class="flex items-center gap-2 action-btn border rounded-full px-4 py-1.5 transition-all group">
+                        class="flex items-center gap-2 action-btn rounded-full px-3 py-1.5 transition-all text-sm">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" stroke-width="2" class="btn-icon">
                             <path d="M12 5v14M5 12h14" />
@@ -541,11 +73,10 @@
                         <span class="text-xs font-medium btn-text">New Chat</span>
                     </button>
 
-                    <!-- Status Badge -->
-                    <div
-                        class="status-badge flex items-center gap-2 bg-emerald-500/20 border border-emerald-500/40 rounded-full px-4 py-1.5">
-                        <span class="w-2 h-2 bg-emerald-400 rounded-full"></span>
-                        <span class="text-xs font-medium text-emerald-600">Active</span>
+                    <!-- Status - Using Factual Green -->
+                    <div class="status-badge flex items-center gap-2 rounded-full px-3 py-1.5">
+                        <span class="w-2 h-2 rounded-full" style="background: var(--color-factual);"></span>
+                        <span class="text-xs font-medium">Active</span>
                     </div>
                 </div>
             </div>
@@ -554,44 +85,45 @@
             <div id="chat-container" class="flex-1 overflow-y-auto px-6 py-4 space-y-4">
                 <!-- Welcome -->
                 <div class="flex gap-3 animate-fade">
-                    <div
-                        class="w-10 h-10 rounded-xl logo-container flex items-center justify-center text-white text-sm font-bold flex-shrink-0 logo-glow">
-                        AI</div>
+                    <!-- AI Avatar - Using Sentra Logo with color filter -->
+                    <div class="w-10 h-10 rounded-xl overflow-hidden flex-shrink-0">
+                        <img src="img/sentra-logo.png" alt="AI" class="w-full h-full object-cover"
+                            style="filter: sepia(100%) saturate(300%) hue-rotate(-10deg) brightness(0.7);">
+                    </div>
                     <div class="bubble-bot p-4 rounded-2xl rounded-tl-none max-w-[85%]">
-                        <p class="chat-text font-semibold mb-1">👋 Welcome to Sentra!</p>
-                        <p class="chat-text-secondary text-sm">I analyze media framing in Indonesia's 2024 election. Ask
-                            me
-                            about how different news outlets report political events.</p>
+                        <p class="chat-text font-semibold mb-1">Welcome to Sentra!</p>
+                        <p class="chat-text-secondary text-sm">I help you analyze media bias and detect AI
+                            hallucinations in news coverage. Ask me about how different outlets report on events, or
+                            submit text for bias analysis.</p>
                     </div>
                 </div>
             </div>
 
             <!-- Input Area -->
-            <div class="px-6 py-4 border-t border-purple-500/20 bg-slate-900/30">
+            <div class="px-6 py-4 border-t" style="border-color: var(--border-color); background: var(--bg-secondary);">
                 <div class="flex items-center justify-between mb-3">
-                    <span class="text-xs text-slate-500">Powered by RAG + LLM</span>
-                    <label class="flex items-center gap-2 cursor-pointer group">
+                    <span class="text-xs" style="color: var(--text-muted);">Powered by RAG + LLM</span>
+                    <label class="flex items-center gap-2 cursor-pointer">
                         <div class="relative">
                             <input type="checkbox" id="mode-toggle" class="peer sr-only">
+                            <div class="w-9 h-5 rounded-full transition-all peer-checked:bg-green-600"
+                                style="background: var(--border-color);"></div>
                             <div
-                                class="w-10 h-5 bg-slate-700 rounded-full peer-checked:bg-gradient-to-r peer-checked:from-emerald-500 peer-checked:to-teal-400 transition-all">
-                            </div>
-                            <div
-                                class="absolute top-0.5 left-0.5 bg-white rounded-full h-4 w-4 transition-all peer-checked:translate-x-5 shadow-md">
+                                class="absolute top-0.5 left-0.5 bg-white rounded-full h-4 w-4 transition-all peer-checked:translate-x-4 shadow-sm">
                             </div>
                         </div>
-                        <span class="text-xs font-medium text-slate-400 group-hover:text-slate-300">Reduce
+                        <span class="text-xs font-medium" style="color: var(--text-secondary);">Reduce
                             Hallucination</span>
                     </label>
                 </div>
                 <form id="chat-form" class="relative">
-                    <input type="text" id="user-input"
-                        class="w-full bg-slate-800/60 border border-purple-500/30 rounded-2xl px-5 py-4 pr-14 text-sm text-white placeholder-slate-400 outline-none input-glow"
-                        placeholder="Ask about media framing in the 2024 election...">
+                    <input type="text" id="user-input" class="w-full input-glow rounded-xl px-4 py-3 pr-12 text-sm"
+                        placeholder="Ask about media bias or analyze news coverage...">
                     <button type="submit"
-                        class="absolute right-2 top-1/2 -translate-y-1/2 p-3 bg-gradient-to-r from-cyan-500 to-purple-600 text-white rounded-xl hover:scale-105 transition-transform">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2">
+                        class="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-lg transition-transform hover:scale-105"
+                        style="background: var(--btn-primary-bg);">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                            stroke="white" stroke-width="2">
                             <line x1="22" y1="2" x2="11" y2="13"></line>
                             <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
                         </svg>
@@ -600,104 +132,117 @@
             </div>
         </div>
 
-        <!-- Right: Dashboard Sidebar -->
-        <div class="w-[400px] flex flex-col gap-4 overflow-y-auto">
+        <!-- Right: Sidebar -->
+        <div class="w-[380px] flex flex-col gap-4 overflow-y-auto">
 
-            <!-- Model Comparison -->
+            <!-- Model Analysis -->
             <div class="glass-card p-4">
-                <h3 class="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+                <h3 class="text-sm font-semibold mb-4 flex items-center gap-2" style="color: var(--text-primary);">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" class="text-cyan-400">
+                        stroke="currentColor" stroke-width="2" style="color: var(--color-chestnut);">
                         <path d="M3 3v18h18" />
                         <path d="m19 9-5 5-4-4-3 3" />
                     </svg>
-                    Model Comparison
+                    Analysis Results
                 </h3>
 
-                <!-- Default State -->
+                <!-- Empty State -->
                 <div id="sidebar-empty" class="text-center py-8">
-                    <div class="w-16 h-16 glass-panel mx-auto mb-4 flex items-center justify-center rounded-2xl">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="1.5" class="text-cyan-400/50">
+                    <div class="w-14 h-14 glass-panel mx-auto mb-3 flex items-center justify-center rounded-xl">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="1.5" style="color: var(--text-muted);">
                             <circle cx="11" cy="11" r="8" />
                             <path d="m21 21-4.3-4.3" />
                         </svg>
                     </div>
-                    <p class="text-slate-500 text-sm">Analysis will appear after you ask a question</p>
+                    <p class="text-sm" style="color: var(--text-muted);">Analysis will appear after you ask a question
+                    </p>
                 </div>
 
                 <!-- Results -->
                 <div id="sidebar-content" class="hidden space-y-4">
-                    <!-- Confidence Circles -->
-                    <div class="grid grid-cols-2 gap-4">
-                        <!-- Model A -->
-                        <div class="glass-panel p-4 text-center neon-border">
-                            <p class="text-xs text-indigo-400 font-medium mb-2">MODEL A</p>
-                            <div class="relative w-20 h-20 mx-auto mb-2">
+                    <!-- Confidence -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <!-- Model A - Primary -->
+                        <div class="glass-panel p-3 text-center neon-border">
+                            <p class="text-xs font-semibold mb-2" style="color: var(--text-secondary);">MODEL A</p>
+                            <div class="relative w-16 h-16 mx-auto mb-2">
                                 <svg class="progress-ring w-full h-full" viewBox="0 0 80 80">
-                                    <circle cx="40" cy="40" r="35" stroke="rgba(99,102,241,0.2)" stroke-width="6"
+                                    <circle cx="40" cy="40" r="35" stroke="var(--border-color)" stroke-width="5"
                                         fill="none" />
                                     <circle id="progress-a" class="progress-ring-circle" cx="40" cy="40" r="35"
-                                        stroke="url(#gradA)" stroke-width="6" fill="none" stroke-dasharray="220"
-                                        stroke-dashoffset="220" />
-                                    <defs>
-                                        <linearGradient id="gradA" x1="0%" y1="0%" x2="100%" y2="0%">
-                                            <stop offset="0%" stop-color="#6366f1" />
-                                            <stop offset="100%" stop-color="#a855f7" />
-                                        </linearGradient>
-                                    </defs>
+                                        stroke="var(--color-chestnut)" stroke-width="5" fill="none"
+                                        stroke-dasharray="220" stroke-dashoffset="220" />
                                 </svg>
                                 <span id="confidence-a"
-                                    class="absolute inset-0 flex items-center justify-center text-xl font-bold text-indigo-400">0%</span>
+                                    class="absolute inset-0 flex items-center justify-center text-lg font-bold"
+                                    style="color: var(--text-secondary);">0%</span>
                             </div>
-                            <p id="confidence-a-method" class="text-[10px] text-slate-400">Random Forest</p>
+                            <p id="confidence-a-method" class="text-[10px]" style="color: var(--text-muted);">Random
+                                Forest</p>
                         </div>
                         <!-- Model B -->
-                        <div class="glass-panel p-4 text-center">
-                            <p class="text-xs text-slate-400 font-medium mb-2">MODEL B</p>
-                            <div class="relative w-20 h-20 mx-auto mb-2">
+                        <div class="glass-panel p-3 text-center">
+                            <p class="text-xs font-semibold mb-2" style="color: var(--text-secondary);">MODEL B</p>
+                            <div class="relative w-16 h-16 mx-auto mb-2">
                                 <svg class="progress-ring w-full h-full" viewBox="0 0 80 80">
-                                    <circle cx="40" cy="40" r="35" stroke="rgba(100,116,139,0.2)" stroke-width="6"
+                                    <circle cx="40" cy="40" r="35" stroke="var(--border-color)" stroke-width="5"
                                         fill="none" />
                                     <circle id="progress-b" class="progress-ring-circle" cx="40" cy="40" r="35"
-                                        stroke="rgba(148,163,184,0.8)" stroke-width="6" fill="none"
+                                        stroke="var(--text-secondary)" stroke-width="5" fill="none"
                                         stroke-dasharray="220" stroke-dashoffset="220" />
                                 </svg>
                                 <span id="confidence-b"
-                                    class="absolute inset-0 flex items-center justify-center text-xl font-bold text-slate-300">0%</span>
+                                    class="absolute inset-0 flex items-center justify-center text-lg font-bold"
+                                    style="color: var(--text-secondary);">0%</span>
                             </div>
-                            <p id="confidence-b-method" class="text-[10px] text-slate-500">Heuristic</p>
+                            <p id="confidence-b-method" class="text-[10px]" style="color: var(--text-muted);">Heuristic
+                            </p>
                         </div>
                     </div>
 
-                    <!-- Hallucination Detection -->
-                    <div class="glass-panel p-4">
-                        <h4 class="text-xs font-semibold text-white mb-3 flex items-center gap-2">
+                    <!-- Hallucination Detection - SEMANTIC COLORS -->
+                    <div class="glass-panel p-3">
+                        <h4 class="text-xs font-semibold mb-3 flex items-center gap-2"
+                            style="color: var(--text-primary);">
                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" class="text-cyan-400">
+                                fill="none" stroke="currentColor" stroke-width="2"
+                                style="color: var(--color-hallucination);">
                                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />
                             </svg>
                             Hallucination Detection
                         </h4>
-                        <div class="grid grid-cols-2 gap-3">
-                            <div class="bg-indigo-500/10 rounded-lg p-3 border border-indigo-500/20">
-                                <p class="text-[10px] text-indigo-400 uppercase font-medium">Model A</p>
-                                <p id="hallu-a-ratio" class="text-lg font-bold text-indigo-400">0/0</p>
-                                <p id="hallu-a-label" class="text-[10px] text-emerald-400">Strong Alignment</p>
+                        <div class="grid grid-cols-2 gap-2">
+                            <!-- Model A Box -->
+                            <div class="p-2 rounded-lg"
+                                style="background: var(--factual-bg); border: 1px solid var(--factual-border);">
+                                <p class="text-[10px] uppercase font-semibold" style="color: var(--text-secondary);">
+                                    Model A</p>
+                                <p id="hallu-a-ratio" class="text-base font-bold" style="color: var(--text-secondary);">
+                                    0/0</p>
+                                <p id="hallu-a-label" class="text-[10px] font-medium"
+                                    style="color: var(--color-factual);">Strong Alignment</p>
                             </div>
-                            <div class="bg-slate-700/30 rounded-lg p-3 border border-slate-600/30">
-                                <p class="text-[10px] text-slate-400 uppercase font-medium">Model B</p>
-                                <p id="hallu-b-ratio" class="text-lg font-bold text-slate-300">0/0</p>
-                                <p id="hallu-b-label" class="text-[10px] text-emerald-400">Strong Alignment</p>
+                            <!-- Model B Box -->
+                            <div class="p-2 rounded-lg"
+                                style="background: var(--bg-secondary); border: 1px solid var(--border-color);">
+                                <p class="text-[10px] uppercase font-semibold" style="color: var(--text-secondary);">
+                                    Model B</p>
+                                <p id="hallu-b-ratio" class="text-base font-bold" style="color: var(--text-secondary);">
+                                    0/0</p>
+                                <p id="hallu-b-label" class="text-[10px] font-medium"
+                                    style="color: var(--color-factual);">Strong Alignment</p>
                             </div>
                         </div>
                     </div>
 
                     <!-- Framing Keywords -->
-                    <div class="glass-panel p-4">
-                        <h4 class="text-xs font-semibold text-white mb-3 flex items-center gap-2">
+                    <div class="glass-panel p-3">
+                        <h4 class="text-xs font-semibold mb-3 flex items-center gap-2"
+                            style="color: var(--text-primary);">
                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" class="text-cyan-400">
+                                fill="none" stroke="currentColor" stroke-width="2"
+                                style="color: var(--color-chestnut);">
                                 <path d="M4 7V4h16v3" />
                                 <path d="M9 20h6" />
                                 <path d="M12 4v16" />
@@ -711,22 +256,23 @@
 
             <!-- Sources -->
             <div class="glass-card p-4 flex-1">
-                <h3 class="text-sm font-semibold text-cyan-400 mb-3 flex items-center gap-2">
+                <h3 class="text-sm font-semibold mb-3 flex items-center gap-2" style="color: var(--color-chestnut);">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2">
                         <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
                         <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
                     </svg>
-                    Sources <span id="source-count" class="text-slate-400 font-normal">(0)</span>
+                    Sources <span id="source-count" style="color: var(--text-muted);" class="font-normal">(0)</span>
                 </h3>
                 <div id="sources-list" class="space-y-2 max-h-[250px] overflow-y-auto">
-                    <p class="text-slate-500 text-xs text-center py-6">Sources will appear here</p>
+                    <p class="text-xs text-center py-6" style="color: var(--text-muted);">Sources will appear here</p>
                 </div>
             </div>
         </div>
     </div>
 
-    <script src="js/app.js?v=3"></script>
+    <!-- JavaScript -->
+    <script src="js/app.js?v=8"></script>
 </body>
 
 </html>
