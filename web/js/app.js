@@ -10,6 +10,7 @@ console.log("APP JS V3 LOADED - CHATBOT MODE");
 // ============================================================================
 let sessionId = null;  // Will be set by server on first message
 let conversationTurns = 0;
+let messageHistory = []; // Store API responses for historical review
 
 // ============================================================================
 // THEME TOGGLE
@@ -96,7 +97,7 @@ chatForm.addEventListener('submit', async (e) => {
         updateConversationIndicator();
 
         // Add Bot Message
-        appendMessage(marked.parse(data.answer), 'bot');
+        appendMessage(marked.parse(data.answer), 'bot', data);
 
         // Update Sidebar
         updateSidebar(data);
@@ -129,6 +130,7 @@ async function startNewChat() {
     // Reset local state
     sessionId = null;
     conversationTurns = 0;
+    messageHistory = [];
 
     // Clear chat UI
     chatContainer.innerHTML = '';
@@ -168,6 +170,7 @@ async function startNewChat() {
     if (halluListB) halluListB.innerHTML = '';
 
     updateConversationIndicator();
+    updateConversationIndicator();
     console.log("[Session] New chat started - all data cleared");
 }
 
@@ -181,7 +184,7 @@ function updateConversationIndicator() {
     }
 }
 
-function appendMessage(text, sender) {
+function appendMessage(text, sender, analysisData = null) {
     const div = document.createElement('div');
     div.className = `flex gap-3 ${sender === 'user' ? 'flex-row-reverse' : ''} animate-fade`;
 
@@ -202,6 +205,59 @@ function appendMessage(text, sender) {
     } else {
         bubble.className = 'bubble-bot p-4 rounded-2xl rounded-tl-none text-sm leading-relaxed max-w-[85%] response-content';
         bubble.innerHTML = text;
+
+        // If we have analysis data, add a "View Analysis" button
+        if (analysisData) {
+            const actionsDiv = document.createElement('div');
+            actionsDiv.className = 'mt-3 pt-3 border-t border-white/10 flex justify-end';
+
+            const viewBtn = document.createElement('button');
+            viewBtn.className = 'text-xs flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-black/5 transition-colors';
+            viewBtn.style.color = 'var(--color-chestnut)';
+            viewBtn.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                </svg>
+                View Analysis
+            `;
+
+            // Hover effect handling manually to respect variables
+            viewBtn.onmouseenter = () => viewBtn.style.backgroundColor = 'rgba(94, 48, 35, 0.08)';
+            viewBtn.onmouseleave = () => viewBtn.style.backgroundColor = 'transparent';
+
+            viewBtn.addEventListener('click', () => {
+                updateSidebar(analysisData);
+                // Optional: Scroll sidebar to top or highlight that it changed
+                const sidebar = document.querySelector('.w-\\[380px\\]');
+                if (sidebar) sidebar.scrollTo({ top: 0, behavior: 'smooth' });
+
+                // Visual feedback on button
+                viewBtn.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    Analysis Loaded
+                `;
+                setTimeout(() => {
+                    viewBtn.innerHTML = `
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                        View Analysis
+                    `;
+                }, 2000);
+            });
+
+            actionsDiv.appendChild(viewBtn);
+            bubble.appendChild(actionsDiv);
+
+            // Store in history if not already (safeguard)
+            if (!messageHistory.includes(analysisData)) {
+                messageHistory.push(analysisData);
+            }
+        }
     }
 
     div.appendChild(avatar);

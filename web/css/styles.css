@@ -520,3 +520,36 @@ body {
         transition-duration: 0.01ms !important;
     }
 }
+
+/* =====================================================
+   Custom Toggle Animation
+   ===================================================== */
+#mode-toggle:checked+#toggle-track {
+    background-color: var(--color-chestnut) !important;
+    animation: togglePulse 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+#mode-toggle:checked~#toggle-thumb {
+    transform: translateX(100%);
+    background-color: var(--bg-card);
+    box-shadow: -2px 0 8px rgba(0, 0, 0, 0.15);
+}
+
+@keyframes togglePulse {
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.05);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+#toggle-thumb {
+    /* Ensure the thumb has a nice shadow */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
