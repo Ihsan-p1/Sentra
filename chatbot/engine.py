@@ -19,7 +19,8 @@ from models.baseline.models import get_baseline_models
 from pipeline.embeddings import get_embedder
 
 # For LLM generation (using OpenAI or Ollama)
-from chatbot.llm_client import LLMClient 
+from chatbot.llm_client import LLMClient
+from chatbot.conversation_memory import conversation_memory
 
 class ChatbotEngine:
     """
@@ -53,7 +54,16 @@ class ChatbotEngine:
         self.baseline_models = get_baseline_models()
         print("[INFO] Loaded baseline models (Model B)")
         
-    async def process_query(self, query: str, mode: str = "default") -> Dict[str, Any]:
+        # Conversation memory for multi-turn chat
+        self.memory = conversation_memory
+        print("[INFO] Conversation memory initialized")
+        
+    async def process_query(
+        self, 
+        query: str, 
+        session_id: str = "default",
+        mode: str = "default"
+    ) -> Dict[str, Any]:
         """
         Main pipeline execution with A/B comparison.
         Now with AGGREGATED hallucination reporting for better UX.
@@ -70,11 +80,64 @@ class ChatbotEngine:
                     "mode": mode
                 }
 
+        # 0.5 CONTEXTUAL QUERY ENHANCEMENT
+        # If query is too short (continuation phrases), extract topic from conversation
+        retrieval_query = query
+        extracted_topic = None  # Store the specific topic user is asking about
+        affirmative_phrases = ["yes", "yeah", "yep", "sure", "ok", "okay", "please", "go ahead", "ya", "iya"]
+        continuation_phrases = ["tell me more", "more", "continue", "go on", "what else", "explain", "elaborate"]
+        
+        query_lower = query.strip().lower()
+        is_short_query = len(query.strip().split()) <= 3
+        is_affirmative = any(phrase in query_lower for phrase in affirmative_phrases)
+        is_continuation = any(phrase in query_lower for phrase in continuation_phrases)
+        
+        if is_short_query and (is_affirmative or is_continuation):
+            history = self.memory.get_history(session_id)
+            if history:
+                # PRIORITY 1: Extract topic from assistant's "Would you like to know more about X?" question
+                import re
+                for msg in reversed(history):
+                    if msg["role"] == "assistant":
+                        assistant_text = msg["content"]
+                        
+                        # Pattern to match "Would you like to know more about X?"
+                        patterns = [
+                            r"would you like to (?:know|learn|hear) more about (.+?)\?",
+                            r"want (?:me )?to (?:tell|explain) (?:you )?(?:more )?about (.+?)\?",
+                            r"interested in (?:learning|knowing) (?:more )?about (.+?)\?",
+                            r"shall i (?:tell|explain) (?:you )?(?:more )?about (.+?)\?",
+                        ]
+                        
+                        for pattern in patterns:
+                            match = re.search(pattern, assistant_text.lower())
+                            if match:
+                                extracted_topic = match.group(1).strip()
+                                # Clean up
+                                extracted_topic = extracted_topic.rstrip('.,!?')
+                                if len(extracted_topic) > 10:  # Valid topic
+                                    retrieval_query = extracted_topic
+                                    print(f"[INFO] ✓ Extracted follow-up topic: '{extracted_topic}'")
+                                    break
+                                else:
+                                    extracted_topic = None
+                        
+                        if extracted_topic:
+                            break
+                
+                # PRIORITY 2: Fallback to last substantive user query
+                if not extracted_topic:
+                    for msg in reversed(history):
+                        if msg["role"] == "user" and len(msg["content"].split()) > 3:
+                            retrieval_query = msg["content"]
+                            print(f"[INFO] Fallback to previous query: '{retrieval_query[:50]}...'")
+                            break
+        
         # 1. RETRIEVAL
         # Context Saturation Control
         top_k = 4 if mode == "reduce_hallucination" else None
         
-        retrieved_chunks = await self.retriever.retrieve(query, top_k=top_k)
+        retrieved_chunks = await self.retriever.retrieve(retrieval_query, top_k=top_k)
         
         # Flatten for certain analyses
         all_chunks_flat = self.retriever.flatten_results(retrieved_chunks)
@@ -140,12 +203,16 @@ class ChatbotEngine:
                 # Store the probability of the ACTUAL media source
                 framing_neural[media] = prediction.get(media, 0.0)
         
-        # 3. TEXT GENERATION (LLM) - Use Statistical framing (more interpretable keywords)
-        raw_response = await self.llm.generate_comparative_answer(
-            query, 
-            retrieved_chunks, 
-            framing_statistical,
-            mode=mode
+        # 2.5 GET CONVERSATION HISTORY for context
+        conversation_history = self.memory.format_for_llm(session_id, num_turns=5)
+        
+        # 3. TEXT GENERATION (LLM) - Use conversational prompt with history
+        raw_response = await self.llm.generate_conversational_response(
+            user_query=query, 
+            retrieved_chunks=retrieved_chunks, 
+            conversation_history=conversation_history,
+            mode=mode,
+            focus_topic=extracted_topic  # Pass the specific topic to focus on
         )
         
         # 4. HALLUCINATION DETECTION (Internal scoring, NOT per-sentence annotation)
@@ -238,9 +305,14 @@ class ChatbotEngine:
                     "confidence": d["confidence"]
                 })
         
+        # Store this conversation turn in memory
+        self.memory.add_message(session_id, "user", query)
+        self.memory.add_message(session_id, "assistant", final_answer)
+        
         return {
             "answer": final_answer,
             "raw_answer": raw_response,
+            "session_id": session_id,
             "framing_analysis": framing_statistical,
             "verification_summary": verification_result_a,
             "unsupported_claims": unsupported_a,

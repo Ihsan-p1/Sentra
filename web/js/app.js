@@ -3,14 +3,65 @@ const userInput = document.getElementById('user-input');
 const chatContainer = document.getElementById('chat-container');
 
 // CONFIRMATION OF UPDATE
-console.log("APP JS V2 LOADED");
+console.log("APP JS V3 LOADED - CHATBOT MODE");
 
+// ============================================================================
+// SESSION & CONVERSATION TRACKING
+// ============================================================================
+let sessionId = null;  // Will be set by server on first message
+let conversationTurns = 0;
+
+// ============================================================================
+// THEME TOGGLE
+// ============================================================================
+function toggleTheme() {
+    const html = document.documentElement;
+    const currentTheme = html.getAttribute('data-theme');
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+
+    html.setAttribute('data-theme', newTheme);
+    localStorage.setItem('sentra-theme', newTheme);
+    updateThemeButton(newTheme);
+    console.log('[Theme] Switched to:', newTheme);
+}
+
+function updateThemeButton(theme) {
+    const sunIcon = document.getElementById('sun-icon');
+    const moonIcon = document.getElementById('moon-icon');
+    const themeLabel = document.getElementById('theme-label');
+
+    if (theme === 'dark') {
+        sunIcon?.classList.remove('hidden');
+        moonIcon?.classList.add('hidden');
+        if (themeLabel) themeLabel.textContent = 'Light';
+    } else {
+        sunIcon?.classList.add('hidden');
+        moonIcon?.classList.remove('hidden');
+        if (themeLabel) themeLabel.textContent = 'Dark';
+    }
+}
+
+// Initialize theme on load
+(function initTheme() {
+    const savedTheme = localStorage.getItem('sentra-theme') || 'light';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    // Wait for DOM to be ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => updateThemeButton(savedTheme));
+    } else {
+        updateThemeButton(savedTheme);
+    }
+})();
+
+// ============================================================================
+// CHAT SUBMIT HANDLER
+// ============================================================================
 chatForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const message = userInput.value.trim();
     if (!message) return;
 
-    // Add User Message
+    // Add User Message to UI
     appendMessage(message, 'user');
     userInput.value = '';
 
@@ -24,11 +75,25 @@ chatForm.addEventListener('submit', async (e) => {
         const response = await fetch('/api/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message, mode })
+            body: JSON.stringify({
+                message,
+                mode,
+                session_id: sessionId  // Send session_id for continuity
+            })
         });
 
         const data = await response.json();
         document.getElementById(loadingId).remove();
+
+        // Update session_id from server response
+        if (data.session_id) {
+            sessionId = data.session_id;
+            console.log("[Session] Active session:", sessionId);
+        }
+
+        // Track conversation turns
+        conversationTurns++;
+        updateConversationIndicator();
 
         // Add Bot Message
         appendMessage(marked.parse(data.answer), 'bot');
@@ -43,6 +108,77 @@ chatForm.addEventListener('submit', async (e) => {
     }
 });
 
+// ============================================================================
+// NEW CHAT FUNCTION
+// ============================================================================
+async function startNewChat() {
+    // Clear session on server if exists
+    if (sessionId) {
+        try {
+            await fetch('/api/chat/clear', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ session_id: sessionId })
+            });
+            console.log("[Session] Cleared:", sessionId);
+        } catch (e) {
+            console.warn("Failed to clear session on server:", e);
+        }
+    }
+
+    // Reset local state
+    sessionId = null;
+    conversationTurns = 0;
+
+    // Clear chat UI
+    chatContainer.innerHTML = '';
+
+    // Add welcome message back
+    const welcomeHtml = `
+        <div class="flex gap-3 animate-fade">
+            <div class="w-10 h-10 rounded-xl logo-container flex items-center justify-center text-white text-sm font-bold flex-shrink-0 logo-glow">AI</div>
+            <div class="bubble-bot p-4 rounded-2xl rounded-tl-none max-w-[85%]">
+                <p class="chat-text font-semibold mb-1">👋 New conversation started!</p>
+                <p class="chat-text-secondary text-sm">I'm ready to help with your questions about Indonesian politics and media framing. What would you like to know?</p>
+            </div>
+        </div>
+    `;
+    chatContainer.innerHTML = welcomeHtml;
+
+    // Reset sidebar - hide content, show empty state
+    document.getElementById('sidebar-empty').classList.remove('hidden');
+    document.getElementById('sidebar-content').classList.add('hidden');
+
+    // Clear sources list
+    const sourcesList = document.getElementById('sources-list');
+    const sourceCount = document.getElementById('source-count');
+    if (sourcesList) sourcesList.innerHTML = '<p class="text-slate-500 text-[10px] text-center py-4">No sources yet</p>';
+    if (sourceCount) sourceCount.innerText = '(0)';
+
+    // Clear framing comparison
+    const framingDiv = document.getElementById('framing-comparison');
+    if (framingDiv) framingDiv.innerHTML = '';
+
+    // Clear hallucination lists
+    const halluListA = document.getElementById('hallucination-list-a');
+    const halluListB = document.getElementById('hallucination-list-b');
+    if (halluListA) halluListA.innerHTML = '';
+    if (halluListB) halluListB.innerHTML = '';
+
+    updateConversationIndicator();
+    console.log("[Session] New chat started - all data cleared");
+}
+
+function updateConversationIndicator() {
+    // Update UI to show conversation turn count (optional visual feedback)
+    const statusBadge = document.querySelector('.status-badge span:last-child');
+    if (statusBadge && conversationTurns > 0) {
+        statusBadge.textContent = `Turn ${conversationTurns}`;
+    } else if (statusBadge) {
+        statusBadge.textContent = 'Active';
+    }
+}
+
 function appendMessage(text, sender) {
     const div = document.createElement('div');
     div.className = `flex gap-3 ${sender === 'user' ? 'flex-row-reverse' : ''} animate-fade`;
@@ -52,7 +188,7 @@ function appendMessage(text, sender) {
         avatar.className = 'w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center text-white text-sm font-bold flex-shrink-0';
         avatar.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
     } else {
-        avatar.className = 'w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400 to-purple-600 flex items-center justify-center text-white text-sm font-bold flex-shrink-0 logo-glow';
+        avatar.className = 'w-10 h-10 rounded-xl logo-container flex items-center justify-center text-white text-sm font-bold flex-shrink-0 logo-glow';
         avatar.innerText = 'AI';
     }
 
@@ -61,7 +197,7 @@ function appendMessage(text, sender) {
         bubble.className = 'bubble-user p-4 rounded-2xl rounded-tr-none text-white text-sm max-w-[85%]';
         bubble.innerText = text;
     } else {
-        bubble.className = 'bubble-bot p-4 rounded-2xl rounded-tl-none text-slate-300 text-sm leading-relaxed max-w-[85%] response-content';
+        bubble.className = 'bubble-bot p-4 rounded-2xl rounded-tl-none text-sm leading-relaxed max-w-[85%] response-content';
         bubble.innerHTML = text;
     }
 
@@ -79,12 +215,12 @@ function appendLoading() {
     div.id = id;
     div.className = 'flex gap-3 animate-fade';
     div.innerHTML = `
-        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400 to-purple-600 flex items-center justify-center text-white text-sm font-bold flex-shrink-0 logo-glow">AI</div>
+        <div class="w-10 h-10 rounded-xl logo-container flex items-center justify-center text-white text-sm font-bold flex-shrink-0 logo-glow">AI</div>
         <div class="bubble-bot p-4 rounded-2xl rounded-tl-none flex items-center gap-2">
-            <div class="loading-dot w-2.5 h-2.5 bg-cyan-400 rounded-full"></div>
-            <div class="loading-dot w-2.5 h-2.5 bg-purple-400 rounded-full"></div>
-            <div class="loading-dot w-2.5 h-2.5 bg-pink-400 rounded-full"></div>
-            <span class="text-slate-400 text-sm ml-2">Analyzing sources...</span>
+            <div class="loading-dot w-2.5 h-2.5 rounded-full" style="background: var(--text-accent)"></div>
+            <div class="loading-dot w-2.5 h-2.5 rounded-full" style="background: var(--glass-border)"></div>
+            <div class="loading-dot w-2.5 h-2.5 rounded-full" style="background: var(--text-accent)"></div>
+            <span class="chat-text-secondary text-sm ml-2">Analyzing sources...</span>
         </div>
     `;
     chatContainer.appendChild(div);
