@@ -92,7 +92,20 @@ class ChatbotEngine:
         is_affirmative = any(phrase in query_lower for phrase in affirmative_phrases)
         is_continuation = any(phrase in query_lower for phrase in continuation_phrases)
         
-        if is_short_query and (is_affirmative or is_continuation):
+        # IMPROVEMENT: If query contains "about X", use X as the query if it's long enough
+        if is_continuation:
+            for phrase in ["tell me more about", "tell me about", "more about", "explain about", "elaborate on", "what about"]:
+                if phrase in query_lower:
+                    proposed_topic = query_lower.split(phrase, 1)[1].strip()
+                    # Remove punctuation
+                    proposed_topic = proposed_topic.strip(".,!?")
+                    if len(proposed_topic.split()) >= 1: # If there's content after "about"
+                        retrieval_query = proposed_topic
+                        extracted_topic = retrieval_query
+                        print(f"[INFO] Extracted topic from current query: '{retrieval_query}'")
+                        break
+        
+        if (is_short_query and is_affirmative) or (is_continuation and not extracted_topic):
             history = self.memory.get_history(session_id)
             if history:
                 # PRIORITY 1: Extract topic from assistant's "Would you like to know more about X?" question
