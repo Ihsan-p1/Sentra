@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     DATABASE_NAME: str = "Sentra1"
     
     # Embedding Model (local, free)
-    EMBEDDING_MODEL: str = "sentence-transformers/all-MiniLM-L6-v2"
+    EMBEDDING_MODEL: str = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
     EMBEDDING_DIMENSION: int = 384
     
     # LLM Configuration

@@ -45,3 +45,8 @@ walkthrough.md
 
 # Evaluation results
 Models Eval.ini
+
+# Debug Output
+debug_output.txt
+debug_result.json
+debug_*.py

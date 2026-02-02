@@ -59,7 +59,6 @@ def generate_hallucination_data(n_samples: int = 1000) -> Tuple[np.ndarray, np.n
         source_text = base_texts[source_idx]
         
         # Simulate slight paraphrase/extraction (Supported)
-        # e.g., "Jokowi meresmikan jalan tol" from "Jokowi meresmikan jalan tol baru..."
         words = source_text.split()
         if len(words) > 3:
             cut_point = np.random.randint(3, len(words))
@@ -78,6 +77,13 @@ def generate_hallucination_data(n_samples: int = 1000) -> Tuple[np.ndarray, np.n
             sentence_text, 
             [source_text]
         )
+        
+        # MANUAL OVERRIDE FOR SYNTHETIC TRAINING: 
+        # Force features[0] (Sim) to specific ranges to teach model correct boundaries
+        # Good: 0.35 - 0.85
+        if np.random.random() > 0.5:
+             feats[0] = np.random.uniform(0.35, 0.85)
+        
         X_features_list.append(feats)
         y_labels_list.append(1) # Label 1 = Supported
         
@@ -85,21 +91,23 @@ def generate_hallucination_data(n_samples: int = 1000) -> Tuple[np.ndarray, np.n
         source_idx_neg = np.random.randint(0, len(base_texts))
         source_text_neg = base_texts[source_idx_neg]
         
-        # Pick a completely different text as the 'sentence'
         other_idx = (source_idx_neg + np.random.randint(1, len(base_texts)-1)) % len(base_texts)
         sentence_text_neg = base_texts[other_idx]
         
-        # Get embeddings
         sent_emb_neg = embedder.generate_single(sentence_text_neg)
         source_emb_neg = embedder.generate([source_text_neg])[0]
         
-        # Extract features
         feats_neg = detector.extract_features(
             sent_emb_neg, 
             np.array([source_emb_neg]), 
             sentence_text_neg, 
             [source_text_neg]
         )
+        
+        # MANUAL OVERRIDE: Bad: 0.0 - 0.30
+        if np.random.random() > 0.5:
+             feats_neg[0] = np.random.uniform(0.0, 0.30)
+             
         X_features_list.append(feats_neg)
         y_labels_list.append(0) # Label 0 = Unsupported
         
@@ -125,16 +133,16 @@ def generate_confidence_data(n_samples: int = 1000) -> Tuple[np.ndarray, np.ndar
         is_good = np.random.random() > 0.5
         
         if is_good:
-            # Good retrieval: High similarities (e.g., 0.7 - 0.9)
-            sims = np.random.uniform(0.7, 0.95, size=5).tolist()
+            # Good retrieval: Realistic scores for Multilingual Model (0.3 - 0.8)
+            sims = np.random.uniform(0.3, 0.8, size=5).tolist()
             num_sources = np.random.randint(2, 4) # Multiple sources
             # Label = High confidence
-            label = np.mean(sims) * 0.9 + (0.1 if num_sources > 1 else 0)
+            label = np.mean(sims) * 1.0 + 0.3 # Strong boost for low sims
         else:
-            # Bad retrieval: Low similarities (e.g., 0.2 - 0.6)
-            sims = np.random.uniform(0.2, 0.6, size=5).tolist()
+            # Bad retrieval: Very low similarities
+            sims = np.random.uniform(0.0, 0.25, size=5).tolist()
             num_sources = np.random.randint(1, 2) # Few sources
-            label = np.mean(sims) * 0.8
+            label = np.mean(sims) * 0.5
             
         label = np.clip(label, 0.0, 1.0)
         

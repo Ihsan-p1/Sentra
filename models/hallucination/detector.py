@@ -68,9 +68,9 @@ class HallucinationDetector:
         else:
             overlap = 0.0
             
-        sent_len = len(sent_words)
+        # Sent Length removed as it introduces bias against long factual answers
         
-        return np.array([max_sim, avg_sim, min_sim, std_sim, overlap, sent_len])
+        return np.array([max_sim, avg_sim, min_sim, std_sim, overlap])
 
     def train(self, X_features: np.ndarray, y_labels: np.ndarray):
         """Train the logistic regression model"""
@@ -84,7 +84,7 @@ class HallucinationDetector:
         self.is_trained = True
         
         # Show weights (Explainability)
-        feature_names = ['Max Sim', 'Avg Sim', 'Min Sim', 'Std Sim', 'Overlap', 'Sent Len']
+        feature_names = ['Max Sim', 'Avg Sim', 'Min Sim', 'Std Sim', 'Overlap']
         print("\nModel Coefficients (Feature Importance):")
         for name, coef in zip(feature_names, self.model.coef_[0]):
             print(f"  {name}: {coef:.4f}")
@@ -130,22 +130,22 @@ class HallucinationDetector:
         # -----------------------------------------------------------
         
         # HARD GATE: Trust issues with the ML model
-        # If the semantic similarity is objectively low (< 0.65), 
+        # If the semantic similarity is objectively low (< 0.30), 
         # we mark it as unsupported regardless of what the ML model thinks.
-        if features[0] < 0.65:
+        if features[0] < 0.30:
             is_supported = False
-            reason = "Hard Gate: Low semantic similarity (< 0.65)"
+            reason = "Hard Gate: Low semantic similarity (< 0.30)"
         else:
-            # Stricter threshold (0.70) for sentences that pass the hard gate
-            is_supported = prob[1] > 0.70
+            # Stricter threshold (0.60) -> (0.50) for sentences that pass the hard gate
+            is_supported = prob[1] > 0.50 
             
         # Determine reason if not supported
         if not is_supported:
-            if features[0] < 0.3:  # max_similarity really low
+            if features[0] < 0.25:  # max_similarity really low
                 reason = "Low semantic similarity to retrieved sources"
             elif features[4] < 0.2:  # overlap
                 reason = "Limited keyword overlap with sources"
-            elif features[0] < 0.65:
+            elif features[0] < 0.30:
                 reason = f"Similarity ({features[0]:.2f}) below strict verification threshold"
             else:
                 reason = "Claim appears to extend beyond source material"
