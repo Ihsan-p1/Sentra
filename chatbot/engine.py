@@ -352,6 +352,8 @@ class ChatbotEngine:
             sentence_lower = sentence.lower()
             if "retrieved sources do not contain" in sentence_lower or "sufficient information" in sentence_lower:
                 continue
+            if "framing analysis" in sentence_lower or "explicit framing" in sentence_lower:
+                continue
             if sentence.strip().startswith("##"):
                 continue
             
