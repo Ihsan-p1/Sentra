@@ -104,6 +104,9 @@ class ChatbotEngine:
                 "analysis": {"retrieval_quality": "insufficient"},
                 "confidence": 0.0,
                 "model_comparison": {},
+                "sources": retrieved_chunks, # Return chunks even if low relevance
+                "unsupported_claims": [],
+                "unsupported_claims_b": [],
                 "source_quality": {
                     "max_similarity": round(max_similarity, 3),
                     "avg_similarity": round(avg_similarity, 3),
