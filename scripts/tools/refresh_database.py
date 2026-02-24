@@ -2,8 +2,8 @@
 Script to clear old data and ingest the new election articles dataset.
 """
 import asyncio
-import sys
-sys.path.insert(0, '.')
+import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 from database.connection import db_manager, init_database
 from pipeline.ingest import ArticleIngestor

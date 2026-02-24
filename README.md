@@ -71,14 +71,16 @@ Sentra/
 ├── data/               # Datasets and raw articles
 │   └── models/         # Pickle files for custom trained models
 ├── database/           # Database connection and schema
+├── evaluation_results/ # Model evaluation logs and debug outputs
 ├── models/             # ML model definitions (Framing, Confidence, Hallucination)
 ├── pipeline/           # Data ingestion and embedding pipeline
 ├── rag/                # Vector retrieval logic
 ├── scraper/            # News scrapers (ANTARA, Tempo, ABC News)
 ├── scripts/            # Training and evaluation scripts
+│   └── tools/          # Debug and maintenance utility scripts
 ├── web/                # Frontend static files (HTML/JS/CSS)
 ├── requirements.txt    # Python dependencies
-└── setup_vector.py     # Script to initialize vector database
+└── .env                # Environment configuration
 ```
 
 ## Data Sources

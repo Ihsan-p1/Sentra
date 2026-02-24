@@ -39,8 +39,8 @@ class ChatbotEngine:
         
         # Load custom trained models (Model A)
         try:
-            self.hallucination_detector = HallucinationDetector("data/models/hallucination_detector.pkl")
-            self.confidence_scorer = ConfidenceScorer("data/models/confidence_scorer.pkl")
+            self.hallucination_detector = HallucinationDetector("models/hallucination_detector.pkl")
+            self.confidence_scorer = ConfidenceScorer("models/confidence_scorer.pkl")
             print("[INFO] Loaded custom evaluation models (Model A)")
         except:
             print("[WARN] Custom models not found, using untrained instance")
@@ -65,160 +65,26 @@ class ChatbotEngine:
     ) -> Dict[str, Any]:
         """
         Main pipeline execution with A/B comparison.
-        Now with AGGREGATED hallucination reporting for better UX.
         """
-        # 0. QUERY SANITY CHECK (Reduce Hallucination Mode)
-        if mode == "reduce_hallucination":
-            # Check length ( < 3 words is prone to ambiguity)
-            if len(query.strip().split()) < 3:
-                 return {
-                    "answer": "This question cannot be reliably answered using the current news corpus. Please ask a more specific question (at least 3 words).",
-                    "analysis": {"error": "query_too_short"},
-                    "confidence": 0.0,
-                    "model_comparison": {}, 
-                    "mode": mode,
-                    "session_id": session_id
-                }
+        # 1. Query Refinement & Context Extraction
+        retrieval_query, extracted_topic = self._handle_query_refinement(query, session_id, mode)
+        if isinstance(retrieval_query, dict): # Check for refusal (query too short)
+            return retrieval_query
 
-        # 0.5 CONTEXTUAL QUERY ENHANCEMENT
-        # If query is too short (continuation phrases), extract topic from conversation
-        retrieval_query = query
-        extracted_topic = None  # Store the specific topic user is asking about
-        affirmative_phrases = ["yes", "yeah", "yep", "sure", "ok", "okay", "please", "go ahead", "ya", "iya"]
-        continuation_phrases = ["tell me more", "more", "continue", "go on", "what else", "explain", "elaborate"]
+        # 2. Retrieval & Gating
+        retrieval_result = await self._perform_retrieval(retrieval_query, mode, session_id)
+        if "answer" in retrieval_result: # Check for retrieval refusal
+            return retrieval_result
         
-        query_lower = query.strip().lower()
-        is_short_query = len(query.strip().split()) <= 3
-        is_affirmative = any(phrase in query_lower for phrase in affirmative_phrases)
-        is_continuation = any(phrase in query_lower for phrase in continuation_phrases)
-        
-        # IMPROVEMENT: If query contains "about X", use X as the query if it's long enough
-        if is_continuation:
-            for phrase in ["tell me more about", "tell me about", "more about", "explain about", "elaborate on", "what about"]:
-                if phrase in query_lower:
-                    proposed_topic = query_lower.split(phrase, 1)[1].strip()
-                    # Remove punctuation
-                    proposed_topic = proposed_topic.strip(".,!?")
-                    if len(proposed_topic.split()) >= 1: # If there's content after "about"
-                        retrieval_query = proposed_topic
-                        extracted_topic = retrieval_query
-                        print(f"[INFO] Extracted topic from current query: '{retrieval_query}'")
-                        break
-        
-        if (is_short_query and is_affirmative) or (is_continuation and not extracted_topic):
-            history = self.memory.get_history(session_id)
-            if history:
-                # PRIORITY 1: Extract topic from assistant's "Would you like to know more about X?" question
-                import re
-                for msg in reversed(history):
-                    if msg["role"] == "assistant":
-                        assistant_text = msg["content"]
-                        
-                        # Pattern to match "Would you like to know more about X?"
-                        patterns = [
-                            r"would you like to (?:know|learn|hear) more about (.+?)\?",
-                            r"want (?:me )?to (?:tell|explain) (?:you )?(?:more )?about (.+?)\?",
-                            r"interested in (?:learning|knowing) (?:more )?about (.+?)\?",
-                            r"shall i (?:tell|explain) (?:you )?(?:more )?about (.+?)\?",
-                        ]
-                        
-                        for pattern in patterns:
-                            match = re.search(pattern, assistant_text.lower())
-                            if match:
-                                extracted_topic = match.group(1).strip()
-                                # Clean up
-                                extracted_topic = extracted_topic.rstrip('.,!?')
-                                if len(extracted_topic) > 10:  # Valid topic
-                                    retrieval_query = extracted_topic
-                                    print(f"[INFO] ✓ Extracted follow-up topic: '{extracted_topic}'")
-                                    break
-                                else:
-                                    extracted_topic = None
-                        
-                        if extracted_topic:
-                            break
-                
-                # PRIORITY 2: Fallback to last substantive user query
-                if not extracted_topic:
-                    for msg in reversed(history):
-                        if msg["role"] == "user" and len(msg["content"].split()) > 3:
-                            retrieval_query = msg["content"]
-                            print(f"[INFO] Fallback to previous query: '{retrieval_query[:50]}...'")
-                            break
-        
-        # 1. RETRIEVAL
-        # Context Saturation Control
-        top_k = 4 if mode == "reduce_hallucination" else None
-        
-        retrieved_chunks = await self.retriever.retrieve(retrieval_query, top_k=top_k)
-        
-        # Flatten for certain analyses
-        all_chunks_flat = self.retriever.flatten_results(retrieved_chunks)
-        source_texts = [c['text'] for c in all_chunks_flat]
-        
-        if not source_texts:
-            return {
-                "answer": "Sorry, I couldn't find relevant information in the news database.",
-                "analysis": {},
-                "confidence": 0.0,
-                "model_comparison": {},
-                "session_id": session_id
-            }
-        
-        # 1.5 RETRIEVAL CONFIDENCE GATE - Refuse if source quality too low
-        similarities = [c['similarity'] for c in all_chunks_flat]
-        max_similarity = max(similarities)
-        avg_similarity = sum(similarities) / len(similarities)
-        
-        # Dynamic Threshold
-        threshold = 0.40 if mode == "reduce_hallucination" else 0.35
-        
-        if max_similarity < threshold:
-            refusal_msg = "Insufficient source coverage." if mode == "reduce_hallucination" else "I cannot answer this based on the available news sources. The retrieved articles do not contain sufficiently relevant information. Please try asking about specific Indonesian political events or candidates covered in the database."
-            
-            return {
-                "answer": refusal_msg,
-                "analysis": {"retrieval_quality": "insufficient"},
-                "confidence": 0.0,
-                "model_comparison": {},
-                "source_quality": {
-                    "max_similarity": round(max_similarity, 3),
-                    "avg_similarity": round(avg_similarity, 3),
-                    "total_sources": len(all_chunks_flat),
-                    "refusal_reason": f"max_sim={max_similarity:.2f} < {threshold}",
-                    "mode": mode
-                },
-                "session_id": session_id
-            }
+        retrieved_chunks = retrieval_result["chunks"]
+        all_chunks_flat = retrieval_result["flat_chunks"]
+        source_texts = retrieval_result["source_texts"]
 
-        # Reduce Chunks Per Media (Context Saturation Control)
-        if mode == "reduce_hallucination":
-            for media in retrieved_chunks:
-                retrieved_chunks[media] = retrieved_chunks[media][:2] # Max 2 per media
-            
-        # 2. FRAMING ANALYSIS
-        texts_by_media = {
-            media: [c['text'] for c in chunks]
-            for media, chunks in retrieved_chunks.items()
-        }
+        # 3. Framing Analysis (A/B)
+        framing_results = self._perform_analysis(retrieved_chunks)
         
-        # Statistical Analysis (TF-IDF)
-        framing_statistical = self.framing_analyzer.analyze_media_framing(texts_by_media)
-        
-        # Neural Analysis (DistilBERT)
-        # We process the combined text per media to see if it matches the expected style
-        framing_neural = {}
-        for media, texts in texts_by_media.items():
-            if texts:
-                combined_text = " ".join(texts)[:512] # Limit len for BERT
-                prediction = self.bert_framing.predict_source_style(combined_text)
-                # Store the probability of the ACTUAL media source
-                framing_neural[media] = prediction.get(media, 0.0)
-        
-        # 2.5 GET CONVERSATION HISTORY for context
+        # 4. LLM Generation
         conversation_history = self.memory.format_for_llm(session_id, num_turns=5)
-        
-        # 3. TEXT GENERATION (LLM) - Use Conversational Prompt
         raw_response = await self.llm.generate_conversational_response(
             user_query=query, 
             retrieved_chunks=retrieved_chunks, 
@@ -227,104 +93,34 @@ class ChatbotEngine:
             focus_topic=extracted_topic
         )
         
-        # 4. HALLUCINATION DETECTION (Internal scoring, NOT per-sentence annotation)
-        # Model A: Trained Logistic Regression
-        verification_result_a, unsupported_a, stats_a = self._analyze_hallucinations_aggregated(
-            raw_response, source_texts
+        # 5. Hallucination Detection (A/B)
+        hallucination_results = self._perform_hallucination_check(raw_response, source_texts)
+        
+        # 6. Confidence Scoring (A/B)
+        confidence_results = self._score_confidence(query, retrieved_chunks, all_chunks_flat)
+        
+        # 7. Final Response Assembly
+        final_answer = self._build_final_answer(
+            raw_response, 
+            hallucination_results["verification_result_a"], 
+            hallucination_results["unsupported_a"]
         )
         
-        # Model B: Simple keyword overlap
-        hallucination_result_b = self.baseline_models["hallucination"].check_response(
-            raw_response, source_texts
+        # 8. Build Comparison Metadata
+        model_comparison = self._build_comparison_metadata(
+            hallucination_results, 
+            framing_results, 
+            confidence_results
         )
-        
-        # 5. CONFIDENCE SCORING
-        all_sims = [c['similarity'] for c in all_chunks_flat]
-        
-        # Model A: Trained Random Forest
-        confidence_a = self.confidence_scorer.predict(all_sims, len(retrieved_chunks))
-        
-        # Model B: Heuristic-based
-        confidence_b = self.baseline_models["confidence"].score(query, retrieved_chunks)
-        
-        # 6. BUILD FINAL ANSWER (with aggregated disclaimer, not per-sentence spam)
-        final_answer = self._build_final_answer(raw_response, verification_result_a, unsupported_a)
-        
-        # Build comparison result
-        model_comparison = {
-            "hallucination": {
-                "model_a": {
-                    "name": "Logistic Regression (Fine-tuned)",
-                    "supported_ratio": f"{stats_a['unsupported_count']}/{stats_a['total_checked']}",
-                    "accuracy_estimate": f"{stats_a['support_rate']:.0%}",
-                    "method": "Embedding Similarity Features"
-                },
-                "model_b": {
-                    "name": "Keyword Overlap (Baseline)",
-                    "supported_ratio": hallucination_result_b["supported_ratio"],
-                    "accuracy_estimate": f"{hallucination_result_b['overall_score']:.0%}",
-                    "method": "N-gram Token Matching"
-                }
-            },
-            "framing": {
-                "model_a": {
-                    "name": "DistilBERT Classifier (Neural)",
-                    # Show style consistency score
-                    "keywords": {
-                        m: [f"Style Match: {score:.1%}"] 
-                        for m, score in framing_neural.items()
-                    },
-                    "method": "Fine-tuned Transformer"
-                },
-                "model_b": {
-                    "name": "TF-IDF Analyzer (Statistical)",
-                    "keywords": {
-                        m: [k[0] for k in data.get("top_keywords", [])][:3] 
-                        for m, data in framing_statistical.items()
-                    },
-                    "method": "Keyword Frequency Analysis"
-                }
-            },
-            "confidence": {
-                "model_a": {
-                    "name": "Random Forest Regressor",
-                    "score": confidence_a,
-                    "score_percent": f"{int(confidence_a * 100)}%",
-                    "method": "Trained on Retreival Features"
-                },
-                "model_b": {
-                    "name": "Heuristic Scorer",
-                    "score": confidence_b["confidence"],
-                    "score_percent": confidence_b["confidence_percent"],
-                    "method": "Rule-based Weighted Sum"
-                }
-            }
-        }
-        
-        # Extract unsupported claims from Model B (filtered)
-        unsupported_b = []
-        for d in hallucination_result_b.get("details", []):
-            if not d.get("is_supported", True):
-                # Apply similar filtering as Model A (skip refusals/headers)
-                s_lower = d["sentence"].lower()
-                if "retrieved sources do not contain" in s_lower or "sufficient information" in s_lower:
-                    continue
-                if d["sentence"].strip().startswith("##"):
-                    continue
-                    
-                unsupported_b.append({
-                    "sentence": d["sentence"], 
-                    "confidence": d["confidence"]
-                })
         
         return {
             "answer": final_answer,
             "raw_answer": raw_response,
-            "framing_analysis": framing_statistical,
-            "verification_summary": verification_result_a,
-            "unsupported_claims": unsupported_a,
-            "unsupported_claims_b": unsupported_b,
-            "confidence_score": confidence_a,
+            "framing_analysis": framing_results["statistical"],
+            "verification_summary": hallucination_results["verification_result_a"],
+            "unsupported_claims": hallucination_results["unsupported_a"],
+            "unsupported_claims_b": hallucination_results["unsupported_b"],
+            "confidence_score": confidence_results["score_a"],
             "sources": retrieved_chunks,
             "model_comparison": model_comparison,
             "source_quality": {
@@ -332,6 +128,234 @@ class ChatbotEngine:
                 "avg_similarity": round(sum([c['similarity'] for c in all_chunks_flat]) / len(all_chunks_flat) if all_chunks_flat else 0, 3),
                 "total_sources": len(all_chunks_flat),
                 "coverage_note": "Articles are stored as snapshots; original URLs may have changed."
+            }
+        }
+
+    def _handle_query_refinement(self, query: str, session_id: str, mode: str) -> tuple:
+        """Handle short queries, topic extraction, and refinement."""
+        if mode == "reduce_hallucination" and len(query.strip().split()) < 3:
+            return {
+                "answer": "This question cannot be reliably answered using the current news corpus. Please ask a more specific question (at least 3 words).",
+                "analysis": {"error": "query_too_short"},
+                "confidence": 0.0,
+                "model_comparison": {}, 
+                "mode": mode,
+                "session_id": session_id
+            }, None
+
+        retrieval_query = query
+        extracted_topic = None
+        
+        query_lower = query.strip().lower()
+        is_short_query = len(query.strip().split()) <= 3
+        
+        # Continuation & Topic Extraction logic
+        continuation_phrases = ["tell me more", "more", "continue", "go on", "what else", "explain", "elaborate"]
+        is_continuation = any(phrase in query_lower for phrase in continuation_phrases)
+        
+        if is_continuation:
+            for phrase in ["tell me more about", "tell me about", "more about", "explain about", "elaborate on", "what about"]:
+                if phrase in query_lower:
+                    proposed_topic = query_lower.split(phrase, 1)[1].strip().strip(".,!?")
+                    if len(proposed_topic.split()) >= 1:
+                        retrieval_query = proposed_topic
+                        extracted_topic = retrieval_query
+                        break
+
+        # Follow-up extraction from memory
+        affirmative_phrases = ["yes", "yeah", "yep", "sure", "ok", "okay", "please", "go ahead", "ya", "iya"]
+        is_affirmative = any(phrase in query_lower for phrase in affirmative_phrases)
+        
+        if (is_short_query and is_affirmative) or (is_continuation and not extracted_topic):
+            history = self.memory.get_history(session_id)
+            if history:
+                for msg in reversed(history):
+                    if msg["role"] == "assistant":
+                        patterns = [
+                            r"would you like to (?:know|learn|hear) more about (.+?)\?",
+                            r"want (?:me )?to (?:tell|explain) (?:you )?(?:more )?about (.+?)\?",
+                            r"interested in (?:learning|knowing) (?:more )?about (.+?)\?",
+                            r"shall i (?:tell|explain) (?:you )?(?:more )?about (.+?)\?",
+                        ]
+                        for pattern in patterns:
+                            match = re.search(pattern, msg["content"].lower())
+                            if match:
+                                match_topic = match.group(1).strip().rstrip('.,!?')
+                                if len(match_topic) > 10:
+                                    extracted_topic = match_topic
+                                    retrieval_query = extracted_topic
+                                    break
+                        if extracted_topic: break
+                
+                if not extracted_topic:
+                    for msg in reversed(history):
+                        if msg["role"] == "user" and len(msg["content"].split()) > 3:
+                            retrieval_query = msg["content"]
+                            break
+                            
+        return retrieval_query, extracted_topic
+
+    async def _perform_retrieval(self, query: str, mode: str, session_id: str) -> Dict[str, Any]:
+        """Perform document retrieval and validation."""
+        top_k = 4 if mode == "reduce_hallucination" else None
+        retrieved_chunks = await self.retriever.retrieve(query, top_k=top_k)
+        all_chunks_flat = self.retriever.flatten_results(retrieved_chunks)
+        source_texts = [c['text'] for c in all_chunks_flat]
+        
+        if not source_texts:
+            return {
+                "answer": "Sorry, I couldn't find relevant information in the news database.",
+                "analysis": {}, "confidence": 0.0, "model_comparison": {}, "session_id": session_id
+            }
+        
+        similarities = [c['similarity'] for c in all_chunks_flat]
+        max_similarity = max(similarities)
+        threshold = 0.40 if mode == "reduce_hallucination" else 0.35
+        
+        if max_similarity < threshold:
+            refusal_msg = "Insufficient source coverage." if mode == "reduce_hallucination" else "I cannot answer this based on the available news sources. The retrieved articles do not contain sufficiently relevant information. Please try asking about specific Indonesian political events or candidates covered in the database."
+            return {
+                "answer": refusal_msg,
+                "analysis": {"retrieval_quality": "insufficient"},
+                "confidence": 0.0, "model_comparison": {},
+                "source_quality": {
+                    "max_similarity": round(max_similarity, 3),
+                    "avg_similarity": round(sum(similarities)/len(similarities), 3),
+                    "total_sources": len(all_chunks_flat),
+                    "refusal_reason": f"max_sim={max_similarity:.2f} < {threshold}",
+                    "mode": mode
+                },
+                "session_id": session_id
+            }
+
+        if mode == "reduce_hallucination":
+            for media in retrieved_chunks:
+                retrieved_chunks[media] = retrieved_chunks[media][:2]
+                
+        return {
+            "chunks": retrieved_chunks,
+            "flat_chunks": all_chunks_flat,
+            "source_texts": source_texts
+        }
+
+    def _perform_analysis(self, retrieved_chunks: Dict[str, List[Dict[str, Any]]]) -> Dict[str, Any]:
+        """Perform framing analysis using Model A (Neural) and Model B (Statistical)."""
+        texts_by_media = {
+            media: [c['text'] for c in chunks]
+            for media, chunks in retrieved_chunks.items()
+        }
+        
+        # Model B: Statistical (TF-IDF)
+        framing_statistical = self.framing_analyzer.analyze_media_framing(texts_by_media)
+        
+        # Model A: Neural (DistilBERT)
+        framing_neural = {}
+        for media, texts in texts_by_media.items():
+            if texts:
+                combined_text = " ".join(texts)[:512]
+                prediction = self.bert_framing.predict_source_style(combined_text)
+                framing_neural[media] = prediction.get(media, 0.0)
+                
+        return {
+            "statistical": framing_statistical,
+            "neural": framing_neural
+        }
+
+    def _perform_hallucination_check(self, response: str, source_texts: List[str]) -> Dict[str, Any]:
+        """Perform hallucination detection with Model A and Model B."""
+        # Model A: Trained Logistic Regression
+        verification_result_a, unsupported_a, stats_a = self._analyze_hallucinations_aggregated(
+            response, source_texts
+        )
+        
+        # Model B: Keyword overlap
+        hallucination_result_b = self.baseline_models["hallucination"].check_response(
+            response, source_texts
+        )
+        
+        # Clean up Model B unsupported claims
+        unsupported_b = []
+        for d in hallucination_result_b.get("details", []):
+            if not d.get("is_supported", True):
+                s_lower = d["sentence"].lower()
+                if any(x in s_lower for x in ["retrieved sources do not contain", "sufficient information"]):
+                    continue
+                if d["sentence"].strip().startswith("##"):
+                    continue
+                unsupported_b.append({"sentence": d["sentence"], "confidence": d["confidence"]})
+                
+        return {
+            "verification_result_a": verification_result_a,
+            "unsupported_a": unsupported_a,
+            "stats_a": stats_a,
+            "hallucination_result_b": hallucination_result_b,
+            "unsupported_b": unsupported_b
+        }
+
+    def _score_confidence(self, query: str, chunks: Dict, flat_chunks: List) -> Dict[str, Any]:
+        """Score response confidence using Model A and Model B."""
+        all_sims = [c['similarity'] for c in flat_chunks]
+        score_a = self.confidence_scorer.predict(all_sims, len(chunks))
+        score_b_data = self.baseline_models["confidence"].score(query, chunks)
+        
+        return {
+            "score_a": score_a,
+            "score_b_data": score_b_data
+        }
+
+    def _build_comparison_metadata(
+        self, 
+        hallucination_res: Dict, 
+        framing_res: Dict, 
+        confidence_res: Dict
+    ) -> Dict[str, Any]:
+        """Construct the competition/comparison metadata for the UI."""
+        return {
+            "hallucination": {
+                "model_a": {
+                    "name": "Logistic Regression (Fine-tuned)",
+                    "supported_ratio": f"{hallucination_res['stats_a']['unsupported_count']}/{hallucination_res['stats_a']['total_checked']}",
+                    "accuracy_estimate": f"{hallucination_res['stats_a']['support_rate']:.0%}",
+                    "method": "Embedding Similarity Features"
+                },
+                "model_b": {
+                    "name": "Keyword Overlap (Baseline)",
+                    "supported_ratio": hallucination_res['hallucination_result_b']["supported_ratio"],
+                    "accuracy_estimate": f"{hallucination_res['hallucination_result_b']['overall_score']:.0%}",
+                    "method": "N-gram Token Matching"
+                }
+            },
+            "framing": {
+                "model_a": {
+                    "name": "DistilBERT Classifier (Neural)",
+                    "keywords": {
+                        m: [f"Style Match: {score:.1%}"] 
+                        for m, score in framing_res["neural"].items()
+                    },
+                    "method": "Fine-tuned Transformer"
+                },
+                "model_b": {
+                    "name": "TF-IDF Analyzer (Statistical)",
+                    "keywords": {
+                        m: [k[0] for k in data.get("top_keywords", [])][:3] 
+                        for m, data in framing_res["statistical"].items()
+                    },
+                    "method": "Keyword Frequency Analysis"
+                }
+            },
+            "confidence": {
+                "model_a": {
+                    "name": "Random Forest Regressor",
+                    "score": confidence_res["score_a"],
+                    "score_percent": f"{int(confidence_res['score_a'] * 100)}%",
+                    "method": "Trained on Retreival Features"
+                },
+                "model_b": {
+                    "name": "Heuristic Scorer",
+                    "score": confidence_res["score_b_data"]["confidence"],
+                    "score_percent": confidence_res["score_b_data"]["confidence_percent"],
+                    "method": "Rule-based Weighted Sum"
+                }
             }
         }
         

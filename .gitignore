@@ -32,7 +32,7 @@ logs/
 # Large Models
 *.safetensors
 *.bin
-data/models/framing_bert/
+models/framing_bert/
 pytorch_model.bin
 *.pkl
 
@@ -45,6 +45,7 @@ walkthrough.md
 
 # Evaluation results
 Models Eval.ini
+evaluation_results/
 
 # Debug Output
 debug_output.txt

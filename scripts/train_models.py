@@ -14,7 +14,7 @@ from models.confidence.scorer import ConfidenceScorer
 from pipeline.embeddings import get_embedder
 
 # Paths
-MODELS_DIR = "data/models"
+MODELS_DIR = "models"
 os.makedirs(MODELS_DIR, exist_ok=True)
 
 def generate_hallucination_data(n_samples: int = 1000) -> Tuple[np.ndarray, np.ndarray]:

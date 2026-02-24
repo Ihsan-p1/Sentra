@@ -2,8 +2,9 @@ import asyncio
 import sys
 import os
 
-# Ensure we can import from parent directory
-sys.path.append(os.getcwd())
+# Ensure we can import from project root
+import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 from database.connection import db_manager
 

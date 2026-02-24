@@ -14,8 +14,7 @@ from sklearn.metrics import classification_report
 import os
 
 # --- Config ---
-DATA_FILE = "data/scraped_articles.json"
-MODEL_SAVE_DIR = "data/models/framing_bert"
+MODEL_SAVE_DIR = "models/framing_bert"
 EPOCHS = 3
 BATCH_SIZE = 8
 MAX_LEN = 128
@@ -56,26 +55,23 @@ class ArticleDataset(Dataset):
 def train():
     print("Starting DistilBERT Fine-tuning for Framing Analysis...")
     
-    # 1. Load Data
-    if not os.path.exists(DATA_FILE):
-        print(f"[ERROR] Data file not found: {DATA_FILE}")
-        return
-
-    with open(DATA_FILE, 'r') as f:
-        articles = json.load(f)
-        
+    # 1. Load Data from election_articles
+    import sys
+    sys.path.insert(0, ".")
+    from data.election_articles import ELECTION_ARTICLES
+    
+    articles = ELECTION_ARTICLES
     print(f"Loaded {len(articles)} articles.")
     
     # 2. Prepare Data (Chunking headlines + snippets for training)
     texts = []
     labels = []
     
-    # Map media names to IDs
+    # Map media names to IDs (updated for actual sources)
     label_map = {
-        "jakarta_post": 0,
+        "antaranews": 0,
         "tempo": 1,
-        "antara": 2,
-        "jakarta_globe": 3
+        "abc": 2
     }
     
     # Reverse map for saving
@@ -172,7 +168,7 @@ def train():
             predictions.extend(preds.cpu().tolist())
             real_values.extend(labels.cpu().tolist())
             
-    print(classification_report(real_values, predictions, target_names=list(label_map.keys())))
+    print(classification_report(real_values, predictions, target_names=list(label_map.keys()), labels=list(range(len(label_map))), zero_division=0))
     
     # 8. Save Model
     if not os.path.exists(MODEL_SAVE_DIR):

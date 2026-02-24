@@ -48,7 +48,7 @@ class Settings(BaseSettings):
     
     # Paths
     DATA_DIR: str = "data"
-    MODELS_DIR: str = "data/models"
+    MODELS_DIR: str = "models"
     LABELED_DIR: str = "data/labeled"
     
     class Config:
