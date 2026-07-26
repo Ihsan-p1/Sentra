@@ -55,3 +55,7 @@ evaluation_results/*
 debug_output.txt
 debug_result.json
 debug_*.py
+
+# Local AI-assistant working notes, not part of the deliverable.
+# Kept out of the repo on purpose - README.md is the document for readers.
+CLAUDE.md
