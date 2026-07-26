@@ -4,45 +4,115 @@ Manages conversation history for multi-turn chatbot interactions.
 Enables contextual responses based on previous exchanges.
 """
 from typing import Dict, List, Optional
-from datetime import datetime
+from datetime import datetime, timedelta
 import uuid
+
+# Returned by format_for_llm() when a session has no prior turns.
+# llm_client compares against this exact string, so keep them in sync.
+NO_HISTORY_SENTINEL = "(No previous conversation)"
+
+# Defaults for eviction. Sessions are created by the server on any request that
+# arrives without a session_id, so every browser refresh mints a new one and
+# nothing the client does ever removes it.
+DEFAULT_MAX_SESSIONS = 500
+DEFAULT_SESSION_TTL_MINUTES = 120
 
 
 class ConversationMemory:
     """
     Stores and manages conversation history per session.
-    
+
     Features:
     - Session-based storage (each user/browser gets unique session)
     - Automatic history truncation to prevent token overflow
+    - Bounded session count with TTL + least-recently-used eviction
     - Formatted output for LLM context injection
+
+    Per-session history was always capped, but the number of sessions was not:
+    `self.sessions` only ever grew. A server left running accumulates one entry
+    per visitor forever, holding up to 20 messages each. That is a slow leak with
+    no upper bound, so sessions now expire and the total is capped.
     """
-    
-    def __init__(self, max_turns: int = 10):
+
+    def __init__(
+        self,
+        max_turns: int = 10,
+        max_sessions: int = DEFAULT_MAX_SESSIONS,
+        session_ttl_minutes: int = DEFAULT_SESSION_TTL_MINUTES,
+    ):
         """
         Initialize conversation memory.
-        
+
         Args:
             max_turns: Maximum number of conversation turns to keep per session
+            max_sessions: Hard cap on concurrently tracked sessions; the least
+                recently used are dropped first
+            session_ttl_minutes: Sessions idle for longer than this are discarded
         """
         self.sessions: Dict[str, List[Dict]] = {}
         self.max_turns = max_turns
+        self.max_sessions = max_sessions
+        self.session_ttl = timedelta(minutes=session_ttl_minutes)
         self.session_metadata: Dict[str, Dict] = {}
-    
+
+    def _now(self) -> datetime:
+        """Overridable clock, so eviction can be tested without sleeping."""
+        return datetime.now()
+
+    def _touch(self, session_id: str) -> None:
+        """Create metadata if absent and mark the session as just used."""
+        now = self._now().isoformat()
+        if session_id not in self.session_metadata:
+            self.session_metadata[session_id] = {"created_at": now, "last_activity": now}
+        else:
+            self.session_metadata[session_id]["last_activity"] = now
+
+    def _last_activity(self, session_id: str) -> datetime:
+        """Parsed last-activity timestamp, treated as expired if unreadable."""
+        raw = self.session_metadata.get(session_id, {}).get("last_activity")
+        try:
+            return datetime.fromisoformat(raw)
+        except (TypeError, ValueError):
+            return datetime.min
+
+    def evict_stale(self) -> int:
+        """
+        Drop expired sessions, then the least recently used ones over the cap.
+
+        Returns the number of sessions removed. Called on every write, which is
+        cheap: it is a scan of at most `max_sessions` timestamps.
+        """
+        cutoff = self._now() - self.session_ttl
+        expired = [sid for sid in self.sessions if self._last_activity(sid) < cutoff]
+        for session_id in expired:
+            self.delete_session(session_id)
+
+        removed = len(expired)
+
+        if len(self.sessions) > self.max_sessions:
+            # Oldest activity first; drop until back within the cap.
+            by_age = sorted(self.sessions, key=self._last_activity)
+            for session_id in by_age[: len(self.sessions) - self.max_sessions]:
+                self.delete_session(session_id)
+                removed += 1
+
+        if removed:
+            print(f"[INFO] Evicted {removed} idle conversation session(s); "
+                  f"{len(self.sessions)} active")
+        return removed
+
     def create_session(self) -> str:
         """Create a new conversation session and return its ID."""
         session_id = str(uuid.uuid4())
         self.sessions[session_id] = []
-        self.session_metadata[session_id] = {
-            "created_at": datetime.now().isoformat(),
-            "last_activity": datetime.now().isoformat()
-        }
+        self._touch(session_id)
+        self.evict_stale()
         return session_id
-    
+
     def add_message(self, session_id: str, role: str, content: str) -> None:
         """
         Add a message to the conversation history.
-        
+
         Args:
             session_id: The session identifier
             role: Either 'user' or 'assistant'
@@ -50,24 +120,29 @@ class ConversationMemory:
         """
         if session_id not in self.sessions:
             self.sessions[session_id] = []
-            self.session_metadata[session_id] = {
-                "created_at": datetime.now().isoformat(),
-                "last_activity": datetime.now().isoformat()
-            }
-        
+
+        self._touch(session_id)
+
         self.sessions[session_id].append({
             "role": role,
             "content": content,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": self._now().isoformat()
         })
-        
-        # Update last activity
-        self.session_metadata[session_id]["last_activity"] = datetime.now().isoformat()
-        
+
         # Truncate if exceeds max turns (1 turn = user + assistant)
         max_messages = self.max_turns * 2
         if len(self.sessions[session_id]) > max_messages:
             self.sessions[session_id] = self.sessions[session_id][-max_messages:]
+
+        self.evict_stale()
+
+    def stats(self) -> Dict[str, int]:
+        """Session counters, for /api/health."""
+        return {
+            "active_sessions": len(self.sessions),
+            "max_sessions": self.max_sessions,
+            "session_ttl_minutes": int(self.session_ttl.total_seconds() // 60),
+        }
     
     def get_history(self, session_id: str) -> List[Dict]:
         """
@@ -111,7 +186,7 @@ class ConversationMemory:
         history = self.get_recent_history(session_id, num_turns)
         
         if not history:
-            return "(No previous conversation)"
+            return NO_HISTORY_SENTINEL
         
         formatted_lines = []
         for msg in history:
