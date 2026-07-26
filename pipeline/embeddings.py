@@ -14,37 +14,68 @@ from config.settings import settings
 class EmbeddingGenerator:
     """
     Generates embeddings using sentence-transformers.
-    
-    Default model: all-MiniLM-L6-v2
-    - Dimension: 384
-    - Fast and efficient
-    - Good for semantic similarity
+
+    Configured model: settings.EMBEDDING_MODEL (384-dim multilingual MiniLM).
+
+    This is a singleton so the weights load once. That made it silently ignore
+    its own argument: `EmbeddingGenerator("some/other-model")` returned the
+    already-loaded instance and handed back vectors from a *different* model than
+    the caller asked for. That is precisely the failure that put mismatched
+    vectors in the database, so requesting a different model now raises instead.
     """
-    
+
     _instance = None
     _model = None
-    
+
     def __new__(cls, model_name: str = None):
         """Singleton pattern to avoid loading model multiple times"""
         if cls._instance is None:
             cls._instance = super().__new__(cls)
         return cls._instance
-    
+
     def __init__(self, model_name: str = None):
-        if self._model is None:
-            self.model_name = model_name or settings.EMBEDDING_MODEL
-            print(f"Loading embedding model: {self.model_name}")
-            self._model = SentenceTransformer(self.model_name)
-            print(f"Embedding model loaded (dim={self.dimension})")
-    
+        requested = model_name or settings.EMBEDDING_MODEL
+
+        if self._model is not None:
+            if requested != self.model_name:
+                raise ValueError(
+                    f"EmbeddingGenerator is already loaded with {self.model_name!r}; "
+                    f"cannot serve {requested!r} from the same process. Vectors from "
+                    f"two different models are not comparable - change "
+                    f"EMBEDDING_MODEL and re-ingest instead."
+                )
+            return
+
+        self.model_name = requested
+        print(f"Loading embedding model: {self.model_name}")
+        self._model = SentenceTransformer(self.model_name)
+        self._dimension = self._read_dimension()
+        print(f"Embedding model loaded (dim={self._dimension})")
+
+    def _read_dimension(self) -> int:
+        """
+        Embedding width, via whichever accessor this sentence-transformers exposes.
+
+        `get_sentence_embedding_dimension` was renamed to `get_embedding_dimension`;
+        calling the old name emits a FutureWarning. The property below is read once
+        per chunk during verification, so the old call produced a wall of warnings
+        on every startup and will break outright on the next major release.
+        """
+        for attr in ("get_embedding_dimension", "get_sentence_embedding_dimension"):
+            accessor = getattr(self._model, attr, None)
+            if callable(accessor):
+                return int(accessor())
+        # Last resort: measure it.
+        return int(self._model.encode("dimension probe", convert_to_numpy=True).shape[0])
+
     @property
     def model(self):
         return self._model
-    
+
     @property
     def dimension(self) -> int:
-        """Get embedding dimension"""
-        return self.model.get_sentence_embedding_dimension()
+        """Embedding width, resolved once at load time."""
+        return self._dimension
     
     def generate(
         self, 

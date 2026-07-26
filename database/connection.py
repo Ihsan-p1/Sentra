@@ -9,13 +9,30 @@ import sys
 sys.path.append('..')
 from config.settings import settings
 
+def database_name(url: str) -> str:
+    """
+    The database a URL actually points at.
+
+    The connect log used to print settings.DATABASE_NAME, a separate hardcoded
+    constant. Any DatabaseManager built with an explicit URL - the integration
+    tests, a CI database, a staging box - therefore logged "Connected to
+    database: Sentra1" while connected somewhere else entirely. A log line about
+    which database you are on is worthless if it cannot be wrong.
+    """
+    return (url or "").rstrip("/").rsplit("/", 1)[-1].split("?")[0] or "unknown"
+
+
 class DatabaseManager:
     """Manages PostgreSQL connection pool"""
-    
+
     def __init__(self, database_url: str = None):
         self.database_url = database_url or settings.DATABASE_URL
         self.pool: Optional[asyncpg.Pool] = None
-    
+
+    @property
+    def name(self) -> str:
+        return database_name(self.database_url)
+
     async def connect(self):
         """Create connection pool"""
         try:
@@ -24,9 +41,9 @@ class DatabaseManager:
                 min_size=2,
                 max_size=10
             )
-            print(f"[INFO] Connected to database: {settings.DATABASE_NAME}")
+            print(f"[INFO] Connected to database: {self.name}")
         except Exception as e:
-            print(f"[ERROR] Failed to connect to database: {e}")
+            print(f"[ERROR] Failed to connect to database {self.name}: {e}")
             raise e
         return self
     
@@ -67,6 +84,38 @@ class DatabaseManager:
 # Singleton instance
 db_manager = DatabaseManager()
 
+
+def split_sql_statements(schema: str) -> list:
+    """
+    Split a schema file into executable statements.
+
+    A plain schema.split(';') breaks plpgsql function bodies, which contain their
+    own semicolons between the $$ delimiters, so dollar-quoted blocks are tracked
+    and kept intact.
+    """
+    statements = []
+    current = []
+    in_dollar_block = False
+
+    for line in schema.splitlines():
+        # Each line either opens or closes a $$ block (an odd number of markers)
+        if line.count('$$') % 2 == 1:
+            in_dollar_block = not in_dollar_block
+
+        current.append(line)
+
+        if not in_dollar_block and line.rstrip().endswith(';'):
+            stmt = "\n".join(current).strip()
+            if stmt:
+                statements.append(stmt)
+            current = []
+
+    tail = "\n".join(current).strip()
+    if tail:
+        statements.append(tail)
+
+    return statements
+
 async def init_database():
     """Initialize database with schema"""
     await db_manager.connect()
@@ -78,16 +127,13 @@ async def init_database():
             schema = f.read()
             
         async with db_manager.acquire() as conn:
-            # Simple split by statement (naive but works for this schema)
-            statements = schema.split(';')
-            for stmt in statements:
-                if stmt.strip():
-                    try:
-                        await conn.execute(stmt)
-                    except Exception as e:
-                        # Ignore benign errors
-                        if 'already exists' not in str(e):
-                            print(f"[WARN] Schema execution warning: {e}")
+            for stmt in split_sql_statements(schema):
+                try:
+                    await conn.execute(stmt)
+                except Exception as e:
+                    # Ignore benign errors
+                    if 'already exists' not in str(e):
+                        print(f"[WARN] Schema execution warning: {e}")
                             
         print("Database schema initialized (Standard Array Mode).")
     except FileNotFoundError:

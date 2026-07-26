@@ -20,6 +20,16 @@ class ProcessedChunk:
     metadata: Dict[str, Any]
 
 
+# Characters kept by clean_text, beyond word characters and whitespace.
+#
+# This list is a whitelist, so anything missing from it is deleted silently. `%`
+# and `&` were missing, which turned "58.59% of the vote" into "58.59 of the
+# vote" in six articles - including the ones added specifically so questions
+# about the official vote share could be answered. A character that carries
+# meaning in news prose belongs here; punctuation and symbol noise does not.
+KEPT_PUNCTUATION = r".,!?;:\-'\"()\[\]%&/$+"
+
+
 class ArticlePreprocessor:
     """
     Preprocesses news articles for RAG pipeline.
@@ -75,12 +85,13 @@ class ArticlePreprocessor:
         # Normalize whitespace (multiple spaces, newlines)
         text = re.sub(r'\s+', ' ', text)
         
-        # Remove special characters but keep basic punctuation
-        text = re.sub(r'[^\w\s.,!?;:\-\'\"()\[\]]', '', text)
-        
-        # Remove multiple punctuation
+        # Remove special characters but keep meaningful punctuation.
+        # \w is Unicode-aware, so accented letters in names survive.
+        text = re.sub(rf'[^\w\s{KEPT_PUNCTUATION}]', '', text)
+
+        # Collapse repeated punctuation ("..." -> ".")
         text = re.sub(r'([.,!?;:])\1+', r'\1', text)
-        
+
         return text.strip()
     
     def chunk_article(self, article: Dict[str, Any]) -> List[ProcessedChunk]:
