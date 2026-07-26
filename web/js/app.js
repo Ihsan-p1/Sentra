@@ -86,6 +86,17 @@ chatForm.addEventListener('submit', async (e) => {
         const data = await response.json();
         document.getElementById(loadingId).remove();
 
+        // An HTTP error body has {detail}, not {answer}. Without this check the
+        // code fell through to marked.parse(undefined), which threw and was
+        // caught below as "connection error" - hiding a real server error behind
+        // the wrong diagnosis.
+        if (!response.ok || typeof data.answer !== 'string') {
+            const detail = data.detail || `HTTP ${response.status}`;
+            appendMessage(`**Server error.** ${detail}`, 'bot');
+            resetAnalysisPanel();
+            return;
+        }
+
         // Update session_id from server response
         if (data.session_id) {
             sessionId = data.session_id;
@@ -298,6 +309,14 @@ function updateSidebar(data) {
 
     const comparison = data.model_comparison || {};
 
+    // A reply that ran no A/B analysis at all (refusal, greeting, help topic).
+    // Blank the panel rather than leaving the previous answer's numbers standing.
+    if (!comparison.hallucination && !comparison.confidence && !comparison.framing) {
+        resetAnalysisPanel();
+        updateSourcesList(data.sources);
+        return;
+    }
+
     // Confidence
     if (comparison.confidence) {
         animateValue('confidence-a', comparison.confidence.model_a?.score_percent || '0%');
@@ -308,8 +327,9 @@ function updateSidebar(data) {
 
     // Hallucination
     if (comparison.hallucination) {
-        const ratioA = comparison.hallucination.model_a?.supported_ratio || '0/0';
-        const ratioB = comparison.hallucination.model_b?.supported_ratio || '0/0';
+        // Ratio is UNSUPPORTED/TOTAL sentences - lower is better
+        const ratioA = comparison.hallucination.model_a?.unsupported_ratio || '0/0';
+        const ratioB = comparison.hallucination.model_b?.unsupported_ratio || '0/0';
 
         document.getElementById('hallu-a-ratio').innerText = ratioA;
         document.getElementById('hallu-b-ratio').innerText = ratioB;
@@ -349,8 +369,10 @@ function updateSidebar(data) {
 
     // Hallucination Lists
     try {
-        updateHallucinationList('hallucination-list-a', data.unsupported_claims || []);
-        updateHallucinationList('hallucination-list-b', data.unsupported_claims_b || []);
+        const checkedA = checkedCount(comparison.hallucination?.model_a?.unsupported_ratio || '0/0');
+        const checkedB = checkedCount(comparison.hallucination?.model_b?.unsupported_ratio || '0/0');
+        updateHallucinationList('hallucination-list-a', data.unsupported_claims || [], checkedA);
+        updateHallucinationList('hallucination-list-b', data.unsupported_claims_b || [], checkedB);
     } catch (err) { console.error("Hallucination update failed", err); }
 
     // Sources
@@ -393,9 +415,23 @@ function animateValue(elementId, targetValue) {
     requestAnimationFrame(update);
 }
 
-function updateHallucinationList(listId, claims) {
+// Zero sentences checked is not a clean bill of health - it means verification
+// never ran (a refusal, a greeting, a help reply). Reporting "0/0 Strong
+// Alignment" in green claimed a verification result that did not exist, which is
+// exactly the kind of overclaiming this project exists to measure.
+function checkedCount(ratioString) {
+    const total = Number(String(ratioString).split('/')[1]);
+    return Number.isFinite(total) ? total : 0;
+}
+
+function updateHallucinationList(listId, claims, totalChecked) {
     const list = document.getElementById(listId);
     list.innerHTML = '';
+
+    if (totalChecked === 0) {
+        list.innerHTML = '<li style="color: var(--text-secondary);">No claims to verify</li>';
+        return;
+    }
 
     if (claims && claims.length > 0) {
         claims.slice(0, 3).forEach(claim => {
@@ -405,23 +441,53 @@ function updateHallucinationList(listId, claims) {
             list.appendChild(li);
         });
     } else {
-        list.innerHTML = '<li class="text-emerald-400">All claims verified ✓</li>';
+        list.innerHTML = `<li class="text-emerald-400">All ${totalChecked} claims verified ✓</li>`;
     }
 }
 
 function updateLabel(elementId, ratioString) {
     const el = document.getElementById(elementId);
-    const [unver, total] = ratioString.split('/').map(Number);
+    const [unver, total] = String(ratioString).split('/').map(Number);
+    el.className = 'text-[10px] font-medium';
 
-    if (unver > 0) {
+    if (!Number.isFinite(total) || total === 0) {
+        el.innerText = 'Not evaluated';
+        el.style.color = 'var(--text-secondary)';  // Neutral - nothing was checked
+    } else if (unver > 0) {
         el.innerText = 'Weak Alignment';
-        el.className = 'text-[10px] font-medium';
         el.style.color = 'var(--color-hallucination)';  // Red - Hallucination risk
     } else {
         el.innerText = 'Strong Alignment';
-        el.className = 'text-[10px] font-medium';
         el.style.color = 'var(--color-factual)';  // Green - Factual confidence
     }
+}
+
+// Refusals, greetings and help replies come back with an empty model_comparison.
+// Without an explicit reset the panel keeps whatever the previous answer left
+// behind, so the user reads last question's scores as if they belonged to this one.
+function resetAnalysisPanel() {
+    ['confidence-a', 'confidence-b'].forEach(id => {
+        document.getElementById(id).innerText = '--';
+    });
+    ['progress-a', 'progress-b'].forEach(id => {
+        const circle = document.getElementById(id);
+        if (circle) circle.style.strokeDashoffset = 220;  // empty ring
+    });
+    document.getElementById('confidence-a-method').innerText = 'Not evaluated';
+    document.getElementById('confidence-b-method').innerText = 'Not evaluated';
+
+    ['hallu-a-ratio', 'hallu-b-ratio'].forEach(id => {
+        document.getElementById(id).innerText = '--';
+    });
+    updateLabel('hallu-a-label', '0/0');
+    updateLabel('hallu-b-label', '0/0');
+
+    updateHallucinationList('hallucination-list-a', [], 0);
+    updateHallucinationList('hallucination-list-b', [], 0);
+
+    document.getElementById('framing-comparison').innerHTML =
+        '<p class="text-[10px] text-center py-2" style="color: var(--text-secondary);">' +
+        'No framing analysis for this reply</p>';
 }
 
 function updateSourcesList(sources) {

@@ -6,6 +6,7 @@ Improved: Aggregated hallucination warnings instead of per-sentence spam.
 """
 from typing import Dict, List, Any
 import asyncio
+import os
 import re
 
 import sys
@@ -19,8 +20,21 @@ from models.baseline.models import get_baseline_models
 from pipeline.embeddings import get_embedder
 
 # For LLM generation (using OpenAI or Ollama)
-from chatbot.llm_client import LLMClient 
-from chatbot.conversation_memory import conversation_memory 
+from chatbot.llm_client import LLMClient, LLMUnavailable
+from chatbot.conversation_memory import conversation_memory
+from chatbot.language import (
+    INTENT_HELP,
+    INTENT_QUESTION,
+    claim_category,
+    classify_intent,
+    detect_help_topic,
+    detect_language,
+    disclaimer,
+    help_reply,
+    refusal,
+    small_talk_reply,
+)
+from utils.trace import format_similarity_spread, trace_request
 
 class ChatbotEngine:
     """
@@ -39,11 +53,16 @@ class ChatbotEngine:
         
         # Load custom trained models (Model A)
         try:
-            self.hallucination_detector = HallucinationDetector("models/hallucination_detector.pkl")
-            self.confidence_scorer = ConfidenceScorer("models/confidence_scorer.pkl")
+            self.hallucination_detector = HallucinationDetector(
+                os.path.join(settings.MODELS_DIR, "hallucination_detector.pkl")
+            )
+            self.confidence_scorer = ConfidenceScorer(
+                os.path.join(settings.MODELS_DIR, "confidence_scorer.pkl")
+            )
             print("[INFO] Loaded custom evaluation models (Model A)")
-        except:
-            print("[WARN] Custom models not found, using untrained instance")
+        except Exception as e:
+            print(f"[WARN] Could not load custom models ({e}); using untrained instance. "
+                  "Run 'python scripts/train_models.py' to generate them.")
             self.hallucination_detector = HallucinationDetector()
             self.confidence_scorer = ConfidenceScorer()
             
@@ -66,79 +85,217 @@ class ChatbotEngine:
         """
         Main pipeline execution with A/B comparison.
         """
-        # 1. Query Refinement & Context Extraction
-        retrieval_query, extracted_topic = self._handle_query_refinement(query, session_id, mode)
-        if isinstance(retrieval_query, dict): # Check for refusal (query too short)
-            return retrieval_query
+        with trace_request(query, session_id) as trace:
+            trace.set(mode=mode)
 
-        # 2. Retrieval & Gating
-        retrieval_result = await self._perform_retrieval(retrieval_query, mode, session_id)
-        if "answer" in retrieval_result: # Check for retrieval refusal
-            return retrieval_result
-        
-        retrieved_chunks = retrieval_result["chunks"]
-        all_chunks_flat = retrieval_result["flat_chunks"]
-        source_texts = retrieval_result["source_texts"]
+            # 0. Answer in whatever language the user wrote in, and divert small talk
+            #    before it reaches retrieval - a greeting has no sources to find.
+            language = detect_language(query)
+            intent = classify_intent(query)
+            trace.set(lang=language, intent=intent)
 
-        # 3. Framing Analysis (A/B)
-        framing_results = self._perform_analysis(retrieved_chunks)
-        
-        # 4. LLM Generation
-        conversation_history = self.memory.format_for_llm(session_id, num_turns=5)
-        raw_response = await self.llm.generate_conversational_response(
-            user_query=query, 
-            retrieved_chunks=retrieved_chunks, 
-            conversation_history=conversation_history,
-            mode=mode,
-            focus_topic=extracted_topic
-        )
-        
-        # 5. Hallucination Detection (A/B)
-        hallucination_results = self._perform_hallucination_check(raw_response, source_texts)
-        
-        # 6. Confidence Scoring (A/B)
-        confidence_results = self._score_confidence(query, retrieved_chunks, all_chunks_flat)
-        
-        # 7. Final Response Assembly
-        final_answer = self._build_final_answer(
-            raw_response, 
-            hallucination_results["verification_result_a"], 
-            hallucination_results["unsupported_a"]
-        )
-        
-        # 8. Build Comparison Metadata
-        model_comparison = self._build_comparison_metadata(
-            hallucination_results, 
-            framing_results, 
-            confidence_results
-        )
-        
-        return {
-            "answer": final_answer,
-            "raw_answer": raw_response,
-            "framing_analysis": framing_results["statistical"],
-            "verification_summary": hallucination_results["verification_result_a"],
-            "unsupported_claims": hallucination_results["unsupported_a"],
-            "unsupported_claims_b": hallucination_results["unsupported_b"],
-            "confidence_score": confidence_results["score_a"],
-            "sources": retrieved_chunks,
-            "model_comparison": model_comparison,
-            "source_quality": {
-                "max_similarity": round(max([c['similarity'] for c in all_chunks_flat]) if all_chunks_flat else 0, 3),
-                "avg_similarity": round(sum([c['similarity'] for c in all_chunks_flat]) / len(all_chunks_flat) if all_chunks_flat else 0, 3),
-                "total_sources": len(all_chunks_flat),
-                "coverage_note": "Articles are stored as snapshots; original URLs may have changed."
+            if intent != INTENT_QUESTION:
+                trace.set(outcome="small_talk")
+                return self._small_talk_response(query, intent, language, mode, session_id)
+
+            # 1. Query Refinement & Context Extraction
+            retrieval_query, extracted_topic = self._handle_query_refinement(
+                query, session_id, mode, language
+            )
+            if isinstance(retrieval_query, dict): # Check for refusal (query too short)
+                trace.set(outcome="refused", gate="too_short")
+                self._remember(session_id, query, retrieval_query["answer"])
+                return retrieval_query
+            if extracted_topic:
+                trace.set(refined="yes")
+
+            # 2. Retrieval & Gating
+            with trace.stage("retrieval"):
+                retrieval_result = await self._perform_retrieval(
+                    retrieval_query, mode, session_id, language, trace
+                )
+            if "answer" in retrieval_result: # Check for retrieval refusal
+                trace.set(outcome="refused")
+                self._remember(session_id, query, retrieval_result["answer"])
+                return retrieval_result
+
+            retrieved_chunks = retrieval_result["chunks"]
+            all_chunks_flat = retrieval_result["flat_chunks"]
+            source_texts = retrieval_result["source_texts"]
+
+            # 3. Framing Analysis (A/B)
+            with trace.stage("framing"):
+                framing_results = self._perform_analysis(retrieved_chunks)
+
+            # 4. LLM Generation
+            conversation_history = self.memory.format_for_llm(session_id, num_turns=5)
+            try:
+                with trace.stage("generate"):
+                    raw_response = await self.llm.generate_conversational_response(
+                        user_query=query,
+                        retrieved_chunks=retrieved_chunks,
+                        conversation_history=conversation_history,
+                        mode=mode,
+                        focus_topic=extracted_topic,
+                        language=language
+                    )
+            except LLMUnavailable as exc:
+                # No completion means there is nothing to verify or score. Return
+                # an error envelope instead of grading the error text as an answer,
+                # and do NOT write it to memory - a failed turn must not become the
+                # context a follow-up resolves against.
+                trace.set(outcome="llm_unavailable", error=type(exc).__name__)
+                return self._llm_error_response(exc, language, mode, session_id, retrieved_chunks)
+
+            trace.set(answer_chars=len(raw_response or ""))
+
+            # 5. Hallucination Detection (A/B)
+            with trace.stage("verify"):
+                hallucination_results = self._perform_hallucination_check(raw_response, source_texts)
+
+            # 6. Confidence Scoring (A/B)
+            confidence_results = self._score_confidence(query, retrieved_chunks, all_chunks_flat)
+
+            stats_a = hallucination_results["stats_a"]
+            trace.set(
+                support=f"{stats_a['supported_count']}/{stats_a['total_checked']}",
+                conf_a=confidence_results["score_a"],
+                outcome="answered",
+            )
+
+            # 7. Final Response Assembly
+            final_answer = self._build_final_answer(
+                raw_response,
+                hallucination_results["verification_result_a"],
+                hallucination_results["unsupported_a"],
+                language
+            )
+
+            # 8. Build Comparison Metadata
+            model_comparison = self._build_comparison_metadata(
+                hallucination_results,
+                framing_results,
+                confidence_results
+            )
+
+            # 9. Persist the turn so the NEXT request can resolve follow-ups against it.
+            # Store the raw answer: the appended disclaimers are display-only noise in history.
+            self._remember(session_id, query, raw_response)
+
+            return {
+                "answer": final_answer,
+                "raw_answer": raw_response,
+                "framing_analysis": framing_results["statistical"],
+                "verification_summary": hallucination_results["verification_result_a"],
+                "unsupported_claims": hallucination_results["unsupported_a"],
+                "unsupported_claims_b": hallucination_results["unsupported_b"],
+                "confidence_score": confidence_results["score_a"],
+                "sources": retrieved_chunks,
+                "model_comparison": model_comparison,
+                "language": language,
+                "source_quality": {
+                    "max_similarity": round(max([c['similarity'] for c in all_chunks_flat]) if all_chunks_flat else 0, 3),
+                    "avg_similarity": round(sum([c['similarity'] for c in all_chunks_flat]) / len(all_chunks_flat) if all_chunks_flat else 0, 3),
+                    "total_sources": len(all_chunks_flat),
+                    "coverage_note": "Articles are stored as snapshots; original URLs may have changed."
+                }
             }
+
+    def _small_talk_response(
+        self,
+        query: str,
+        intent: str,
+        language: str,
+        mode: str,
+        session_id: str
+    ) -> Dict[str, Any]:
+        """
+        Answer a greeting, a thanks, a farewell, or a question about the app
+        itself, without touching the corpus.
+
+        Returns the same envelope as a normal answer so the frontend needs no
+        special case; the analysis panels are simply empty because no retrieval
+        or verification took place.
+        """
+        if intent == INTENT_HELP:
+            # Which panel or feature was asked about, falling back to an overview
+            answer = help_reply(detect_help_topic(query) or "overview", language)
+        else:
+            answer = small_talk_reply(intent, language)
+
+        self._remember(session_id, query, answer)
+
+        return {
+            "answer": answer,
+            "raw_answer": answer,
+            "intent": intent,
+            "language": language,
+            "framing_analysis": {},
+            "verification_summary": {},
+            "unsupported_claims": [],
+            "unsupported_claims_b": [],
+            "confidence_score": 0.0,
+            "sources": {},
+            "model_comparison": {},
+            "mode": mode,
+            "session_id": session_id,
         }
 
-    def _handle_query_refinement(self, query: str, session_id: str, mode: str) -> tuple:
+    def _llm_error_response(
+        self,
+        exc: "LLMUnavailable",
+        language: str,
+        mode: str,
+        session_id: str,
+        retrieved_chunks: Dict,
+    ) -> Dict[str, Any]:
+        """
+        Envelope for "the model server did not answer".
+
+        Retrieval succeeded, so the sources are still returned - they are real and
+        worth showing. Everything downstream of generation is empty, which makes
+        the sidebar render "Not evaluated" rather than inventing a score for text
+        that is not an answer.
+        """
+        return {
+            "answer": f"{refusal('llm_unavailable', language)}\n\n`{exc.user_message()}`",
+            "raw_answer": "",
+            "error": "llm_unavailable",
+            "language": language,
+            "framing_analysis": {},
+            "verification_summary": {},
+            "unsupported_claims": [],
+            "unsupported_claims_b": [],
+            "confidence_score": 0.0,
+            "sources": retrieved_chunks,
+            "model_comparison": {},
+            "mode": mode,
+            "session_id": session_id,
+        }
+
+    def _remember(self, session_id: str, query: str, answer: str) -> None:
+        """
+        Record one completed turn in conversation memory.
+
+        Called at every exit point of process_query (including refusals) so that
+        follow-up resolution in _handle_query_refinement has something to read.
+        Recording happens AFTER refinement on purpose: the refinement step must
+        only see previous turns, never the message currently being answered.
+        """
+        self.memory.add_message(session_id, "user", query)
+        self.memory.add_message(session_id, "assistant", answer)
+
+    def _handle_query_refinement(
+        self, query: str, session_id: str, mode: str, language: str = "en"
+    ) -> tuple:
         """Handle short queries, topic extraction, and refinement."""
         if mode == "reduce_hallucination" and len(query.strip().split()) < 3:
             return {
-                "answer": "This question cannot be reliably answered using the current news corpus. Please ask a more specific question (at least 3 words).",
+                "answer": refusal("too_short", language),
                 "analysis": {"error": "query_too_short"},
                 "confidence": 0.0,
-                "model_comparison": {}, 
+                "model_comparison": {},
+                "language": language,
                 "mode": mode,
                 "session_id": session_id
             }, None
@@ -195,29 +352,50 @@ class ChatbotEngine:
                             
         return retrieval_query, extracted_topic
 
-    async def _perform_retrieval(self, query: str, mode: str, session_id: str) -> Dict[str, Any]:
+    async def _perform_retrieval(
+        self, query: str, mode: str, session_id: str, language: str = "en", trace=None
+    ) -> Dict[str, Any]:
         """Perform document retrieval and validation."""
         top_k = 4 if mode == "reduce_hallucination" else None
         retrieved_chunks = await self.retriever.retrieve(query, top_k=top_k)
         all_chunks_flat = self.retriever.flatten_results(retrieved_chunks)
         source_texts = [c['text'] for c in all_chunks_flat]
-        
+
         if not source_texts:
+            if trace:
+                trace.set(gate="no_sources", chunks=0)
             return {
-                "answer": "Sorry, I couldn't find relevant information in the news database.",
-                "analysis": {}, "confidence": 0.0, "model_comparison": {}, "session_id": session_id
+                "answer": refusal("no_sources", language),
+                "analysis": {}, "confidence": 0.0, "model_comparison": {},
+                "language": language, "session_id": session_id
             }
-        
+
         similarities = [c['similarity'] for c in all_chunks_flat]
         max_similarity = max(similarities)
-        threshold = 0.40 if mode == "reduce_hallucination" else 0.35
-        
+        threshold = (
+            settings.RETRIEVAL_THRESHOLD_STRICT
+            if mode == "reduce_hallucination"
+            else settings.RETRIEVAL_THRESHOLD
+        )
+
+        if trace:
+            # sim is max/median/min. All three sliding down together is the
+            # signature of an embedding mismatch, not of a difficult query -
+            # that distinction is why the spread is logged and not just the max.
+            trace.set(
+                sim=format_similarity_spread(similarities),
+                threshold=threshold,
+                chunks=f"{len(all_chunks_flat)}/{len(retrieved_chunks)}src",
+                gate="pass" if max_similarity >= threshold else "below_threshold",
+            )
+
         if max_similarity < threshold:
-            refusal_msg = "Insufficient source coverage." if mode == "reduce_hallucination" else "I cannot answer this based on the available news sources. The retrieved articles do not contain sufficiently relevant information. Please try asking about specific Indonesian political events or candidates covered in the database."
+            kind = "low_similarity_strict" if mode == "reduce_hallucination" else "low_similarity"
             return {
-                "answer": refusal_msg,
+                "answer": refusal(kind, language),
                 "analysis": {"retrieval_quality": "insufficient"},
                 "confidence": 0.0, "model_comparison": {},
+                "language": language,
                 "source_quality": {
                     "max_similarity": round(max_similarity, 3),
                     "avg_similarity": round(sum(similarities)/len(similarities), 3),
@@ -311,17 +489,19 @@ class ChatbotEngine:
     ) -> Dict[str, Any]:
         """Construct the competition/comparison metadata for the UI."""
         return {
+            # Note: the ratio reported here is UNSUPPORTED/TOTAL sentences (lower is
+            # better), and support_rate is the share that passed verification.
             "hallucination": {
                 "model_a": {
                     "name": "Logistic Regression (Fine-tuned)",
-                    "supported_ratio": f"{hallucination_res['stats_a']['unsupported_count']}/{hallucination_res['stats_a']['total_checked']}",
-                    "accuracy_estimate": f"{hallucination_res['stats_a']['support_rate']:.0%}",
+                    "unsupported_ratio": f"{hallucination_res['stats_a']['unsupported_count']}/{hallucination_res['stats_a']['total_checked']}",
+                    "support_rate": f"{hallucination_res['stats_a']['support_rate']:.0%}",
                     "method": "Embedding Similarity Features"
                 },
                 "model_b": {
                     "name": "Keyword Overlap (Baseline)",
-                    "supported_ratio": hallucination_res['hallucination_result_b']["supported_ratio"],
-                    "accuracy_estimate": f"{hallucination_res['hallucination_result_b']['overall_score']:.0%}",
+                    "unsupported_ratio": hallucination_res['hallucination_result_b']["unsupported_ratio"],
+                    "support_rate": f"{hallucination_res['hallucination_result_b']['overall_score']:.0%}",
                     "method": "N-gram Token Matching"
                 }
             },
@@ -457,77 +637,77 @@ class ChatbotEngine:
         return verification_summary, unsupported, stats
     
     def _build_final_answer(
-        self, 
-        raw_response: str, 
-        verification_summary: Dict, 
-        unsupported_claims: List[Dict]
+        self,
+        raw_response: str,
+        verification_summary: Dict,
+        unsupported_claims: List[Dict],
+        language: str = "en"
     ) -> str:
         """
         Build final answer with academic disclaimer and categorized claim warnings.
         NO per-sentence [Unverified] spam!
         Uses softer language and claim categories instead of full sentences.
+
+        Disclaimers follow the answer's language so a reply in Indonesian does
+        not end with an English footer.
         """
         final_answer = raw_response
-        
-        # Always add global academic disclaimer at the end
-        academic_disclaimer = "\n\n---\n*This analysis focuses on media framing and emphasis. Some conclusions are interpretive statements and depend on the scope of retrieved articles.*"
-        
+
         # For low verification, add categorized claims (not full sentences)
         if verification_summary["level"] == "low" and unsupported_claims:
-            # Extract claim categories from sentences
-            claim_categories = self._extract_claim_categories(unsupported_claims)
-            
+            claim_categories = self._extract_claim_categories(unsupported_claims, language)
+
             if claim_categories:
-                final_answer += "\n\n---\n**Interpretive Claims with Limited Source Support:**\n"
+                final_answer += disclaimer("claims_header", language)
                 for category in claim_categories[:4]:  # Max 4 categories
                     final_answer += f"- {category}\n"
-                
-                # Add interpretive note
-                final_answer += "\n*Interpretive statements (Framing Inferences) are evaluated conservatively and may be flagged despite being reasonable in context.*"
+                final_answer += disclaimer("claims_footer", language)
         elif verification_summary["level"] == "moderate":
-             final_answer += "\n\n---\n*Note: Contains some Framing Inferences not explicitly in source text.*"
-        
-        # Add global disclaimer
-        final_answer += academic_disclaimer
-        
+            final_answer += disclaimer("moderate", language)
+
+        # Always add the global academic disclaimer at the end
+        final_answer += disclaimer("academic", language)
+
         return final_answer
-    
-    def _extract_claim_categories(self, unsupported_claims: List[Dict]) -> List[str]:
+
+    # Keyword -> category key. Keys are language-independent; the display text
+    # is looked up per language, so detection never has to be translated.
+    CATEGORY_PATTERNS = [
+        (["jokowi", "widodo", "president", "facilitat", "presiden"], "jokowi_role"),
+        (["opposition", "rival", "opponent", "accept", "oposisi", "lawan"], "opposition"),
+        (["campaign", "strateg", "victory", "success", "kampanye", "kemenangan"], "campaign"),
+        (["cabinet", "minister", "appoint", "position", "kabinet", "menteri"], "cabinet"),
+        (["coalition", "party", "political", "alliance", "koalisi", "partai"], "coalition"),
+        (["economic", "invest", "market", "business", "ekonomi", "investasi", "pasar"], "economic"),
+        (["diplomatic", "foreign", "international", "diplomatik", "luar negeri"], "diplomatic"),
+        (["military", "defense", "security", "militer", "pertahanan", "keamanan"], "military"),
+        (["social", "program", "meal", "welfare", "sosial", "kesejahteraan"], "social"),
+        (["constitutional", "court", "legal", "law", "konstitusi", "mahkamah", "hukum"], "legal"),
+    ]
+
+    def _extract_claim_categories(
+        self, unsupported_claims: List[Dict], language: str = "en"
+    ) -> List[str]:
         """
         Extract high-level claim categories from unsupported sentences.
         Instead of showing full sentences, show thematic categories.
         """
         categories = []
-        
-        # Keywords to category mapping
-        category_patterns = [
-            (["jokowi", "widodo", "president", "facilitat"], "Role of President Jokowi in the process"),
-            (["opposition", "rival", "opponent", "accept"], "Acceptance by former opposition figures"),
-            (["campaign", "strateg", "victory", "success"], "Attribution of campaign success factors"),
-            (["cabinet", "minister", "appoint", "position"], "Cabinet appointment decisions"),
-            (["coalition", "party", "political", "alliance"], "Political coalition dynamics"),
-            (["economic", "invest", "market", "business"], "Economic implications and outlook"),
-            (["diplomatic", "foreign", "international"], "Diplomatic and foreign relations"),
-            (["military", "defense", "security"], "Military and security aspects"),
-            (["social", "program", "meal", "welfare"], "Social program initiatives"),
-            (["constitutional", "court", "legal", "law"], "Constitutional and legal matters"),
-        ]
-        
-        seen_categories = set()
-        
+        seen_keys = set()
+
         for claim in unsupported_claims:
             sentence_lower = claim['sentence'].lower()
-            
-            for keywords, category in category_patterns:
+
+            for keywords, key in self.CATEGORY_PATTERNS:
                 if any(kw in sentence_lower for kw in keywords):
-                    if category not in seen_categories:
-                        categories.append(category)
-                        seen_categories.add(category)
+                    if key not in seen_keys:
+                        categories.append(claim_category(key, language))
+                        seen_keys.add(key)
                     break
-        
+
         # If no patterns matched, add generic category
         if not categories and unsupported_claims:
-            categories.append("General interpretive framing statements")
-        
+            categories.append(claim_category("generic", language))
+
         return categories
 
