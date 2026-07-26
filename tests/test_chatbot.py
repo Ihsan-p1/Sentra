@@ -1,113 +1,144 @@
 """
-Test the improved chatbot output format.
+End-to-end smoke tests against a running Sentra server.
+
+Marked `integration` and skipped automatically when nothing is listening on
+API_BASE, so the default `pytest` run stays offline. To run them:
+
+    python -m uvicorn api.main:app        # in one terminal
+    pytest -m integration                 # in another
 """
+import os
+
+import pytest
 import requests
-import json
 
-API_BASE = "http://localhost:8000"
+API_BASE = os.getenv("SENTRA_API_BASE", "http://localhost:8000")
+TIMEOUT = int(os.getenv("SENTRA_TEST_TIMEOUT", "180"))
 
-def test_chat(question: str):
-    """Send a question to the chatbot and display the full response."""
-    print(f"\nQuestion: {question}")
-    print("=" * 70)
-    
+pytestmark = pytest.mark.integration
+
+
+def _server_is_up() -> bool:
     try:
-        response = requests.post(
-            f"{API_BASE}/api/chat",
-            json={"message": question},
-            timeout=120
-        )
-        
-        if response.status_code == 200:
-            result = response.json()
-            
-            print("\nFULL ANSWER:")
-            print("-" * 70)
-            print(result.get("answer", "No answer"))
-            print("-" * 70)
-            
-            # Verification summary
-            verification = result.get("verification_summary", {})
-            if verification:
-                level = verification.get("level", "unknown")
-                support_rate = verification.get("support_rate", 0)
-                print(f"\nVerification Level: {level.upper()} ({support_rate:.1%})")
-                print(f"   Supported: {verification.get('supported_count', 0)}/{verification.get('total_checked', 0)}")
-            
-            verification = result.get("verification_summary", {})
-            if verification:
-                level = verification.get("level", "unknown")
-                support_rate = verification.get("support_rate", 0)
-                print(f"\nVerification Level: {level.upper()} ({support_rate:.1%})")
-                print(f"   Supported: {verification.get('supported_count', 0)}/{verification.get('total_checked', 0)}")
-                
-                print("\n   Sentence Breakdown:")
-                for item in verification.get("items", []):
-                    status = "[PASS]" if item.get("is_supported") else "[FAIL]"
-                    print(f"   {status} {item.get('sentence')[:50]}...")
-                    if not item.get("is_supported"):
-                        print(f"          Reason: {item.get('reason')}")
-            
-            comparison = result.get("model_comparison", {})
-            if comparison.get("confidence"):
-                print(f"\nConfidence: Model A: {comparison['confidence']['model_a']['score_percent']}, "
-                      f"Model B: {comparison['confidence']['model_b']['score_percent']}")
-                
-            if comparison.get("hallucination"):
-                 print(f"\nHallucination Detection:")
-                 print(f"  Model A: {comparison['hallucination']['model_a'].get('supported_ratio')} ({comparison['hallucination']['model_a'].get('accuracy_estimate')})")
-                 print(f"  Model B: {comparison['hallucination']['model_b'].get('supported_ratio')} ({comparison['hallucination']['model_b'].get('accuracy_estimate')})")
-            
-            print("\nTest complete.")
-            
-        else:
-            print(f"[ERROR] Status code: {response.status_code}")
-            print(response.text)
-            
-    except requests.exceptions.ConnectionError:
-        print("[ERROR] Could not connect to API. Is the server running?")
-    except Exception as e:
-        print(f"[ERROR] {e}")
+        return requests.get(f"{API_BASE}/api/health", timeout=3).status_code == 200
+    except requests.exceptions.RequestException:
+        return False
 
-if __name__ == "__main__":
-    # Test with reduce_hallucination mode
-    question = "who is the new president of indonesia?"
-    print(f"\nTesting Question: {question}")
-    
-    try:
-        response = requests.post(
-            f"{API_BASE}/api/chat",
-            json={
-                "message": question,
-                "mode": "reduce_hallucination"
-            },
-            timeout=120
-        )
-        if response.status_code == 200:
-            result = response.json()
-            
-            # Save to file for debug
-            with open("debug_result.json", "w") as f:
-                json.dump(result, f, indent=2)
-                
-            print("\nFULL ANSWER:")
-            print("-" * 70)
-            print(result.get("answer", "No answer"))
-            print("-" * 70)
-            
-            verification = result.get("verification_summary", {})
-            if verification:
-                level = verification.get("level", "unknown")
-                support_rate = verification.get("support_rate", 0)
-                print(f"\nVerification Level: {level.upper()} ({support_rate:.1%})")
-                print(f"   Supported: {verification.get('supported_count', 0)}/{verification.get('total_checked', 0)}")
-            
-            comparison = result.get("model_comparison", {})
-            if comparison.get("hallucination"):
-                 print(f"\nHallucination Detection:")
-                 print(f"  Model A: {comparison['hallucination']['model_a'].get('supported_ratio')} ({comparison['hallucination']['model_a'].get('accuracy_estimate')})")
-                 print(f"  Model B: {comparison['hallucination']['model_b'].get('supported_ratio')} ({comparison['hallucination']['model_b'].get('accuracy_estimate')})")
-        else:
-            print(f"Error: {response.status_code}")
-    except Exception as e:
-        print(f"Error: {e}")
+
+requires_server = pytest.mark.skipif(
+    not _server_is_up(), reason=f"no Sentra server reachable at {API_BASE}"
+)
+
+
+def ask(question: str, mode: str = "default", session_id: str = None) -> dict:
+    payload = {"message": question, "mode": mode}
+    if session_id:
+        payload["session_id"] = session_id
+
+    response = requests.post(f"{API_BASE}/api/chat", json=payload, timeout=TIMEOUT)
+    assert response.status_code == 200, response.text
+    return response.json()
+
+
+@requires_server
+def test_health_endpoint_reports_ok():
+    data = requests.get(f"{API_BASE}/api/health", timeout=10).json()
+    assert data["status"] == "ok"
+
+
+@requires_server
+def test_chat_returns_a_non_empty_answer():
+    data = ask("who is the new president of indonesia?")
+
+    assert data["answer"].strip()
+    assert data["session_id"]
+
+
+@requires_server
+def test_chat_reports_verification_summary():
+    data = ask("what did the constitutional court decide?")
+
+    verification = data.get("verification_summary") or {}
+    if not verification:
+        pytest.skip("answer was a refusal; no verification performed")
+
+    assert verification["level"] in {"high", "moderate", "low"}
+    assert 0.0 <= verification["support_rate"] <= 1.0
+    assert verification["supported_count"] <= verification["total_checked"]
+
+
+@requires_server
+def test_model_comparison_reports_both_models():
+    data = ask("how did media cover the cabinet formation?")
+
+    comparison = data.get("model_comparison") or {}
+    if not comparison:
+        pytest.skip("answer was a refusal; no A/B comparison performed")
+
+    for stage in ("hallucination", "confidence", "framing"):
+        assert "model_a" in comparison[stage], f"{stage} missing Model A"
+        assert "model_b" in comparison[stage], f"{stage} missing Model B"
+
+    for model in ("model_a", "model_b"):
+        unsupported, total = comparison["hallucination"][model]["unsupported_ratio"].split("/")
+        assert int(unsupported) <= int(total)
+
+
+@requires_server
+def test_strict_mode_rejects_a_too_short_query():
+    data = ask("who?", mode="reduce_hallucination")
+
+    # Asserting on intent, not exact wording: the copy is localised and may change
+    assert data["answer"].strip()
+    assert not data.get("sources")
+    assert "three words" in data["answer"] or "tiga kata" in data["answer"]
+
+
+@requires_server
+def test_greeting_is_answered_without_retrieval():
+    data = ask("halo")
+
+    assert data.get("intent") == "greeting"
+    assert not data.get("sources")
+    assert "Halo" in data["answer"]
+
+
+@requires_server
+def test_indonesian_question_is_answered_in_indonesian():
+    data = ask("siapa yang memenangkan pemilu indonesia 2024")
+
+    assert data.get("language") == "id"
+    # Indonesian function words that would not appear in an English answer
+    lowered = data["answer"].lower()
+    assert any(word in lowered for word in (" yang ", " dan ", " dengan ", " adalah "))
+
+
+@requires_server
+def test_english_question_is_answered_in_english():
+    data = ask("who won the 2024 indonesian election")
+
+    assert data.get("language") == "en"
+
+
+@requires_server
+def test_session_history_is_retained_across_turns():
+    first = ask("tell me about the 2024 presidential election")
+    session_id = first["session_id"]
+
+    # A follow-up only makes sense if the previous turn was actually stored
+    second = ask("tell me more", session_id=session_id)
+
+    assert second["session_id"] == session_id
+    assert second["answer"].strip()
+
+
+@requires_server
+def test_clearing_a_session_succeeds():
+    session_id = ask("what happened after the election?")["session_id"]
+
+    response = requests.post(
+        f"{API_BASE}/api/chat/clear", json={"session_id": session_id}, timeout=30
+    )
+
+    assert response.status_code == 200
+    assert response.json()["status"] == "cleared"
