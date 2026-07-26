@@ -1,0 +1,16 @@
+# Sentra's serving model.
+#
+# Ollama defaults to num_ctx=2048. Sentra's prompts (system template + retrieved
+# chunks from three outlets + conversation history) exceed that, and Ollama
+# truncates silently - the model simply stops seeing the earliest sources, which
+# looks like a retrieval bug rather than a configuration one.
+#
+# Baking the context window into a derived model makes the fix independent of how
+# the server happens to be started.
+#
+# Build:  ollama create sentra-qwen:3b -f ollama/Modelfile
+# Verify: ollama show sentra-qwen:3b
+
+FROM qwen2.5:3b
+
+PARAMETER num_ctx 8192

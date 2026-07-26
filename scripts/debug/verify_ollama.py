@@ -1,22 +1,40 @@
+"""
+Check that the Ollama server is reachable and serving the configured model.
+"""
+import os
+import sys
+
 import requests
-import json
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+from config.settings import settings
+
+# Derive the host from LLM_BASE_URL so this checks the endpoint the app actually uses
+host = settings.LLM_BASE_URL.rsplit("/v1", 1)[0].rstrip("/")
+expected_model = settings.LLM_MODEL
 
 try:
-    print("Checking Ollama API at http://localhost:11434/api/tags ...")
-    response = requests.get("http://localhost:11434/api/tags")
-    
-    if response.status_code == 200:
-        data = response.json()
-        models = data.get('models', [])
-        print(f"Connection Successful! Found {len(models)} models.")
-        for m in models:
-            print(f"- {m['name']}")
-            
-        if not any('llama3.1' in m['name'] for m in models):
-            print("\nWARNING: 'llama3.1' is NOT found.")
-    else:
-        print(f"Error {response.status_code}: {response.text}")
+    print(f"Checking Ollama API at {host}/api/tags ...")
+    response = requests.get(f"{host}/api/tags", timeout=10)
 
-except Exception as e:
-    print(f"Connection Failed: {e}")
-    print("Is Ollama running? Try running 'ollama serve' in a separate terminal.")
+    if response.status_code != 200:
+        print(f"Error {response.status_code}: {response.text[:200]}")
+        sys.exit(1)
+
+    models = [m["name"] for m in response.json().get("models", [])]
+    print(f"Connection successful. Found {len(models)} model(s):")
+    for name in models:
+        marker = "  <- configured in .env" if name == expected_model else ""
+        print(f"- {name}{marker}")
+
+    if expected_model not in models:
+        print(f"\nWARNING: '{expected_model}' (LLM_MODEL) is NOT available.")
+        print("Build it with: ollama create sentra-qwen:3b -f ollama/Modelfile")
+        sys.exit(1)
+
+    print(f"\nOK: '{expected_model}' is ready.")
+
+except requests.exceptions.RequestException as e:
+    print(f"Connection failed: {e}")
+    print("Is Ollama running? Start the Ollama app, or run 'ollama serve'.")
+    sys.exit(1)
