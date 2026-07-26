@@ -12,7 +12,11 @@ import os
 import json
 import torch
 import torch.nn.functional as F
-from transformers import DistilBertTokenizer, DistilBertForSequenceClassification
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
+
+import sys
+sys.path.append('..')
+from config.settings import settings
 
 class FramingAnalyzer:
     """
@@ -129,12 +133,12 @@ class BertFramingAnalyzer:
     Fine-tuned Neural Model for Framing Classification.
     Predicts which media source a text sounds like.
     """
-    def __init__(self, model_path="data/models/framing_bert"):
+    def __init__(self, model_path=os.path.join(settings.MODELS_DIR, "framing_bert")):
         self.is_loaded = False
         try:
             if os.path.exists(model_path):
-                self.tokenizer = DistilBertTokenizer.from_pretrained(model_path)
-                self.model = DistilBertForSequenceClassification.from_pretrained(model_path)
+                self.tokenizer = AutoTokenizer.from_pretrained(model_path)
+                self.model = AutoModelForSequenceClassification.from_pretrained(model_path)
                 self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
                 self.model.to(self.device)
                 self.model.eval()

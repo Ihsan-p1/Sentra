@@ -13,6 +13,17 @@ import sys
 
 sys.path.append('../../..') # Adjust path if needed
 
+# Feature vector width. Sentence length was dropped (it biased the model against
+# long factual answers), so anything constructing a zero vector must use this.
+N_FEATURES = 5
+FEATURE_NAMES = ['Max Sim', 'Avg Sim', 'Min Sim', 'Std Sim', 'Overlap']
+
+# Below this max cosine similarity a sentence is unsupported regardless of what
+# the classifier says. The classifier is trained on synthetic data and its weights
+# are not trustworthy on their own; this floor is the deterministic backstop.
+HARD_GATE_SIMILARITY = 0.30
+
+
 class HallucinationDetector:
     """
     Custom Hallucination Detector trained from scratch.
@@ -39,18 +50,17 @@ class HallucinationDetector:
         """
         Extract interpretable features for the classifier.
         
-        Features:
+        Features (5 total - must match the width the scaler was fitted on):
         1. Max Cosine Similarity (How close is the best matching chunk?)
         2. Avg Cosine Similarity (Is the sentence generally supported?)
         3. Min Cosine Similarity
         4. Std Dev Similarity (Variance in support)
         5. Exact Keyword Overlap (Ratio of words found in sources)
-        6. Sentence Length (Longer sentences might be harder to support)
         """
-        
+
         # 1. Similarity Features
         if len(source_embs) == 0:
-            return np.zeros(6)
+            return np.zeros(N_FEATURES)
             
         sims = cosine_similarity(sentence_emb.reshape(1, -1), source_embs)[0]
         
@@ -84,9 +94,8 @@ class HallucinationDetector:
         self.is_trained = True
         
         # Show weights (Explainability)
-        feature_names = ['Max Sim', 'Avg Sim', 'Min Sim', 'Std Sim', 'Overlap']
         print("\nModel Coefficients (Feature Importance):")
-        for name, coef in zip(feature_names, self.model.coef_[0]):
+        for name, coef in zip(FEATURE_NAMES, self.model.coef_[0]):
             print(f"  {name}: {coef:.4f}")
             
     def predict(
@@ -130,27 +139,33 @@ class HallucinationDetector:
         # -----------------------------------------------------------
         
         # HARD GATE: Trust issues with the ML model
-        # If the semantic similarity is objectively low (< 0.30), 
+        # If the semantic similarity is objectively low (< 0.30),
         # we mark it as unsupported regardless of what the ML model thinks.
-        if features[0] < 0.30:
+        hard_gated = features[0] < HARD_GATE_SIMILARITY
+        if hard_gated:
             is_supported = False
-            reason = "Hard Gate: Low semantic similarity (< 0.30)"
         else:
             # Stricter threshold (0.60) -> (0.50) for sentences that pass the hard gate
-            is_supported = prob[1] > 0.50 
-            
-        # Determine reason if not supported
-        if not is_supported:
-            if features[0] < 0.25:  # max_similarity really low
-                reason = "Low semantic similarity to retrieved sources"
-            elif features[4] < 0.2:  # overlap
-                reason = "Limited keyword overlap with sources"
-            elif features[0] < 0.30:
-                reason = f"Similarity ({features[0]:.2f}) below strict verification threshold"
-            else:
-                reason = "Claim appears to extend beyond source material"
-        else:
+            is_supported = prob[1] > 0.50
+
+        # Determine reason if not supported.
+        #
+        # The hard-gate branch above used to set its own reason string, which this
+        # block then unconditionally overwrote - so "Hard Gate: Low semantic
+        # similarity" was never once shown to a user despite being the actual
+        # decision. The gate is reported first now, because it is the reason that
+        # overrode the classifier.
+        if is_supported:
             reason = ""
+        elif hard_gated:
+            reason = (
+                f"Hard gate: similarity {features[0]:.2f} is below the "
+                f"{HARD_GATE_SIMILARITY:.2f} floor, so the classifier was overridden"
+            )
+        elif features[4] < 0.2:  # overlap
+            reason = "Limited keyword overlap with sources"
+        else:
+            reason = "Claim appears to extend beyond source material"
         
         return {
             'is_supported': bool(is_supported),

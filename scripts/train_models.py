@@ -8,14 +8,17 @@ import os
 import sys
 from typing import List, Tuple
 
-sys.path.append('..') # Adjust path to project root
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from config.settings import settings
 from models.hallucination.detector import HallucinationDetector
 from models.confidence.scorer import ConfidenceScorer
 from pipeline.embeddings import get_embedder
 
 # Paths
-MODELS_DIR = "models"
+MODELS_DIR = settings.MODELS_DIR
 os.makedirs(MODELS_DIR, exist_ok=True)
+
+SEED = 42
 
 def generate_hallucination_data(n_samples: int = 1000) -> Tuple[np.ndarray, np.ndarray]:
     """
@@ -154,6 +157,7 @@ def generate_confidence_data(n_samples: int = 1000) -> Tuple[np.ndarray, np.ndar
 
 def main():
     print("Starting Model Training (From Scratch)...")
+    np.random.seed(SEED)  # synthetic data must be identical across runs
     
     # 1. Train Hallucination Detector
     print("\n--- Training Hallucination Detector ---")

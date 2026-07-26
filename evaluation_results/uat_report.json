@@ -1,0 +1,225 @@
+{
+  "generated_at": "2026-07-26T19:47:17",
+  "target": "http://localhost:8137",
+  "passed": 31,
+  "failed": 0,
+  "results": [
+    {
+      "section": "smalltalk",
+      "scenario": "Indonesian greeting is answered conversationally",
+      "status": "PASS",
+      "detail": "answer length 478; intent=greeting; 0 chunks retrieved; language=id",
+      "query": "halo"
+    },
+    {
+      "section": "smalltalk",
+      "scenario": "English greeting is answered conversationally",
+      "status": "PASS",
+      "detail": "answer length 483; intent=greeting; 0 chunks retrieved; language=en",
+      "query": "hello"
+    },
+    {
+      "section": "smalltalk",
+      "scenario": "Asking what the bot is does not hit retrieval",
+      "status": "PASS",
+      "detail": "answer length 478; intent=greeting; 0 chunks retrieved",
+      "query": "kamu bisa apa"
+    },
+    {
+      "section": "smalltalk",
+      "scenario": "Thanks is acknowledged",
+      "status": "PASS",
+      "detail": "answer length 80; intent=thanks; 0 chunks retrieved",
+      "query": "terima kasih"
+    },
+    {
+      "section": "help",
+      "scenario": "Asking what Analysis Results does is answered",
+      "status": "PASS",
+      "detail": "answer length 824; intent=help; 0 chunks retrieved; language=id",
+      "query": "apa fungsi dari analysis results?"
+    },
+    {
+      "section": "help",
+      "scenario": "Asking for the feature list is answered",
+      "status": "PASS",
+      "detail": "answer length 1132; intent=help; 0 chunks retrieved; language=id",
+      "query": "apa saja fitur project ini"
+    },
+    {
+      "section": "help",
+      "scenario": "Model A vs Model B is explained",
+      "status": "PASS",
+      "detail": "answer length 829; intent=help; 0 chunks retrieved; language=en",
+      "query": "what is the difference between model a and model b"
+    },
+    {
+      "section": "help",
+      "scenario": "Hallucination method is explained",
+      "status": "PASS",
+      "detail": "answer length 1236; intent=help; 0 chunks retrieved",
+      "query": "bagaimana cara deteksi halusinasi bekerja"
+    },
+    {
+      "section": "help",
+      "scenario": "Framing keywords panel is explained",
+      "status": "PASS",
+      "detail": "answer length 1072; intent=help; 0 chunks retrieved",
+      "query": "apa itu framing keywords"
+    },
+    {
+      "section": "help",
+      "scenario": "A framing research question is NOT hijacked by the help panel",
+      "status": "PASS",
+      "detail": "answer length 3040; 24 chunks; intent=None",
+      "query": "how did the outlets frame the election differently"
+    },
+    {
+      "section": "language",
+      "scenario": "Indonesian question gets an Indonesian answer",
+      "status": "PASS",
+      "detail": "answer length 2190; language=id; indonesian markers: ['yang', 'dan', 'dengan', 'pada', 'dari']; 24 chunks; english headings present: none",
+      "query": "siapa yang memenangkan pemilu indonesia 2024"
+    },
+    {
+      "section": "language",
+      "scenario": "English question gets an English answer",
+      "status": "PASS",
+      "detail": "answer length 2068; language=en; english markers: ['the', 'and', 'of', 'that', 'with', 'is']; 24 chunks; indonesian headings present: none",
+      "query": "who won the 2024 indonesian election"
+    },
+    {
+      "section": "language",
+      "scenario": "Indonesian follow-up stays Indonesian",
+      "status": "PASS",
+      "detail": "answer length 4801; language=id; indonesian markers: ['yang', 'dan', 'dengan', 'pada', 'untuk', 'dari']; english headings present: none",
+      "query": "bagaimana media meliput pembentukan kabinet"
+    },
+    {
+      "section": "language",
+      "scenario": "Indonesian strict mode keeps Indonesian headings",
+      "status": "PASS",
+      "detail": "answer length 923; language=id; english headings present: none",
+      "query": "apa yang dikatakan prabowo tentang swasembada pangan"
+    },
+    {
+      "section": "retrieval",
+      "scenario": "Previously-refused Indonesian person query now answers",
+      "status": "PASS",
+      "detail": "answer length 2954; 24 chunks; language=id",
+      "query": "siapa itu prabowo subianto"
+    },
+    {
+      "section": "retrieval",
+      "scenario": "Core corpus topic is answerable",
+      "status": "PASS",
+      "detail": "answer length 2932; 24 chunks",
+      "query": "prabowo cabinet appointments"
+    },
+    {
+      "section": "retrieval",
+      "scenario": "Constitutional court topic is answerable",
+      "status": "PASS",
+      "detail": "answer length 3615; 24 chunks",
+      "query": "what did the constitutional court decide about the election"
+    },
+    {
+      "section": "retrieval",
+      "scenario": "Out-of-corpus question is refused",
+      "status": "PASS",
+      "detail": "answer length 297; 0 chunks retrieved",
+      "query": "what is the price of bitcoin today"
+    },
+    {
+      "section": "retrieval",
+      "scenario": "Unrelated recipe question is refused",
+      "status": "PASS",
+      "detail": "answer length 297; 0 chunks retrieved",
+      "query": "how do i cook fried rice"
+    },
+    {
+      "section": "grounding",
+      "scenario": "No invented media outlets in the answer",
+      "status": "PASS",
+      "detail": "answer length 3036; invented: none; 24 chunks",
+      "query": "how did each outlet cover the election result"
+    },
+    {
+      "section": "grounding",
+      "scenario": "A/B comparison is fully populated",
+      "status": "PASS",
+      "detail": "answer length 2361; missing: none; sources with style match: ['abc_news', 'antaranews', 'tempo']",
+      "query": "how did antaranews and tempo differ in covering the cabinet appointments"
+    },
+    {
+      "section": "grounding",
+      "scenario": "Verification summary is internally consistent",
+      "status": "PASS",
+      "detail": "answer length 3169; 15/18 level=high; model_a=3/18 model_b=3/14",
+      "query": "what were the main developments after the election"
+    },
+    {
+      "section": "strict",
+      "scenario": "Strict mode rejects a too-short query",
+      "status": "PASS",
+      "detail": "answer length 118; 0 chunks retrieved",
+      "query": "who?"
+    },
+    {
+      "section": "strict",
+      "scenario": "Strict mode answers a well-specified question",
+      "status": "PASS",
+      "detail": "answer length 640",
+      "query": "what did prabowo say about food self sufficiency"
+    },
+    {
+      "section": "strict",
+      "scenario": "Strict mode refuses a genuinely unrelated question",
+      "status": "PASS",
+      "detail": "answer length 1132; 0 chunks retrieved; language=id",
+      "query": "bagaimana cara membuat aplikasi android"
+    },
+    {
+      "section": "performance",
+      "scenario": "Warm query returns within 90 seconds",
+      "status": "PASS",
+      "detail": "answer length 2098; 10.6s",
+      "query": "who is gibran rakabuming"
+    },
+    {
+      "section": "memory",
+      "scenario": "Multi-turn: session id is issued",
+      "status": "PASS",
+      "detail": "704e980d-4c73-4086-8576-eb935ffd7e76",
+      "query": ""
+    },
+    {
+      "section": "memory",
+      "scenario": "Multi-turn: session id is stable across turns",
+      "status": "PASS",
+      "detail": "704e980d-4c73-4086-8576-eb935ffd7e76",
+      "query": ""
+    },
+    {
+      "section": "memory",
+      "scenario": "Multi-turn: follow-up produces an answer",
+      "status": "PASS",
+      "detail": "3155 chars",
+      "query": ""
+    },
+    {
+      "section": "memory",
+      "scenario": "Multi-turn: follow-up retrieved sources",
+      "status": "PASS",
+      "detail": "24 chunks",
+      "query": ""
+    },
+    {
+      "section": "memory",
+      "scenario": "Multi-turn: session can be cleared",
+      "status": "PASS",
+      "detail": "cleared",
+      "query": ""
+    }
+  ]
+}

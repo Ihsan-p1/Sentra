@@ -21,7 +21,8 @@ class ConfidenceScorer:
     """
     
     def __init__(self, model_path: str = None):
-        self.model = RandomForestRegressor(n_estimators=100, max_depth=5)
+        # random_state fixed so retraining reproduces the same model
+        self.model = RandomForestRegressor(n_estimators=100, max_depth=5, random_state=42)
         self.scaler = StandardScaler()
         self.is_trained = False
         

@@ -7,18 +7,28 @@ import random
 import torch
 import numpy as np
 from torch.utils.data import DataLoader, Dataset
-from transformers import DistilBertTokenizer, DistilBertForSequenceClassification
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
 from torch.optim import AdamW
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
 import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from config.settings import settings
 
 # --- Config ---
-MODEL_SAVE_DIR = "models/framing_bert"
+MODEL_SAVE_DIR = os.path.join(settings.MODELS_DIR, "framing_bert")
 EPOCHS = 3
 BATCH_SIZE = 8
 MAX_LEN = 128
 LEARNING_RATE = 2e-5
+SEED = 42
+
+# Reproducible runs (the evaluation report compares against a fixed baseline)
+random.seed(SEED)
+np.random.seed(SEED)
+torch.manual_seed(SEED)
 
 class ArticleDataset(Dataset):
     def __init__(self, texts, labels, tokenizer, max_len):
@@ -34,7 +44,8 @@ class ArticleDataset(Dataset):
         text = str(self.texts[item])
         label = self.labels[item]
         
-        encoding = self.tokenizer.encode_plus(
+        # Modern tokenizer call API (encode_plus was removed in transformers v5)
+        encoding = self.tokenizer(
             text,
             add_special_tokens=True,
             max_length=self.max_len,
@@ -55,33 +66,33 @@ class ArticleDataset(Dataset):
 def train():
     print("Starting DistilBERT Fine-tuning for Framing Analysis...")
     
-    # 1. Load Data from election_articles
+    # 1. Load Data from the corpus
     import sys
     sys.path.insert(0, ".")
-    from data.election_articles import ELECTION_ARTICLES
-    
-    articles = ELECTION_ARTICLES
-    print(f"Loaded {len(articles)} articles.")
+    from data.corpus import corpus_metadata, load_articles
+
+    articles = load_articles()
+    print(f"Loaded {len(articles)} articles ({corpus_metadata()['version']}).")
     
     # 2. Prepare Data (Chunking headlines + snippets for training)
     texts = []
     labels = []
     
-    # Map media names to IDs (updated for actual sources)
-    label_map = {
-        "antaranews": 0,
-        "tempo": 1,
-        "abc": 2
-    }
-    
+    # Derive labels from the canonical source list so they can never drift from
+    # the media_source values used at ingestion and retrieval time.
+    label_map = {media: idx for idx, media in enumerate(settings.SUPPORTED_MEDIA)}
+    print(f"Label map: {label_map}")
+
     # Reverse map for saving
     id_to_label = {v: k for k, v in label_map.items()}
-    
+
+    skipped = {}
     for art in articles:
         media = art.get('media_source')
         if media not in label_map:
+            skipped[media] = skipped.get(media, 0) + 1
             continue
-            
+
         label = label_map[media]
         
         # Use simple text segments: Title + Content chunks
@@ -94,14 +105,20 @@ def train():
         labels.append(label)
         
     print(f"Training samples: {len(texts)}")
-    
-    # 3. Train/Test Split
-    X_train, X_test, y_train, y_test = train_test_split(texts, labels, test_size=0.2, random_state=42)
+    if skipped:
+        # Loud on purpose: a silent skip here previously dropped a whole source
+        # from training while the pipeline still queried it at runtime.
+        print(f"[WARN] Skipped articles from sources not in SUPPORTED_MEDIA: {skipped}")
+
+    # 3. Train/Test Split (stratified so every source appears in both splits)
+    X_train, X_test, y_train, y_test = train_test_split(
+        texts, labels, test_size=0.2, random_state=SEED, stratify=labels
+    )
     
     # 4. Initialize Model & Tokenizer
-    tokenizer = DistilBertTokenizer.from_pretrained('distilbert-base-uncased')
-    model = DistilBertForSequenceClassification.from_pretrained(
-        'distilbert-base-uncased', 
+    tokenizer = AutoTokenizer.from_pretrained('distilbert-base-uncased')
+    model = AutoModelForSequenceClassification.from_pretrained(
+        'distilbert-base-uncased',
         num_labels=len(label_map)
     )
     

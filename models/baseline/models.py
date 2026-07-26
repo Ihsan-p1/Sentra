@@ -4,7 +4,6 @@ These are simple rule-based approaches to compare against our trained models.
 """
 import re
 from typing import List, Dict, Any
-import random
 
 class BaselineHallucinationDetector:
     """
@@ -72,7 +71,7 @@ class BaselineHallucinationDetector:
         
         return {
             "overall_score": supported_count / total,
-            "supported_ratio": f"{unsupported_count}/{total}", # Return UNsupported/Total to match Model A
+            "unsupported_ratio": f"{unsupported_count}/{total}",  # same orientation as Model A
             "details": results,
             "method": "baseline_keyword"
         }
@@ -125,33 +124,60 @@ class BaselineFramingAnalyzer:
             "method": "baseline_wordcount"
         }
 
+    def keyword_weights(self, texts_by_media: Dict[str, List[str]], top_k: int = 5) -> Dict[str, List]:
+        """
+        Same extraction as analyze(), but returns (word, count) pairs and an
+        adjustable depth. Used by the framing evaluation, which needs weights to
+        score articles and a comparable top_k across extractors.
+        """
+        profiles = {}
+
+        for media, texts in texts_by_media.items():
+            combined = " ".join(texts).lower()
+            words = re.findall(r'\b[a-z]+\b', combined)
+
+            counts = {}
+            for word in words:
+                if word not in self.stopwords and len(word) > 3:
+                    counts[word] = counts.get(word, 0) + 1
+
+            ranked = sorted(counts.items(), key=lambda x: (-x[1], x[0]))[:top_k]
+            profiles[media] = [(word, float(count)) for word, count in ranked]
+
+        return profiles
+
 
 class BaselineConfidenceScorer:
     """
-    Baseline: Random or fixed confidence score.
-    Much simpler than our trained Random Forest model.
+    Baseline: deterministic rule-based confidence.
+
+    Much simpler than the trained Random Forest model. Deliberately contains no
+    randomness: the A/B comparison against Model A must be reproducible, so the
+    same query on the same corpus has to yield the same baseline score every run.
     """
-    
+
     def __init__(self):
-        self.name = "Baseline (Random/Fixed)"
-    
+        self.name = "Baseline (Heuristic)"
+
     def score(self, query: str, retrieved_chunks: Dict[str, List[Dict]]) -> Dict[str, Any]:
-        """Return a semi-random confidence score"""
+        """Return a deterministic heuristic confidence score"""
         # Count total chunks retrieved
         total_chunks = sum(len(chunks) for chunks in retrieved_chunks.values())
-        
-        # Simple heuristic: more chunks = higher confidence (capped)
-        base_score = min(total_chunks * 0.1, 0.7)
-        
-        # Add some randomness
-        noise = random.uniform(-0.1, 0.1)
-        score = max(0.2, min(0.9, base_score + noise))
-        
+
+        # Number of distinct sources that actually returned something
+        num_sources = sum(1 for chunks in retrieved_chunks.values() if chunks)
+
+        # Simple weighted rule: more chunks and more corroborating sources
+        # both raise confidence, each capped so neither can dominate.
+        chunk_component = min(total_chunks * 0.08, 0.55)
+        source_component = min(num_sources * 0.1, 0.25)
+        score = round(min(0.9, max(0.2, chunk_component + source_component)), 3)
+
         return {
             "confidence": score,
             "confidence_percent": f"{int(score * 100)}%",
-            "method": "baseline_random",
-            "reasoning": f"Based on {total_chunks} retrieved chunks"
+            "method": "baseline_heuristic",
+            "reasoning": f"Based on {total_chunks} chunks across {num_sources} sources"
         }
 
 

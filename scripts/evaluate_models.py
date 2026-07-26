@@ -14,6 +14,11 @@ import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+# The report uses box-drawing characters, which the default Windows console
+# codepage (cp1252) cannot encode. Force UTF-8 so the run does not die halfway.
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
 import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
@@ -25,6 +30,7 @@ from datetime import datetime
 from models.hallucination.detector import HallucinationDetector
 from models.confidence.scorer import ConfidenceScorer
 from models.framing.analyzer import FramingAnalyzer
+from models.framing.metrics import evaluate_extractor, tfidf_profiles, wordcount_profiles
 from models.baseline.models import get_baseline_models
 from pipeline.embeddings import get_embedder  # Fixed import
 
@@ -299,9 +305,10 @@ print(f"│ {'In-Range Accuracy':<25} │ {correct_a/total:<15.2%} │ {correct_
 print(f"│ {'Mean Absolute Error':<25} │ {np.mean(errors_a):<15.3f} │ {np.mean(errors_b):<15.3f} │")
 print("└─────────────────────────────────────────────────────────────────────┘")
 
-from data.election_articles import ELECTION_ARTICLES
+from data.corpus import corpus_metadata, load_articles
 
-# ... (Previous code) ...
+CORPUS_ARTICLES = load_articles()
+CORPUS_META = corpus_metadata()
 
 # ============================================================================
 # 3. FRAMING ANALYSIS EVALUATION
@@ -312,72 +319,72 @@ print("=" * 70)
 
 # Prepare real data
 framing_data = {}
-for article in ELECTION_ARTICLES:
+for article in CORPUS_ARTICLES:
     source = article["media_source"]
     if source not in framing_data:
         framing_data[source] = []
     framing_data[source].append(article["content"])
 
-print(f"Analyzing framing across {len(ELECTION_ARTICLES)} articles from {len(framing_data)} sources...")
+print(f"Corpus: {CORPUS_META['version']}")
+print(f"Analyzing framing across {len(CORPUS_ARTICLES)} articles from {len(framing_data)} sources...")
 
-# Expected keywords (General themes we expect matching the dataset)
-expected_keywords = {
-    "jakarta_post": ["coalition", "reconciliation", "democracy", "political", "parties"],
-    "tempo": ["corruption", "investigation", "concerns", "military", "dynasties"],
-    "antara": ["development", "cooperation", "asean", "international", "government"],
-    "jakarta_globe": ["investment", "market", "economic", "growth", "business"]
-}
+TOP_K = 15
 
-print("\nEvaluating Framing Analysis...")
-framing_analyzer_a = FramingAnalyzer()
-framing_analyzer_b = baseline_models["framing"]
+print("\nEvaluating keyword extractors with label-free metrics...")
+print("   (no hand-written 'expected themes' - see models/framing/metrics.py)")
 
-result_a = framing_analyzer_a.analyze_media_framing(framing_data)
-result_b = framing_analyzer_b.analyze(framing_data)
+results_tfidf = evaluate_extractor(framing_data, tfidf_profiles, top_k=TOP_K)
+results_wordcount = evaluate_extractor(framing_data, wordcount_profiles, top_k=TOP_K)
 
-print("\n┌─────────────────────────────────────────────────────────────────────────────────────────┐")
-print("│                              FRAMING ANALYSIS RESULTS                                   │")
-print("├─────────────────────────────────────────────────────────────────────────────────────────┤")
-
-avg_overlap_a = 0
-avg_overlap_b = 0
-count = 0
-
-for media in framing_data.keys():
-    if media not in expected_keywords: continue
-    
-    keywords_a = result_a.get("framing_by_media", {}).get(media, {}).get("top_keywords", [])[:5]
-    keywords_b = result_b.get("framing_by_media", {}).get(media, {}).get("top_keywords", [])[:5]
-    expected = expected_keywords.get(media, [])
-    
-    # Calculate simple overlap with expected themes
-    # We check if any of our expected themes appear in the top 5
-    matches_a = sum(1 for k in keywords_a if any(exp in k.lower() for exp in expected))
-    matches_b = sum(1 for k in keywords_b if any(exp in k.lower() for exp in expected))
-    
-    score_a = matches_a / len(expected) if expected else 0
-    score_b = matches_b / len(expected) if expected else 0
-    
-    avg_overlap_a += score_a
-    avg_overlap_b += score_b
-    count += 1
-    
+print("\n┌" + "─" * 89 + "┐")
+print("│" + "TOP KEYWORDS PER SOURCE".center(89) + "│")
+print("├" + "─" * 89 + "┤")
+for media in sorted(framing_data):
     print(f"│ {media.upper():<15}")
-    print(f"│   Model A (TF-IDF):    {', '.join(keywords_a):<60}")
-    print(f"│   Model B (WordCount): {', '.join(keywords_b):<60}")
-    print(f"│   Expected Themes:     {', '.join(expected):<60}")
-    print("├─────────────────────────────────────────────────────────────────────────────────────────┤")
+    print(f"│   TF-IDF:      {', '.join(results_tfidf['profiles'].get(media, [])):<68}")
+    print(f"│   WordCount:   {', '.join(results_wordcount['profiles'].get(media, [])):<68}")
+    print("├" + "─" * 89 + "┤")
 
-final_score_a = avg_overlap_a / count if count else 0
-final_score_b = avg_overlap_b / count if count else 0
+print("│" + "FRAMING KEYWORD METRICS (top-15 keywords per source)".center(89) + "│")
+print("├" + "─" * 89 + "┤")
+print(f"│ {'Metric':<34} │ {'TF-IDF':<20} │ {'WordCount baseline':<26}│")
+print("├" + "─" * 89 + "┤")
+print(f"│ {'Distinctiveness (lower better)':<34} │ {results_tfidf['distinctiveness']:<20.2%} │ {results_wordcount['distinctiveness']:<26.2%}│")
+print(f"│ {'Generic-term rate (lower better)':<34} │ {results_tfidf['generic_term_rate']:<20.2%} │ {results_wordcount['generic_term_rate']:<26.2%}│")
+print(f"│ {'Source attribution acc (higher)':<34} │ {results_tfidf['accuracy']:<20.2%} │ {results_wordcount['accuracy']:<26.2%}│")
+print(f"│ {'Source attribution macro-F1':<34} │ {results_tfidf['macro_f1']:<20.2%} │ {results_wordcount['macro_f1']:<26.2%}│")
+print("├" + "─" * 89 + "┤")
+print(f"│ {'Majority-class baseline':<34} │ {results_tfidf['majority_baseline']:<20.2%} │ {'(same task, always guess ANTARA)':<26}│")
+print(f"│ {'Held-out articles':<34} │ {results_tfidf['n_test']:<20} │ {results_wordcount['n_test']:<26}│")
+print("└" + "─" * 89 + "┘")
 
-print("│                          FRAMING ANALYSIS METRICS                                       │")
-print("├─────────────────────────────────────────────────────────────────────────────────────────┤")
-print(f"│ {'Metric':<25} │ {'Model A (TF-IDF)':<20} │ {'Model B (WordCount)':<20}       │")
-print("├─────────────────────────────────────────────────────────────────────────────────────────┤")
-print(f"│ {'Semantic Match Score':<25} │ {final_score_a:<20.2%} │ {final_score_b:<20.2%}       │")
-print(f"│ {'Method':<25} │ {'TF-IDF + NER':<20} │ {'Simple Frequency':<20}       │")
-print("└─────────────────────────────────────────────────────────────────────────────────────────┘")
+final_score_a = results_tfidf["accuracy"]
+final_score_b = results_wordcount["accuracy"]
+
+print("\nHow to read this:")
+print("  - Distinctiveness  : mean pairwise Jaccard overlap between outlets' keyword sets.")
+print("  - Generic-term rate: share of keywords that are also corpus-wide top-50 terms.")
+print("  - Attribution      : assign a held-out article to the outlet whose keyword")
+print("                       profile it matches best. Beating the majority baseline")
+print("                       means the keywords carry genuine outlet-specific signal.")
+
+# State the negative result explicitly. An extractor that loses to "always guess
+# the biggest outlet" has not demonstrated any outlet-specific signal, and the
+# report should say so rather than crowning a relative winner.
+majority = results_tfidf["majority_baseline"]
+print("\nVerdict on source attribution:")
+for name, res in (("TF-IDF", results_tfidf), ("WordCount", results_wordcount)):
+    if res["accuracy"] > majority:
+        print(f"  - {name:<10}: {res['accuracy']:.2%} BEATS the {majority:.2%} majority baseline.")
+    else:
+        print(f"  - {name:<10}: {res['accuracy']:.2%} does NOT beat the {majority:.2%} majority baseline")
+        print(f"    {'':<10}  -> keyword frequency alone does not identify the outlet.")
+print("  Both extractors do separate the outlets' vocabularies (see distinctiveness),")
+print("  but that separation is too weak to classify individual articles. This is the")
+print("  gap the fine-tuned DistilBERT classifier is meant to close.")
+print("\nNote: this compares the two KEYWORD extractors only. In the running app,")
+print("      Model A for framing is the fine-tuned DistilBERT classifier - see the")
+print("      classification report printed by scripts/train_framing_bert.py.")
 
 # ... (Summary Section Update) ...
 
@@ -404,10 +411,10 @@ print("""
 │   - In-Range Accuracy  │ {:.2%}             │ {:.2%}                       │
 │   - MAE                │ {:.3f}              │ {:.3f}                        │
 ├────────────────────────┼─────────────────────┼──────────────────────────────┤
-│ Framing Analysis       │                     │                              │
-│   - Method             │ TF-IDF + NER        │ Simple Word Frequency        │
-│   - Keyword Overlap    │ {:.2%}             │ {:.2%}                       │
+│ Framing keywords*      │ TF-IDF              │ WordCount baseline           │
+│   - Attribution acc.   │ {:.2%}             │ {:.2%}                       │
 └────────────────────────┴─────────────────────┴──────────────────────────────┘
+* Keyword extractors only. The app's Model A for framing is DistilBERT.
 """.format(
     accuracy_score(y_true, y_pred_a),
     accuracy_score(y_true, y_pred_b),
@@ -425,6 +432,109 @@ print("""
 print("WINNERS:")
 print(f"   - Hallucination Detection: {'Model A' if accuracy_score(y_true, y_pred_a) > accuracy_score(y_true, y_pred_b) else 'Model B'}")
 print(f"   - Confidence Scoring: {'Model A' if correct_a > correct_b else 'Model B'}")  
-print(f"   - Framing Analysis: {'Model A' if final_score_a > final_score_b else 'Model B'}")
+if final_score_a == final_score_b:
+    framing_winner = "Tie"
+else:
+    framing_winner = "TF-IDF" if final_score_a > final_score_b else "WordCount baseline"
 
+# Naming a relative winner here would overstate the result: both extractors are
+# below the majority-class baseline, so the honest verdict is that neither works,
+# not that one of them won. Reporting "TF-IDF wins" is precisely the kind of
+# overclaiming this project's A/B comparison exists to expose.
+if max(final_score_a, final_score_b) <= majority:
+    print(f"   - Framing keywords (attribution): NEITHER - both are below the "
+          f"{majority:.2%} majority-class baseline")
+    print(f"     ({framing_winner} is the better of the two at "
+          f"{max(final_score_a, final_score_b):.2%}, but that is not a win.)")
+else:
+    print(f"   - Framing keywords (attribution): {framing_winner}")
+
+# ============================================================================
+# PERSIST THE REPORT
+# ============================================================================
+# Written to disk so results can be reviewed, diffed between runs, and cited
+# without re-running the whole evaluation.
+report = {
+    "generated_at": datetime.now().isoformat(timespec="seconds"),
+    "corpus": {
+        "version": CORPUS_META["version"],
+        "articles": len(CORPUS_ARTICLES),
+        "sources": {media: len(texts) for media, texts in sorted(framing_data.items())},
+    },
+    "hallucination_detection": {
+        "model_a": {
+            "method": "Logistic Regression on similarity features",
+            "accuracy": accuracy_score(y_true, y_pred_a),
+            "precision": precision_score(y_true, y_pred_a, zero_division=0),
+            "recall": recall_score(y_true, y_pred_a, zero_division=0),
+            "f1": f1_score(y_true, y_pred_a, zero_division=0),
+        },
+        "model_b": {
+            "method": "Keyword overlap >= 30%",
+            "accuracy": accuracy_score(y_true, y_pred_b),
+            "precision": precision_score(y_true, y_pred_b, zero_division=0),
+            "recall": recall_score(y_true, y_pred_b, zero_division=0),
+            "f1": f1_score(y_true, y_pred_b, zero_division=0),
+        },
+        "n_test": len(y_true),
+        "note": "Trained on synthetic data; treat as proof-of-concept, not a benchmark.",
+    },
+    "confidence_scoring": {
+        "model_a": {"method": "Random Forest", "in_range_accuracy": correct_a / total, "mae": float(np.mean(errors_a))},
+        "model_b": {"method": "Deterministic heuristic", "in_range_accuracy": correct_b / total, "mae": float(np.mean(errors_b))},
+        "n_test": total,
+    },
+    "framing_keywords": {
+        "top_k": TOP_K,
+        "tfidf": {k: v for k, v in results_tfidf.items()},
+        "wordcount": {k: v for k, v in results_wordcount.items()},
+        "interpretation": (
+            "TF-IDF produces more distinctive, less generic keyword sets, but neither "
+            "extractor beats the majority-class baseline at source attribution. Keyword "
+            "frequency alone does not identify the outlet."
+        ),
+    },
+}
+
+os.makedirs("evaluation_results", exist_ok=True)
+json_path = os.path.join("evaluation_results", "latest_evaluation.json")
+with open(json_path, "w", encoding="utf-8") as f:
+    json.dump(report, f, indent=2)
+
+md_path = os.path.join("evaluation_results", "latest_evaluation.md")
+with open(md_path, "w", encoding="utf-8") as f:
+    h_a = report["hallucination_detection"]["model_a"]
+    h_b = report["hallucination_detection"]["model_b"]
+    c_a = report["confidence_scoring"]["model_a"]
+    c_b = report["confidence_scoring"]["model_b"]
+
+    f.write("# Sentra Evaluation Report\n\n")
+    f.write(f"Generated: {report['generated_at']}  \n")
+    f.write(f"Corpus: {report['corpus']['articles']} articles - {report['corpus']['sources']}\n\n")
+
+    f.write("## Hallucination detection\n\n")
+    f.write(f"{report['hallucination_detection']['n_test']} labelled claim/source pairs.\n\n")
+    f.write("| Metric | Model A (Logistic Regression) | Model B (Keyword overlap) |\n")
+    f.write("|---|---|---|\n")
+    for metric in ("accuracy", "precision", "recall", "f1"):
+        f.write(f"| {metric.capitalize()} | {h_a[metric]:.2%} | {h_b[metric]:.2%} |\n")
+    f.write(f"\n> {report['hallucination_detection']['note']}\n\n")
+
+    f.write("## Confidence scoring\n\n")
+    f.write("| Metric | Model A (Random Forest) | Model B (Heuristic) |\n")
+    f.write("|---|---|---|\n")
+    f.write(f"| In-range accuracy | {c_a['in_range_accuracy']:.2%} | {c_b['in_range_accuracy']:.2%} |\n")
+    f.write(f"| Mean absolute error | {c_a['mae']:.3f} | {c_b['mae']:.3f} |\n\n")
+
+    f.write(f"## Framing keyword extractors (top-{TOP_K})\n\n")
+    f.write("| Metric | TF-IDF | WordCount baseline |\n")
+    f.write("|---|---|---|\n")
+    f.write(f"| Distinctiveness (lower better) | {results_tfidf['distinctiveness']:.2%} | {results_wordcount['distinctiveness']:.2%} |\n")
+    f.write(f"| Generic-term rate (lower better) | {results_tfidf['generic_term_rate']:.2%} | {results_wordcount['generic_term_rate']:.2%} |\n")
+    f.write(f"| Source attribution accuracy | {results_tfidf['accuracy']:.2%} | {results_wordcount['accuracy']:.2%} |\n")
+    f.write(f"| Source attribution macro-F1 | {results_tfidf['macro_f1']:.2%} | {results_wordcount['macro_f1']:.2%} |\n")
+    f.write(f"| Majority-class baseline | {results_tfidf['majority_baseline']:.2%} | {results_tfidf['majority_baseline']:.2%} |\n\n")
+    f.write(f"> {report['framing_keywords']['interpretation']}\n")
+
+print(f"\nReport written to {json_path} and {md_path}")
 print("\nEvaluation complete.")
