@@ -1,7 +1,16 @@
-# Auto-detect text files and perform LF normalization
-* text=auto
+# Line endings
+#
+# `text=auto` on its own normalises to LF *in the repository* but still lets
+# core.autocrlf (true on this Windows dev box) rewrite the working tree to CRLF
+# on checkout - which is what produced a screen of
+# "LF will be replaced by CRLF the next time Git touches it" on every git add.
+#
+# `eol=lf` pins the working tree to LF as well, so there is no conversion left to
+# warn about. Attributes here override core.autocrlf, so the behaviour is the
+# same on every machine regardless of local git config.
+* text=auto eol=lf
 
-# Explicitly declare text files to be normalized to LF (Unix) on commit
+# Explicitly declare text files, so detection is never guessed for these.
 *.py text diff=python
 *.js text
 *.css text
@@ -10,9 +19,24 @@
 *.md text
 *.txt text
 *.ini text
+*.sql text
 *.yml text
 *.yaml text
 *.toml text
+ollama/Modelfile text
+
+# Binary: never normalise, never diff as text. `text=auto` detects most of these
+# anyway; declaring them stops a stray heuristic from corrupting one.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.pkl binary
+*.pt binary
+*.bin binary
+*.safetensors binary
 
 # Deny checkout for Windows-specific filenames to avoid cross-platform issues
 aux -text
