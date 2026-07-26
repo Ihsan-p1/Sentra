@@ -1,0 +1,91 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  secret-scan:
+    name: Reject hardcoded credentials
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Cheap guard against the failure mode this repo already hit once:
+      # a Google API key committed inside a debug script.
+      - name: Scan tracked files for API key patterns
+        run: |
+          if git grep -nIE 'AIza[0-9A-Za-z_-]{20,}|sk-or-v1-[0-9a-f]{16,}|gsk_[0-9A-Za-z]{20,}' -- . ':!.github/workflows/*'; then
+            echo "::error::A hardcoded API key was found in tracked files. Move it to .env."
+            exit 1
+          fi
+          echo "No hardcoded credentials found."
+
+  unit-tests:
+    name: Unit tests (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install dependencies
+        # CPU-only torch: the default wheel pulls ~2GB of CUDA runtime that CI
+        # never uses.
+        run: |
+          python -m pip install --upgrade pip
+          pip install --extra-index-url https://download.pytorch.org/whl/cpu -r requirements.txt
+
+      - name: Run unit tests
+        # Integration tests need a live server + PostgreSQL, so they are excluded.
+        run: pytest -m "not integration" -v
+
+  schema-and-ingest:
+    name: Schema applies and ingestion records provenance
+    runs-on: ubuntu-latest
+
+    # The unit suite fakes the database, so nothing checked that schema.sql
+    # actually executes against a real PostgreSQL - and the schema is where the
+    # embedding-provenance guard lives. This job runs the real DDL, ingests a
+    # slice of the corpus and asserts the provenance columns are populated.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: sentra_ci
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install --extra-index-url https://download.pytorch.org/whl/cpu -r requirements.txt
+
+      - name: Apply schema and verify ingestion provenance
+        env:
+          # These tests truncate the article tables and refuse to run against a
+          # database whose name does not mark it disposable - hence sentra_ci.
+          SENTRA_TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/sentra_ci
+        run: pytest tests/test_schema_integration.py -m integration -v

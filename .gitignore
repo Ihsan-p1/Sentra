@@ -43,9 +43,13 @@ presentation_notes.md
 task.md
 walkthrough.md
 
-# Evaluation results
+# Evaluation results: keep the generated report (it documents the A/B claims),
+# ignore ad-hoc debug output.
 Models Eval.ini
-evaluation_results/
+evaluation_results/*
+!evaluation_results/latest_evaluation.md
+!evaluation_results/latest_evaluation.json
+!evaluation_results/uat_report.json
 
 # Debug Output
 debug_output.txt
