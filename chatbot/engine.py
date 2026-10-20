@@ -22,6 +22,7 @@ from pipeline.embeddings import get_embedder
 # For LLM generation (using OpenAI or Ollama)
 from chatbot.llm_client import LLMClient, LLMUnavailable
 from chatbot.conversation_memory import conversation_memory
+from chatbot.sentences import prepare_for_check, split_sentences
 from chatbot.language import (
     INTENT_HELP,
     INTENT_QUESTION,
@@ -550,9 +551,6 @@ class ChatbotEngine:
         
         Returns: (verification_summary, unsupported_list, stats_dict)
         """
-        # Split on punctuation lookbehind OR newlines (to handle markdown headers)
-        sentences = [s.strip() for s in re.split(r'(?<=[.!?])\s+|\n+', response_text) if s.strip()]
-        
         unsupported = []
         supported_count = 0
         total_checked = 0
@@ -560,28 +558,10 @@ class ChatbotEngine:
         # Pre-compute source embeddings once
         source_embs = self.embedder.generate(source_texts, show_progress=False)
         
-        for sentence in sentences:
-            # Skip short sentences
-            if len(sentence.split()) < 4:
-                continue
-                
-            # Skip refusal/direct answer headers or standard refusal phrases
-            sentence_lower = sentence.lower()
-            if "retrieved sources do not contain" in sentence_lower or "sufficient information" in sentence_lower:
-                continue
-            if "framing analysis" in sentence_lower or "explicit framing" in sentence_lower:
-                continue
-            if sentence.strip().startswith("##"):
-                continue
-            
-            # Clean sentence for detection (remove citations and markdown)
-            # 1. Remove [Source] type citations
-            clean_sentence = re.sub(r'\[.*?\]', '', sentence).strip()
-            # 2. Remove leading bullets/dashes
-            clean_sentence = re.sub(r'^[\-\*•]\s+', '', clean_sentence).strip()
-            
-            # Skip if empty after cleaning
-            if not clean_sentence or len(clean_sentence.split()) < 3:
+        for sentence in split_sentences(response_text):
+            # Headings, refusals and short fragments are skipped (chatbot/sentences.py)
+            clean_sentence = prepare_for_check(sentence)
+            if clean_sentence is None:
                 continue
 
             total_checked += 1
