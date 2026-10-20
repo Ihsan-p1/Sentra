@@ -13,6 +13,7 @@ import pytest
 from evaluation.hallucination_dataset import (
     answer_record,
     answer_to_rows,
+    classify_result,
     load_jsonl,
     load_questions,
     pending_questions,
@@ -109,3 +110,18 @@ def test_save_is_atomic(tmp_path):
 def test_pending_questions_skips_done():
     questions = [{"id": "c01"}, {"id": "c02"}, {"id": "n01"}]
     assert pending_questions(questions, {"c02"}) == [{"id": "c01"}, {"id": "n01"}]
+
+
+def test_answered_result_is_kept():
+    assert classify_result({"raw_answer": "Prabowo won."}) == ("answered", None)
+
+
+def test_retrieval_refusal_is_recorded_with_its_reason():
+    result = {"answer": "No.", "source_quality": {"refusal_reason": "max_sim=0.33 < 0.35"}}
+    assert classify_result(result) == ("refused", "max_sim=0.33 < 0.35")
+
+
+def test_llm_outage_is_retried_not_recorded_as_refusal():
+    # A refusal is skipped on resume; an outage must not be, or the question is lost.
+    result = {"answer": "down", "raw_answer": "", "error": "llm_unavailable"}
+    assert classify_result(result) == ("retry", "llm_unavailable")

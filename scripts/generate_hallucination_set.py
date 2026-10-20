@@ -39,6 +39,7 @@ from evaluation.hallucination_dataset import (
     SENTENCES_PATH,
     answer_record,
     answer_to_rows,
+    classify_result,
     load_jsonl,
     load_questions,
     pending_questions,
@@ -93,8 +94,11 @@ async def main(limit: int) -> None:
             meta["seconds"][qid] = round(time.perf_counter() - start, 1)
 
             raw = result.get("raw_answer")
-            if not raw:
-                reason = (result.get("source_quality") or {}).get("refusal_reason") or "no raw_answer"
+            status, reason = classify_result(result)
+            if status == "retry":
+                # Not recorded, so the next run asks this question again.
+                print(f"[WARN] {qid} not answered ({reason}); rerun the script to retry it")
+            elif status == "refused":
                 meta["refused"][qid] = reason
                 print(f"[WARN] {qid} refused: {reason}")
             else:

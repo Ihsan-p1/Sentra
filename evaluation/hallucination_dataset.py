@@ -11,7 +11,7 @@ Two JSONL files, so the retrieved chunks are stored once per answer:
 import json
 import os
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional
+from typing import Dict, Iterable, List, Optional, Tuple
 
 from chatbot.sentences import prepare_for_check, split_sentences
 
@@ -76,6 +76,15 @@ def answer_to_rows(query_id: str, answer: Optional[str]) -> List[Dict]:
         }
         for i, sentence in enumerate(split_sentences(answer))
     ]
+
+
+def classify_result(result: Dict) -> Tuple[str, Optional[str]]:
+    """("answered", None), ("refused", reason) - final - or ("retry", reason) for an LLM outage."""
+    if result.get("raw_answer"):
+        return "answered", None
+    if result.get("error"):
+        return "retry", result["error"]
+    return "refused", (result.get("source_quality") or {}).get("refusal_reason") or "no raw_answer"
 
 
 def pending_questions(questions: List[Dict], done_ids: set) -> List[Dict]:
