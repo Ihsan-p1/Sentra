@@ -4,7 +4,10 @@ Metrics for the real hallucination evaluation.
 True means "unsupported" everywhere: that is the class the checker exists to
 catch, so recall is the catch rate.
 """
+import numpy as np
+
 from evaluation.hallucination_metrics import binary_scores, cluster_bootstrap_ci, label_agreement
+from evaluation.hallucination_report import build_report, claim_rows, predict_all
 
 T, F = True, False
 
@@ -54,3 +57,66 @@ def test_kappa_perfect_and_worse_than_chance():
 def test_kappa_undefined_for_one_class_or_one_item():
     assert label_agreement(["s", "s"], ["s", "s"])["kappa"] is None
     assert label_agreement(["s"], ["u"])["kappa"] is None
+
+
+# --- predict_all and the report (scripts/evaluate_hallucination.py) ---
+
+
+class FakeEmbedder:
+    def __init__(self):
+        self.batches = 0
+
+    def generate(self, texts, show_progress=False):
+        self.batches += 1
+        return np.ones((len(texts), 3))
+
+    def generate_single(self, text):
+        return np.ones(3)
+
+
+class FakeDetector:
+    def predict(self, sentence_emb, source_embs, sentence_text, source_texts):
+        return {"is_supported": "invented" not in sentence_text}
+
+
+class FakeBaseline:
+    def check_sentence(self, sentence, source_texts):
+        return {"is_supported": True}
+
+
+def _claims():
+    return [
+        {"query_id": "a", "sentence_idx": 0, "check_text": "fine claim here", "label": "supported"},
+        {"query_id": "a", "sentence_idx": 1, "check_text": "an invented claim", "label": "unsupported"},
+        {"query_id": "b", "sentence_idx": 0, "check_text": "another fine claim", "label": "supported"},
+    ]
+
+
+def test_claim_rows_keep_only_checked_supported_or_unsupported():
+    rows = _claims() + [
+        {"query_id": "b", "sentence_idx": 1, "check_text": "x y z", "label": "not_claim"},
+        {"query_id": "b", "sentence_idx": 2, "check_text": None, "label": None},
+        {"query_id": "b", "sentence_idx": 3, "check_text": "x y z", "label": None},
+    ]
+    assert claim_rows(rows) == _claims()
+
+
+def test_predict_all_shapes():
+    answers = {q: {"chunks": [{"text": "source one"}, {"text": "source two"}]} for q in ("a", "b")}
+    embedder = FakeEmbedder()
+    preds = predict_all(_claims(), answers, FakeDetector(), FakeBaseline(), embedder)
+
+    assert preds == {
+        "model_a": [False, True, False],
+        "model_b": [False, False, False],
+        "always_supported": [False, False, False],
+    }
+    assert embedder.batches == 2  # chunks embedded once per answer
+
+
+def test_report_writes_na_for_undefined_metrics():
+    rows = [dict(r, label="supported") for r in _claims()]
+    preds = {"model_a": [False] * 3, "model_b": [False] * 3, "always_supported": [False] * 3}
+    markdown, data = build_report(rows, preds, [], {}, None, {"skipped": 0, "unlabelled": 0})
+    assert "n/a" in markdown
+    assert data["real"]["model_a"]["recall"] is None
