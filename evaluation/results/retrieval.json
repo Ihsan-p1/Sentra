@@ -1,6 +1,6 @@
 {
   "meta": {
-    "commit": "a781466",
+    "commit": "80b6fb9",
     "corpus_version": "indonesia-election-2024@cecce290d0ff",
     "embedding_model": "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
     "top_k": 8,
@@ -9,7 +9,7 @@
       "strict": 0.42
     },
     "n_articles": 154,
-    "generated_at": "2026-10-21T23:55:02",
+    "generated_at": "2026-10-22T00:02:13",
     "gold_provenance": "the owner judged every candidate, with an AI tool helping to read or summarise articles"
   },
   "scores": {
@@ -21,6 +21,7 @@
           0.681233878968254
         ]
       },
+      "recall_at_5_ceiling": 0.9017004407629408,
       "mrr_at_10": {
         "mean": 0.8215856481481479,
         "ci": [
@@ -236,6 +237,7 @@
           0.778011983676046
         ]
       },
+      "recall_at_5_ceiling": 0.9017004407629408,
       "mrr_at_10": {
         "mean": 0.8090277777777778,
         "ci": [
@@ -446,9 +448,13 @@
   },
   "refusals": {
     "default": {
-      "in_corpus": {
+      "in_corpus_calibration": {
         "refused": 2,
-        "total": 50
+        "total": 25
+      },
+      "in_corpus_held_out": {
+        "refused": 0,
+        "total": 25
       },
       "ooc_calibration": {
         "refused": 8,
@@ -464,9 +470,13 @@
       }
     },
     "strict": {
-      "in_corpus": {
+      "in_corpus_calibration": {
         "refused": 2,
-        "total": 50
+        "total": 25
+      },
+      "in_corpus_held_out": {
+        "refused": 0,
+        "total": 25
       },
       "ooc_calibration": {
         "refused": 8,
@@ -484,13 +494,13 @@
   },
   "latency": {
     "dense": {
-      "p50": 126.96595001034439,
-      "p95": 160.09845998196388,
+      "p50": 126.3755000254605,
+      "p95": 168.26010501245037,
       "n": 210
     },
     "tfidf": {
-      "p50": 3.0035999952815473,
-      "p95": 3.5880850162357087,
+      "p50": 3.0752499878872186,
+      "p95": 3.828954984783193,
       "n": 210
     }
   },
