@@ -57,6 +57,10 @@ def test_make_sheet_shows_every_candidate_once_in_pool_order():
     assert "School lunch program" in q1 and "2024-08-12" in q1
 
 
+def test_make_sheet_points_to_the_guide():
+    assert "evaluation/datasets/RETRIEVAL_GUIDE.md" in make_sheet(POOL, QUESTIONS, ARTICLES)
+
+
 def test_make_sheet_round_trips_with_parse():
     text = make_sheet(POOL, QUESTIONS, ARTICLES).replace("relevan: ", "relevan: 1", 1)
     gold, _ = parse_sheet(text, POOL)

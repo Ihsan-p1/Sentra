@@ -40,6 +40,7 @@ def make_sheet(pool: Dict[str, List[str]], questions: Dict[str, str], articles: 
         "(contoh `2 5 11`). Relevan berarti artikel memuat informasi yang menjawab sebagian atau",
         "seluruh pertanyaan. Tulis `-` kalau tidak ada yang relevan; biarkan kosong kalau belum",
         "dinilai. Urutan kandidat tidak mengikuti peringkat sistem mana pun.",
+        "Aturan lengkap: `evaluation/datasets/RETRIEVAL_GUIDE.md`.",
         "",
     ]
     for qid, urls in pool.items():
