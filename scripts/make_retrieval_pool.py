@@ -6,6 +6,10 @@ Usage:
     python scripts/make_retrieval_pool.py pool              # needs the database
     python scripts/make_retrieval_pool.py sheet OUT.md [QID ...]
     python scripts/make_retrieval_pool.py parse OUT.md      # merges into retrieval_gold.json
+    python scripts/make_retrieval_pool.py extra             # phase 3: unjudged articles in
+                                                            # any system's top 10 (retrieval.json)
+    python scripts/make_retrieval_pool.py sheet --extra OUT.md
+    python scripts/make_retrieval_pool.py parse --extra OUT.md
 """
 import asyncio
 import json
@@ -21,7 +25,8 @@ if hasattr(sys.stdout, "reconfigure"):
 from data.corpus import corpus_version, load_articles
 from evaluation.hallucination_dataset import load_questions
 from evaluation.lexical_retriever import TfidfRetriever
-from evaluation.retrieval_gold import GOLD_PATH, POOL_PATH, build_pool, make_sheet, parse_sheet
+from evaluation.retrieval_gold import (EXTRA_POOL_PATH, GOLD_PATH, POOL_PATH, build_pool, extra_pool,
+                                       make_sheet, merge_extra, parse_sheet)
 from evaluation.retrieval_metrics import rank_articles
 
 DEPTH = 10
@@ -68,8 +73,21 @@ async def make_pool() -> int:
     return 0
 
 
-def write_sheet(out: str, qids: list) -> int:
-    saved = read_json(POOL_PATH)
+def make_extra() -> int:
+    results = read_json(Path(GOLD_PATH).parents[1] / "results" / "retrieval.json")
+    if results["meta"]["corpus_version"] != corpus_version():
+        print(f"[ERROR] retrieval.json was made from {results['meta']['corpus_version']}, the corpus "
+              f"is now {corpus_version()}; run scripts/evaluate_retrieval.py again")
+        return 1
+    pool = extra_pool(results["rankings"], read_json(GOLD_PATH), DEPTH)
+    write_json(EXTRA_POOL_PATH, {"corpus_version": corpus_version(), "depth": DEPTH, "pool": pool})
+    print(f"[INFO] {len(pool)} questions, {sum(len(v) for v in pool.values())} unjudged articles; "
+          f"wrote {EXTRA_POOL_PATH}")
+    return 0
+
+
+def write_sheet(out: str, qids: list, pool_path: Path = POOL_PATH) -> int:
+    saved = read_json(pool_path)
     if saved["corpus_version"] != corpus_version():
         print(f"[ERROR] the pool was built from {saved['corpus_version']}, the corpus is now "
               f"{corpus_version()}; run `pool` again")
@@ -89,13 +107,15 @@ def write_sheet(out: str, qids: list) -> int:
     return 0
 
 
-def read_sheet(path: str) -> int:
-    pool = read_json(POOL_PATH)["pool"]
+def read_sheet(path: str, extra: bool = False) -> int:
+    pool = read_json(EXTRA_POOL_PATH if extra else POOL_PATH)["pool"]
     gold, errors = parse_sheet(Path(path).read_text(encoding="utf-8"), pool)
     for e in errors:
         print(f"[WARN] {e}")
     merged = read_json(GOLD_PATH)
-    for qid, urls in gold.items():
+    if extra:
+        merged = merge_extra(merged, gold, pool)
+    for qid, urls in ({} if extra else gold).items():
         merged[qid] = {"relevant": urls, "judged": pool[qid]}
     write_json(GOLD_PATH, dict(sorted(merged.items())))
     print(f"[INFO] {len(gold)} questions read from the sheet; {len(merged)}/{len(pool)} in {GOLD_PATH.name}")
@@ -105,6 +125,12 @@ def read_sheet(path: str) -> int:
 def main(argv: list) -> int:
     if argv[:1] == ["pool"]:
         return asyncio.run(make_pool())
+    if argv == ["extra"]:
+        return make_extra()
+    if argv[:2] == ["sheet", "--extra"] and len(argv) >= 3:
+        return write_sheet(argv[2], argv[3:], EXTRA_POOL_PATH)
+    if argv[:2] == ["parse", "--extra"] and len(argv) == 3:
+        return read_sheet(argv[2], extra=True)
     if argv[:1] == ["sheet"] and len(argv) >= 2:
         return write_sheet(argv[1], argv[2:])
     if argv[:1] == ["parse"] and len(argv) == 2:

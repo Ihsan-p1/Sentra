@@ -122,3 +122,9 @@ def test_report_gate_section_names_calibration_only():
 def test_report_lists_unjudged_counts():
     md = build_report(SCORES, REFUSALS, LATENCY, META, unjudged={"dense": 0, "rerank": 7})
     assert "Articles in a top 10 that were never judged: dense 0, rerank 7" in md
+
+
+def test_report_states_extended_gold():
+    md = build_report(SCORES, REFUSALS, LATENCY, {**META, "gold_extra": 12})
+    assert ("12 articles first ranked by the phase 3 systems were judged later by the same owner; "
+            "every system is scored on the same extended gold.") in md

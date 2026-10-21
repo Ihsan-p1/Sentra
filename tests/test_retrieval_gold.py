@@ -4,7 +4,7 @@ from datetime import datetime
 from pathlib import Path
 
 from evaluation.hallucination_dataset import DATASETS_DIR, load_questions
-from evaluation.retrieval_gold import build_pool, make_sheet, parse_sheet
+from evaluation.retrieval_gold import build_pool, extra_pool, make_sheet, merge_extra, parse_sheet
 
 POOL = {"q1": ["u1", "u2", "u3"], "q2": ["u2"], "q3": ["u1", "u3"]}
 QUESTIONS = {"q1": "free meal program", "q2": "court ruling", "q3": "who won"}
@@ -88,3 +88,20 @@ def test_ooc_questions_keep_calibration_set_apart_from_held_out():
     assert len(held_out) == 12
     assert sum(q["kind"] == "near" for q in held_out) == 6
     assert {q["kind"] for q in ooc} == {"far", "near"}
+
+
+# --- eval phase 3: articles the new systems surface ---
+
+def test_extra_pool_lists_only_unjudged_top_k():
+    rankings = {"dense": {"q1": ["a", "b"]}, "rerank": {"q1": ["x", "a", "z"]}}
+    gold = {"q1": {"relevant": ["a"], "judged": ["a", "b"]}}
+    assert extra_pool(rankings, gold, depth=2) == {"q1": ["x"]}
+
+
+def test_merge_extra_keeps_old_relevant_and_is_idempotent():
+    gold = {"q1": {"relevant": ["a"], "judged": ["a", "b"]}}
+    once = merge_extra(gold, {"q1": ["x"]}, {"q1": ["x", "y"]})
+    assert once["q1"] == {"relevant": ["a", "x"], "judged": ["a", "b", "x", "y"]}
+    assert merge_extra(once, {"q1": ["x"]}, {"q1": ["x", "y"]}) == once
+    assert merge_extra(once, {"q1": []}, {"q1": ["x", "y"]})["q1"]["relevant"] == ["a"]
+    assert gold["q1"] == {"relevant": ["a"], "judged": ["a", "b"]}   # input untouched

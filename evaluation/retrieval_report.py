@@ -226,6 +226,9 @@ def build_report(
         f"- Gold comes from a single judge: {meta['gold_provenance']}.",
         "- Gold is pooled from the top 10 of both systems; a relevant article neither system "
         "ranked in its top 10 was never judged and counts as not relevant.",
+        *([f"- {meta['gold_extra']} articles first ranked by the phase 3 systems were judged later by "
+           "the same owner; every system is scored on the same extended gold."]
+          if meta.get("gold_extra") else []),
         "- The calibration questions, in-corpus and out-of-corpus, are the data the refusal "
         "threshold was tuned on; only the held-out groups test it.",
         *([f"- Articles in a top 10 that were never judged: "

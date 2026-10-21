@@ -29,7 +29,7 @@ from data.corpus import corpus_version, load_articles
 from database.connection import db_manager
 from evaluation.hallucination_dataset import DATASETS_DIR, load_questions
 from evaluation.lexical_retriever import TfidfRetriever
-from evaluation.retrieval_gold import GOLD_PATH
+from evaluation.retrieval_gold import EXTRA_POOL_PATH, GOLD_PATH
 from evaluation.reranking import RERANKER_MODEL, CrossEncoderReranker, reciprocal_rank_fusion, rerank
 from evaluation.retrieval_metrics import percentile, rank_articles
 from evaluation.retrieval_report import (build_report, pick_threshold, refusal_table, score_rankings,
@@ -39,6 +39,14 @@ from rag.retrieval import RAGRetriever
 RESULTS_DIR = DATASETS_DIR.parent / "results"
 REPEATS = 3
 SYSTEM_KEYS = ("dense", "tfidf", "rrf", "rerank", "rerank_hybrid")
+
+
+def extra_judged(gold: dict) -> int:
+    """Articles from the phase 3 extra sheet that are already merged into the gold."""
+    if not EXTRA_POOL_PATH.exists():
+        return 0
+    pool = json.loads(EXTRA_POOL_PATH.read_text(encoding="utf-8"))["pool"]
+    return sum(u in gold.get(qid, {}).get("judged", []) for qid, urls in pool.items() for u in urls)
 
 
 def ooc_group(q: dict):
@@ -145,6 +153,7 @@ def main() -> int:
         "generated_at": datetime.now().isoformat(timespec="seconds"),
         "gold_provenance": "the owner judged every candidate, with an AI tool helping to read "
                            "or summarise articles",
+        "gold_extra": extra_judged(gold),
     }
 
     RESULTS_DIR.mkdir(exist_ok=True)

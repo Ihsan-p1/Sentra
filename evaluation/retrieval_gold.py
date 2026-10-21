@@ -19,6 +19,8 @@ from typing import Dict, List, Tuple
 DATASETS_DIR = Path(__file__).resolve().parent / "datasets"
 POOL_PATH = DATASETS_DIR / "retrieval_pool.json"
 GOLD_PATH = DATASETS_DIR / "retrieval_gold.json"
+# Articles the phase 3 systems ranked in a top 10 that the phase 2 pool never held.
+EXTRA_POOL_PATH = DATASETS_DIR / "retrieval_pool_extra.json"
 
 HEAD = re.compile(r"^## (\w+): .*\((\d+) kandidat, pool (\w+)\)\s*$")
 ANSWER = re.compile(r"^relevan:(.*)$")
@@ -89,3 +91,26 @@ def parse_sheet(text: str, pool: Dict[str, List[str]]) -> Tuple[Dict[str, List[s
         if picked:
             gold[current] = picked
     return gold, errors
+
+
+def extra_pool(rankings: Dict[str, Dict[str, List[str]]], gold: Dict[str, Dict], depth: int = 10) -> Dict[str, List[str]]:
+    """Per question, the URLs some system ranked in its top `depth` that were never judged."""
+    extra: Dict[str, set] = {}
+    for by_question in rankings.values():
+        for qid, ranked in by_question.items():
+            if qid not in gold:
+                continue
+            judged = set(gold[qid]["judged"])
+            extra.setdefault(qid, set()).update(u for u in ranked[:depth] if u not in judged)
+    return {qid: sorted(urls) for qid, urls in sorted(extra.items()) if urls}
+
+
+def merge_extra(gold: Dict, picked: Dict[str, List[str]], pool: Dict[str, List[str]]) -> Dict:
+    """Add judgements from an extra sheet; re-merging the same sheet changes nothing."""
+    merged = {qid: {"relevant": list(e["relevant"]), "judged": list(e["judged"])} for qid, e in gold.items()}
+    for qid, urls in picked.items():
+        entry = merged[qid]
+        extra = set(pool[qid])
+        entry["relevant"] = [u for u in entry["relevant"] if u not in extra] + list(urls)
+        entry["judged"] = sorted(set(entry["judged"]) | extra)
+    return merged
