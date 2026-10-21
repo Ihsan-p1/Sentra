@@ -6,7 +6,7 @@ passes the real Model A, Model B and embedder.
 """
 from typing import Dict, List, Optional, Tuple
 
-from evaluation.hallucination_metrics import binary_scores, cluster_bootstrap_ci
+from evaluation.hallucination_metrics import binary_scores, cluster_bootstrap_ci, label_agreement
 
 MODELS = ("model_a", "model_b", "always_supported")
 MODEL_NAMES = {
@@ -40,6 +40,23 @@ def predict_all(rows: List[Dict], answers_by_qid: Dict[str, Dict], detector, bas
     return preds
 
 
+def claude_agreement(rows: List[Dict], readings: List[Dict], corrections: List[Dict]) -> Optional[Dict]:
+    """Owner vs Claude's pre-recorded reading, using the owner's answer from before any correction."""
+    claude = {(r["query_id"], r["sentence_idx"]): r["label"] for r in readings}
+    before = {}
+    for c in corrections:
+        if c.get("after_claude_reading"):
+            before.setdefault((c["query_id"], c["sentence_idx"]), c["from"])
+    keys = [(r["query_id"], r["sentence_idx"]) for r in rows if r["label"] is not None]
+    keys = [k for k in keys if k in claude]
+    if not keys:
+        return None
+    final = {(r["query_id"], r["sentence_idx"]): r["label"] for r in rows}
+    result = label_agreement([before.get(k, final[k]) for k in keys], [claude[k] for k in keys])
+    result["corrected"] = sum(k in before for k in keys)
+    return result
+
+
 def _pct(value: Optional[float]) -> str:
     return "n/a" if value is None else f"{value:.1%}"
 
@@ -59,6 +76,7 @@ def build_report(
     syn_preds: Dict[str, List[bool]],
     agreement: Optional[Dict],
     counts: Dict[str, int],
+    claude: Optional[Dict] = None,
 ) -> Tuple[str, Dict]:
     y_true = [r["label"] == "unsupported" for r in real_rows]
     groups = [r["query_id"] for r in real_rows]
@@ -126,13 +144,22 @@ def build_report(
         "## Limits",
         "",
         "- The corpus holds article summaries (median 97 words), not full text.",
-        "- One person labelled every sentence.",
+        "- One person chose every label; for most questions an AI tool tidied the written reasons.",
         "- Model A was trained on synthetic data.",
         "- Model B is scored per sentence with `check_sentence` on the same text as Model A; "
         "the app runs `check_response`, which splits sentences differently.",
         f"- {counts['skipped']} sentences were skipped by the engine (headings, under four words) and "
         f"{counts['unlabelled']} checked sentences are not labelled yet; neither is scored.",
     ]
+    if claude:
+        kappa = "n/a" if claude["kappa"] is None else f"{claude['kappa']:.2f}"
+        plural = "" if claude["corrected"] == 1 else "s"
+        lines.append(
+            f"- Claude's reading of {claude['n']} sentences was recorded before each question and shown "
+            f"after the owner answered. On the owner's first answers: agreement {_pct(claude['agreement'])}, "
+            f"Cohen's kappa {kappa}. The owner then changed {claude['corrected']} label{plural} "
+            "(`hallucination_corrections.jsonl`), and later answers may lean towards Claude's readings."
+        )
 
     data = {
         "n_sentences": len(real_rows),
@@ -141,6 +168,7 @@ def build_report(
         "real": real,
         "synthetic": {"n": len(syn_rows), "catch_rate": synthetic},
         "agreement": agreement,
+        "claude_agreement": claude,
         "counts": counts,
     }
     return "\n".join(lines) + "\n", data

@@ -26,7 +26,7 @@ if hasattr(sys.stdout, "reconfigure"):
 
 from evaluation.hallucination_dataset import DATASETS_DIR, load_jsonl, save_jsonl
 from evaluation.hallucination_metrics import label_agreement
-from evaluation.hallucination_report import build_report, claim_rows, predict_all
+from evaluation.hallucination_report import build_report, claim_rows, claude_agreement, predict_all
 from evaluation.perturb import synthetic_rows
 
 RESULTS_DIR = Path(__file__).resolve().parents[1] / "evaluation" / "results"
@@ -67,7 +67,12 @@ def main(datasets: Path, out: Path) -> int:
         "unlabelled": sum(r["check_text"] is not None and r["label"] is None for r in rows),
         "not_claim": sum(r["label"] == "not_claim" for r in rows),
     }
-    markdown, data = build_report(claims, real_preds, synthetic, syn_preds, agreement, counts)
+    claude = claude_agreement(
+        rows,
+        load_jsonl(datasets / "hallucination_claude_reading.jsonl"),
+        load_jsonl(datasets / "hallucination_corrections.jsonl"),
+    )
+    markdown, data = build_report(claims, real_preds, synthetic, syn_preds, agreement, counts, claude)
 
     out.mkdir(parents=True, exist_ok=True)
     (out / "hallucination_real.md").write_text(markdown, encoding="utf-8", newline="\n")

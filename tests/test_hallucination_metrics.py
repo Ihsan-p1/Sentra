@@ -7,7 +7,7 @@ catch, so recall is the catch rate.
 import numpy as np
 
 from evaluation.hallucination_metrics import binary_scores, cluster_bootstrap_ci, label_agreement
-from evaluation.hallucination_report import build_report, claim_rows, predict_all
+from evaluation.hallucination_report import build_report, claim_rows, claude_agreement, predict_all
 
 T, F = True, False
 
@@ -120,3 +120,32 @@ def test_report_writes_na_for_undefined_metrics():
     markdown, data = build_report(rows, preds, [], {}, None, {"skipped": 0, "unlabelled": 0})
     assert "n/a" in markdown
     assert data["real"]["model_a"]["recall"] is None
+
+
+def test_claude_agreement_uses_owner_label_before_correction():
+    rows = _claims()  # final labels after any correction
+    readings = [{"query_id": r["query_id"], "sentence_idx": r["sentence_idx"], "label": r["label"]} for r in rows]
+    first = rows[0]
+    flipped = "supported" if first["label"] == "unsupported" else "unsupported"
+    corrections = [{"query_id": first["query_id"], "sentence_idx": first["sentence_idx"],
+                    "from": flipped, "to": first["label"], "after_claude_reading": True}]
+    result = claude_agreement(rows, readings, corrections)
+    assert result["n"] == 3
+    assert result["agreement"] == 2 / 3  # the owner's first answer disagreed once
+    assert result["corrected"] == 1
+
+
+def test_claude_agreement_is_none_without_readings():
+    assert claude_agreement(_claims(), [], []) is None
+
+
+def test_report_states_claude_readings_when_present():
+    rows = _claims()
+    preds = {"model_a": [False] * 3, "model_b": [False] * 3, "always_supported": [False] * 3}
+    counts = {"skipped": 0, "unlabelled": 0}
+    claude = {"n": 3, "agreement": 2 / 3, "kappa": 0.5, "corrected": 1}
+    with_claude, data = build_report(rows, preds, [], {}, None, counts, claude)
+    without, _ = build_report(rows, preds, [], {}, None, counts)
+    assert "Claude's reading" in with_claude and "1 label" in with_claude
+    assert "Claude's reading" not in without
+    assert data["claude_agreement"] == claude

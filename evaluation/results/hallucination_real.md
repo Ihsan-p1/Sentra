@@ -27,7 +27,8 @@ Not measured yet (run `scripts/label_hallucination.py --relabel` about a week af
 ## Limits
 
 - The corpus holds article summaries (median 97 words), not full text.
-- One person labelled every sentence.
+- One person chose every label; for most questions an AI tool tidied the written reasons.
 - Model A was trained on synthetic data.
 - Model B is scored per sentence with `check_sentence` on the same text as Model A; the app runs `check_response`, which splits sentences differently.
 - 370 sentences were skipped by the engine (headings, under four words) and 602 checked sentences are not labelled yet; neither is scored.
+- Claude's reading of 154 sentences was recorded before each question and shown after the owner answered. On the owner's first answers: agreement 88.3%, Cohen's kappa 0.77. The owner then changed 8 labels (`hallucination_corrections.jsonl`), and later answers may lean towards Claude's readings.

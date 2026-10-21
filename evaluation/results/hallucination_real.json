@@ -85,6 +85,12 @@
     }
   },
   "agreement": null,
+  "claude_agreement": {
+    "n": 154,
+    "agreement": 0.8831168831168831,
+    "kappa": 0.7702635504724018,
+    "corrected": 8
+  },
   "counts": {
     "skipped": 370,
     "unlabelled": 602,
