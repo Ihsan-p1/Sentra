@@ -37,7 +37,7 @@ RELABEL_PATH = DATASETS_DIR / "hallucination_relabel.jsonl"
 
 def show_chunks(answer: dict) -> None:
     print("\n" + "=" * 78)
-    print(f"QUESTION [{answer['query_id']}]: {answer['question']}")
+    print(f"PERTANYAAN [{answer['query_id']}]: {answer['question']}")
     print("=" * 78)
     by_media = {}
     for chunk in answer["chunks"]:
@@ -63,7 +63,7 @@ def show_sentence(rows: list, i: int) -> None:
     row = rows[i]
     before = [r for r in rows if r["query_id"] == row["query_id"] and r["sentence_idx"] == row["sentence_idx"] - 1]
     if before:
-        print(f"  (previous: {before[0]['sentence']})")
+        print(f"  (kalimat sebelumnya: {before[0]['sentence']})")
     print(f"  >> {row['sentence']}")
 
 
@@ -77,7 +77,7 @@ def label_loop(rows_path: Path, answers_path: Path) -> None:
         pending = [r for r in rows if id(r) not in skipped]
         idx_in_pending = next_unlabeled(pending, order)
         if idx_in_pending is None:
-            print("Nothing left to label." if not skipped else "Only skipped sentences are left.")
+            print("Semua kalimat sudah dilabel." if not skipped else "Tinggal kalimat yang dilewati.")
             break
         row = pending[idx_in_pending]
         i = rows.index(row)
@@ -86,9 +86,9 @@ def label_loop(rows_path: Path, answers_path: Path) -> None:
             show_chunks(answers[current_qid])
 
         p = progress(rows)
-        print(f"[{p['claims']}/{TARGET_CLAIMS} claims, {p['unsupported']} unsupported, {p['remaining']} left]")
+        print(f"[{p['claims']}/{TARGET_CLAIMS} klaim, {p['unsupported']} tidak didukung, sisa {p['remaining']}]")
         show_sentence(rows, i)
-        key = ask("  label [s/u/n, c=chunks, k=skip, q=quit]: ")
+        key = ask("  label [s=didukung u=tidak didukung n=bukan klaim | c=chunk k=lewati q=keluar]: ")
         if key in LABELS:
             rows[i]["label"] = LABELS[key]
             save_jsonl(rows_path, rows)
@@ -99,10 +99,10 @@ def label_loop(rows_path: Path, answers_path: Path) -> None:
         elif key == "q":
             break
         else:
-            print("  unknown key")
+            print("  tombol tidak dikenal")
 
     p = progress(rows)
-    print(f"Saved. {p['claims']} claims labelled ({p['unsupported']} unsupported), {p['remaining']} left.")
+    print(f"Tersimpan. {p['claims']} klaim dilabel ({p['unsupported']} tidak didukung), sisa {p['remaining']}.")
 
 
 def relabel_loop(rows_path: Path, answers_path: Path, relabel_path: Path, n: int) -> None:
@@ -114,7 +114,7 @@ def relabel_loop(rows_path: Path, answers_path: Path, relabel_path: Path, n: int
     rank = {qid: i for i, qid in enumerate(query_order(list(answers)))}
     sample = sorted(sample_for_relabel(rows, n), key=lambda k: (rank.get(k[0], 0), k[1]))
     todo = [k for k in sample if k not in done_keys]
-    print(f"Relabel: {len(done)} done, {len(todo)} to go. Earlier labels are hidden.")
+    print(f"Label ulang: {len(done)} selesai, {len(todo)} lagi. Label sebelumnya disembunyikan.")
 
     current_qid = None
     for key in todo:
@@ -123,7 +123,7 @@ def relabel_loop(rows_path: Path, answers_path: Path, relabel_path: Path, n: int
             show_chunks(answers[current_qid])
         while True:
             show_sentence(rows, rows.index(by_key[key]))
-            choice = ask("  label [s/u/n, c=chunks, q=quit]: ")
+            choice = ask("  label [s=didukung u=tidak didukung n=bukan klaim | c=chunk q=keluar]: ")
             if choice == "c":
                 show_chunks(answers[current_qid])
                 continue
@@ -131,12 +131,12 @@ def relabel_loop(rows_path: Path, answers_path: Path, relabel_path: Path, n: int
         if choice == "q":
             break
         if choice not in LABELS:
-            print("  unknown key, sentence left for the next run")
+            print("  tombol tidak dikenal, kalimat ini ditunda ke sesi berikutnya")
             continue
         done.append({"query_id": key[0], "sentence_idx": key[1], "label": LABELS[choice],
                      "relabelled_at": datetime.now().isoformat(timespec="seconds")})
         save_jsonl(relabel_path, done)
-    print(f"Saved. {len(done)} relabelled.")
+    print(f"Tersimpan. {len(done)} dilabel ulang.")
 
 
 if __name__ == "__main__":
@@ -153,4 +153,4 @@ if __name__ == "__main__":
         else:
             label_loop(args.path, args.answers)
     except KeyboardInterrupt:
-        print("\nStopped. Every label given so far is saved.")
+        print("\nBerhenti. Semua label yang sudah diberikan tersimpan.")
