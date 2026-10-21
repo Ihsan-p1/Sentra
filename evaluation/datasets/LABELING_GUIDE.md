@@ -34,6 +34,14 @@ the labeller is, not a change of standard.
    label is for the sentence after `>>`.
 10. **Hedged claims are still claims.** "Reportedly", "may have" or "suggests" does not turn a
     claim into `n`. Judge what is being claimed.
+11. **Quoted keywords need the words, not just the idea.** A keyword in quotes is `s` when
+    that outlet's chunks contain the same words or a close form with the same meaning
+    ("diplomatic outcomes" for "diplomatic and economic outcomes", "civil servant
+    neutrality" for "civil servants need to remain neutral"). An idea that the chunks only
+    express in other words is `u`.
+12. **Check absence against every chunk of the outlet named.** "TEMPO does not mention X"
+    is checked against all of TEMPO's chunks on screen. If the sentence limits the topic
+    ("of the issue", "related to X"), check only that topic.
 
 ## When a rule changes
 
@@ -41,3 +49,5 @@ Add a line below with the date and the rule number, and relabel the rows that ru
 Otherwise the first pass and the relabel pass are measured against different standards.
 
 - 2026-10-21: guide written and rule 6 fixed by the owner, before the first label.
+- 2026-10-21: rules 11 and 12 added after 154 labels. Both write down how the owner had
+  already been labelling those cases, so no row needed relabelling.
