@@ -1,5 +1,7 @@
 """Scoring and report for the retrieval evaluation (eval phase 2)."""
-from evaluation.retrieval_report import build_report, paired_difference, refusal_table, score_rankings
+import pytest
+from evaluation.retrieval_report import (build_report, paired_difference, pick_threshold, refusal_table,
+                                         score_rankings, unjudged_at_k)
 
 GOLD = {"q1": {"relevant": ["a"], "judged": ["a", "b"]},
         "q2": {"relevant": [], "judged": ["b"]}}
@@ -83,3 +85,40 @@ def test_recall_ceiling_when_gold_exceeds_k():
     s = score_rankings({"q1": ["a"], "q2": list("abcdefghij")}, gold)
     assert s["recall_at_5_ceiling"] == 0.75   # mean of 1.0 and 5/10
     assert "Best possible Recall@5" in build_report({"dense": s}, REFUSALS, LATENCY, META)
+
+
+# --- eval phase 3 ---
+
+def test_pick_threshold_separable_takes_midpoint():
+    assert pick_threshold([0.8, 0.9], [0.1, 0.3]) == pytest.approx(0.55)
+
+
+def test_pick_threshold_overlap_prefers_fewer_leaks():
+    # 0.2 and 0.46 both make one error; 0.46 leaks nothing
+    assert pick_threshold([0.30, 0.6, 0.7], [0.32, 0.1]) == pytest.approx(0.46)
+
+
+def test_unjudged_counts_top_k_outside_judged():
+    gold = {"q1": {"relevant": ["a"], "judged": ["a", "b"]}}
+    assert unjudged_at_k({"q1": ["a", "x", "b", "y"]}, gold, k=3) == 1
+
+
+def test_report_adds_paired_row_per_new_system():
+    scores = {**SCORES, "rerank": score_rankings({"q1": ["a"]}, GOLD)}
+    latency = {**LATENCY, "rerank": {"p50": 40.0, "p95": 90.0, "n": 3}}
+    md = build_report(scores, REFUSALS, latency, META)
+    assert "| Cross-encoder rerank of dense candidates minus dense (paired) |" in md
+    assert "| Dense minus TF-IDF (paired) |" in md
+
+
+def test_report_gate_section_names_calibration_only():
+    gate = refusal_table({"q1": 1.5}, {"q1": "in_corpus_held_out"}, {"picked": 0.42})
+    md = build_report(SCORES, REFUSALS, LATENCY, META,
+                      gates={"rerank": {"threshold": 0.42, "refusals": gate}})
+    assert "## Reranker score as refusal signal" in md
+    assert "threshold 0.420, picked on the calibration groups only" in md
+
+
+def test_report_lists_unjudged_counts():
+    md = build_report(SCORES, REFUSALS, LATENCY, META, unjudged={"dense": 0, "rerank": 7})
+    assert "Articles in a top 10 that were never judged: dense 0, rerank 7" in md

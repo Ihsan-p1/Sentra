@@ -8,7 +8,13 @@ from typing import Dict, List, Optional, Union
 
 from evaluation.retrieval_metrics import mean_ci, recall_at_k, reciprocal_rank
 
-SYSTEMS = {"dense": "Dense (current, cosine over chunk embeddings)", "tfidf": "TF-IDF baseline"}
+SYSTEMS = {
+    "dense": "Dense (current, cosine over chunk embeddings)",
+    "tfidf": "TF-IDF baseline",
+    "rrf": "Hybrid RRF (dense + TF-IDF, no model)",
+    "rerank": "Cross-encoder rerank of dense candidates",
+    "rerank_hybrid": "Cross-encoder rerank of dense + TF-IDF candidates",
+}
 
 GROUPS = {
     "in_corpus_calibration": "In-corpus, calibration set (the threshold was tuned on these; "
@@ -74,6 +80,32 @@ def refusal_table(
     return table
 
 
+def pick_threshold(in_corpus: List[float], out_of_corpus: List[float]) -> float:
+    """Threshold with the fewest errors on calibration scores; ties go to fewer leaks, then the lower value.
+
+    Candidates are midpoints between neighbouring scores. A question is refused
+    when its score is below the threshold, so an out-of-corpus score at or above
+    it is a leak and an in-corpus score below it is a false refusal.
+    """
+    scores = sorted(set(in_corpus) | set(out_of_corpus))
+    best = None
+    for lo, hi in zip(scores, scores[1:]):
+        t = (lo + hi) / 2
+        leaks = sum(s >= t for s in out_of_corpus)
+        key = (sum(s < t for s in in_corpus) + leaks, leaks, t)
+        best = key if best is None or key < best else best
+    return best[2]
+
+
+def unjudged_at_k(rankings: Dict[str, List[str]], gold: Dict[str, Dict], k: int = 10) -> int:
+    """Articles in a top k that the owner never judged, summed over questions with gold."""
+    return sum(
+        url not in set(gold[qid]["judged"])
+        for qid, ranked in rankings.items() if qid in gold
+        for url in ranked[:k]
+    )
+
+
 def _pct(value: Optional[float]) -> str:
     return "n/a" if value is None else f"{value:.1%}"
 
@@ -93,7 +125,14 @@ def _with_ci(summary: Dict) -> str:
     return _pct(summary["mean"]) + (f" [{_pct(ci[0])}, {_pct(ci[1])}]" if ci else "")
 
 
-def build_report(scores: Dict, refusals: Dict, latency: Dict, meta: Dict) -> str:
+def build_report(
+    scores: Dict,
+    refusals: Dict,
+    latency: Dict,
+    meta: Dict,
+    gates: Optional[Dict] = None,
+    unjudged: Optional[Dict[str, int]] = None,
+) -> str:
     first = next(iter(scores.values()))
     names = list(refusals)
     lines = [
@@ -116,6 +155,14 @@ def build_report(scores: Dict, refusals: Dict, latency: Dict, meta: Dict) -> str
             d = paired_difference(scores["dense"], scores["tfidf"], metric)
             cells.append(_points(d))
         lines.append(f"| Dense minus TF-IDF (paired) | {cells[0]} | {cells[1]} | {d['n']} |")
+    for key in scores:
+        if key in ("dense", "tfidf") or "dense" not in scores:
+            continue
+        cells = []
+        for metric in ("recall_at_5", "mrr_at_10"):
+            d = paired_difference(scores[key], scores["dense"], metric)
+            cells.append(_points(d))
+        lines.append(f"| {SYSTEMS.get(key, key)} minus dense (paired) | {cells[0]} | {cells[1]} | {d['n']} |")
     if first.get("recall_at_5_ceiling") is not None:
         lines += ["", f"Best possible Recall@5 with this gold: {_pct(first['recall_at_5_ceiling'])}, "
                       "because some questions have more than 5 relevant articles."]
@@ -143,6 +190,30 @@ def build_report(scores: Dict, refusals: Dict, latency: Dict, meta: Dict) -> str
             cells.append(f"{c['refused']}/{c['total']}")
         lines.append(f"| {label} | {' | '.join(cells)} |")
 
+    if gates:
+        default = names[0]
+        lines += [
+            "",
+            "## Reranker score as refusal signal",
+            "",
+            "The best reranker score per question takes the place of the best cosine. Each "
+            "threshold was picked on the calibration groups only (fewest errors, ties to fewer "
+            "leaks); the held-out groups test it. Reranker scores are raw logits.",
+            "",
+        ]
+        for key, gate in gates.items():
+            lines.append(f"- {SYSTEMS.get(key, key)}: threshold {gate['threshold']:.3f}, "
+                         "picked on the calibration groups only.")
+        header = " | ".join(SYSTEMS.get(k, k) for k in gates)
+        lines += ["", f"| Group | Dense, cosine at {thresholds.get(default, '?')} | {header} |",
+                  "|---|---|" + "---|" * len(gates)]
+        tables = [refusals[default]] + [g["refusals"]["picked"] for g in gates.values()]
+        for group, label in GROUPS.items():
+            if not any(group in t for t in tables):
+                continue
+            cells = [f"{t[group]['refused']}/{t[group]['total']}" if group in t else "n/a" for t in tables]
+            lines.append(f"| {label} | {' | '.join(cells)} |")
+
     lines += ["", "## Latency per retrieval call", "", "| System | p50 | p95 | Calls |", "|---|---|---|---|"]
     for key, lat in latency.items():
         lines.append(f"| {SYSTEMS.get(key, key)} | {lat['p50']:.0f} ms | {lat['p95']:.0f} ms | {lat['n']} |")
@@ -157,6 +228,9 @@ def build_report(scores: Dict, refusals: Dict, latency: Dict, meta: Dict) -> str
         "ranked in its top 10 was never judged and counts as not relevant.",
         "- The calibration questions, in-corpus and out-of-corpus, are the data the refusal "
         "threshold was tuned on; only the held-out groups test it.",
+        *([f"- Articles in a top 10 that were never judged: "
+           + ", ".join(f"{k} {v}" for k, v in unjudged.items())
+           + ". They count as not relevant."] if unjudged else []),
         "- Latency was measured on one laptop against a local PostgreSQL; the dense figure "
         "includes embedding the query and fetching every chunk from the database.",
         "",
