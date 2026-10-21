@@ -1,6 +1,9 @@
 """Candidate pool and gold sheet for the retrieval evaluation (eval phase 2)."""
+import ast
 from datetime import datetime
+from pathlib import Path
 
+from evaluation.hallucination_dataset import DATASETS_DIR, load_questions
 from evaluation.retrieval_gold import build_pool, make_sheet, parse_sheet
 
 POOL = {"q1": ["u1", "u2", "u3"], "q2": ["u2"], "q3": ["u1", "u3"]}
@@ -65,3 +68,23 @@ def test_make_sheet_round_trips_with_parse():
     text = make_sheet(POOL, QUESTIONS, ARTICLES).replace("relevan: ", "relevan: 1", 1)
     gold, _ = parse_sheet(text, POOL)
     assert gold == {"q1": ["u1"]}
+
+
+def _calibration_out_of_corpus():
+    # Read with ast, as test_hallucination_dataset does: importing the script pulls in torch.
+    source = (Path(__file__).resolve().parents[1] / "scripts" / "calibrate_threshold.py").read_text(encoding="utf-8")
+    for node in ast.parse(source).body:
+        if isinstance(node, ast.Assign) and node.targets[0].id == "OUT_OF_CORPUS":
+            return ast.literal_eval(node.value)
+    raise AssertionError("OUT_OF_CORPUS not found")
+
+
+def test_ooc_questions_keep_calibration_set_apart_from_held_out():
+    ooc = load_questions(DATASETS_DIR / "ooc_questions.json")
+    assert len(ooc) == 20
+    calibration = [q for q in ooc if q["origin"] == "calibration"]
+    held_out = [q for q in ooc if q["origin"] == "held_out"]
+    assert [q["text"] for q in calibration] == _calibration_out_of_corpus()
+    assert len(held_out) == 12
+    assert sum(q["kind"] == "near" for q in held_out) == 6
+    assert {q["kind"] for q in ooc} == {"far", "near"}
