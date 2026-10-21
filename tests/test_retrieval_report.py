@@ -1,5 +1,5 @@
 """Scoring and report for the retrieval evaluation (eval phase 2)."""
-from evaluation.retrieval_report import build_report, refusal_table, score_rankings
+from evaluation.retrieval_report import build_report, paired_difference, refusal_table, score_rankings
 
 GOLD = {"q1": {"relevant": ["a"], "judged": ["a", "b"]},
         "q2": {"relevant": [], "judged": ["b"]}}
@@ -51,3 +51,35 @@ def test_report_states_corpus_limit_and_single_judge():
 def test_report_names_questions_without_gold():
     md = build_report(SCORES, REFUSALS, LATENCY, META)
     assert "q2" in md
+
+
+def test_report_splits_in_corpus_calibration_from_held_out():
+    # c01-c25 are the in-corpus half of the threshold calibration set; c11 and c16
+    # are refused there, so pooling them with n01-n25 hid where the refusals came from.
+    refusals = refusal_table({"c11": 0.33, "n01": 0.5},
+                             {"c11": "in_corpus_calibration", "n01": "in_corpus_held_out"},
+                             {"default": 0.35})
+    md = build_report(SCORES, refusals, LATENCY, META)
+    assert "In-corpus, calibration set" in md and "In-corpus, held out" in md
+    assert "only the held-out groups test it" in md
+
+
+def test_paired_difference_uses_shared_questions():
+    a = {"per_query": {"q1": {"recall_at_5": 1.0}, "q2": {"recall_at_5": 0.5}, "q3": {"recall_at_5": 0.0}}}
+    b = {"per_query": {"q1": {"recall_at_5": 0.5}, "q2": {"recall_at_5": 0.5}}}
+    d = paired_difference(a, b, "recall_at_5")
+    assert d["mean"] == 0.25 and d["n"] == 2
+    assert d["ci"][0] <= 0.25 <= d["ci"][1]
+
+
+def test_report_shows_paired_difference_row():
+    md = build_report(SCORES, REFUSALS, LATENCY, META)
+    assert "Dense minus TF-IDF (paired)" in md
+
+
+def test_recall_ceiling_when_gold_exceeds_k():
+    gold = {"q1": {"relevant": ["a"], "judged": []},
+            "q2": {"relevant": list("abcdefghij"), "judged": []}}
+    s = score_rankings({"q1": ["a"], "q2": list("abcdefghij")}, gold)
+    assert s["recall_at_5_ceiling"] == 0.75   # mean of 1.0 and 5/10
+    assert "Best possible Recall@5" in build_report({"dense": s}, REFUSALS, LATENCY, META)

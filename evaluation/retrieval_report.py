@@ -11,7 +11,9 @@ from evaluation.retrieval_metrics import mean_ci, recall_at_k, reciprocal_rank
 SYSTEMS = {"dense": "Dense (current, cosine over chunk embeddings)", "tfidf": "TF-IDF baseline"}
 
 GROUPS = {
-    "in_corpus": "In-corpus questions (refusal here is a false refusal)",
+    "in_corpus_calibration": "In-corpus, calibration set (the threshold was tuned on these; "
+                             "refusal is a false refusal)",
+    "in_corpus_held_out": "In-corpus, held out (refusal is a false refusal)",
     "ooc_calibration": "Out-of-corpus, calibration set (the threshold was tuned on these)",
     "ooc_held_out": "Out-of-corpus, held out",
     "ooc_near": "of which near-domain (elections outside Indonesia)",
@@ -36,13 +38,22 @@ def score_rankings(rankings: Dict[str, List[str]], gold: Dict[str, Dict]) -> Dic
             "recall_at_5": recall_at_k(ranked, relevant, 5),
             "mrr_at_10": reciprocal_rank(ranked, relevant, 10),
         }
+    ceilings = [min(5, len(gold[q]["relevant"])) / len(gold[q]["relevant"]) for q in per_query]
     return {
         "recall_at_5": _summary([v["recall_at_5"] for v in per_query.values()]),
+        "recall_at_5_ceiling": sum(ceilings) / len(ceilings) if ceilings else None,
         "mrr_at_10": _summary([v["mrr_at_10"] for v in per_query.values()]),
         "n_scored": len(per_query),
         "no_gold": no_gold,
         "per_query": per_query,
     }
+
+
+def paired_difference(a: Dict, b: Dict, metric: str) -> Dict:
+    """Mean per-question difference a - b over the questions both scored, with a bootstrap interval."""
+    shared = [q for q in a["per_query"] if q in b["per_query"]]
+    diffs = [a["per_query"][q][metric] - b["per_query"][q][metric] for q in shared]
+    return {**_summary(diffs), "n": len(diffs)}
 
 
 def refusal_table(
@@ -65,6 +76,14 @@ def refusal_table(
 
 def _pct(value: Optional[float]) -> str:
     return "n/a" if value is None else f"{value:.1%}"
+
+
+def _points(summary: Dict) -> str:
+    if summary["mean"] is None:
+        return "n/a"
+    ci = summary["ci"]
+    text = f"{summary['mean'] * 100:+.1f} pts"
+    return text + (f" [{ci[0] * 100:+.1f}, {ci[1] * 100:+.1f}]" if ci else "")
 
 
 def _with_ci(summary: Dict) -> str:
@@ -91,6 +110,15 @@ def build_report(scores: Dict, refusals: Dict, latency: Dict, meta: Dict) -> str
     for key, s in scores.items():
         lines.append(f"| {SYSTEMS.get(key, key)} | {_with_ci(s['recall_at_5'])} | "
                      f"{_with_ci(s['mrr_at_10'])} | {s['n_scored']} |")
+    if "dense" in scores and "tfidf" in scores:
+        cells = []
+        for metric in ("recall_at_5", "mrr_at_10"):
+            d = paired_difference(scores["dense"], scores["tfidf"], metric)
+            cells.append(_points(d))
+        lines.append(f"| Dense minus TF-IDF (paired) | {cells[0]} | {cells[1]} | {d['n']} |")
+    if first.get("recall_at_5_ceiling") is not None:
+        lines += ["", f"Best possible Recall@5 with this gold: {_pct(first['recall_at_5_ceiling'])}, "
+                      "because some questions have more than 5 relevant articles."]
     if first["no_gold"]:
         lines += ["", f"No candidate was judged relevant for {', '.join(first['no_gold'])}; "
                       "those questions are left out of both averages."]
@@ -127,8 +155,8 @@ def build_report(scores: Dict, refusals: Dict, latency: Dict, meta: Dict) -> str
         f"- Gold comes from a single judge: {meta['gold_provenance']}.",
         "- Gold is pooled from the top 10 of both systems; a relevant article neither system "
         "ranked in its top 10 was never judged and counts as not relevant.",
-        "- The calibration out-of-corpus questions are the data the refusal threshold was tuned "
-        "on; only the held-out group tests it.",
+        "- The calibration questions, in-corpus and out-of-corpus, are the data the refusal "
+        "threshold was tuned on; only the held-out groups test it.",
         "- Latency was measured on one laptop against a local PostgreSQL; the dense figure "
         "includes embedding the query and fetching every chunk from the database.",
         "",

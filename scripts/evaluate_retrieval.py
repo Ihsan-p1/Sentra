@@ -81,7 +81,10 @@ def main() -> int:
 
     thresholds = {"default": settings.RETRIEVAL_THRESHOLD, "strict": settings.RETRIEVAL_THRESHOLD_STRICT}
     scores = {name: score_rankings(r, gold) for name, r in rankings.items()}
-    refusals = refusal_table(max_sims, {**{q["id"]: "in_corpus" for q in in_corpus}, **{q["id"]: ooc_group(q) for q in ooc}}, thresholds)
+    groups = {q["id"]: "in_corpus_calibration" if q["origin"] == "calibration" else "in_corpus_held_out"
+              for q in in_corpus}
+    groups.update({q["id"]: ooc_group(q) for q in ooc})
+    refusals = refusal_table(max_sims, groups, thresholds)
     latency = {name: {"p50": percentile(t, 50), "p95": percentile(t, 95), "n": len(t)}
                for name, t in times.items()}
     commit = subprocess.run(["git", "rev-parse", "--short", "HEAD"],
