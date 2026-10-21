@@ -1,0 +1,8 @@
+{"query_id": "n16", "sentence_idx": 1, "from": "supported", "to": "unsupported", "after_claude_reading": true, "recorded_at": "2026-10-21T19:50:10"}
+{"query_id": "n16", "sentence_idx": 4, "from": "supported", "to": "unsupported", "after_claude_reading": true, "recorded_at": "2026-10-21T19:50:11"}
+{"query_id": "c13", "sentence_idx": 7, "from": "supported", "to": "unsupported", "after_claude_reading": true, "recorded_at": "2026-10-21T20:29:18"}
+{"query_id": "c13", "sentence_idx": 18, "from": "unsupported", "to": "supported", "after_claude_reading": true, "recorded_at": "2026-10-21T20:29:18"}
+{"query_id": "c13", "sentence_idx": 28, "from": "supported", "to": "unsupported", "after_claude_reading": true, "recorded_at": "2026-10-21T20:29:18"}
+{"query_id": "c13", "sentence_idx": 32, "from": "supported", "to": "unsupported", "after_claude_reading": true, "recorded_at": "2026-10-21T20:29:19"}
+{"query_id": "n21", "sentence_idx": 23, "from": "supported", "to": "unsupported", "after_claude_reading": true, "recorded_at": "2026-10-21T20:36:25"}
+{"query_id": "n02", "sentence_idx": 17, "from": "not_claim", "to": "supported", "after_claude_reading": true, "recorded_at": "2026-10-21T20:57:53"}
