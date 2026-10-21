@@ -1,9 +1,10 @@
 """
 Score the hallucination checkers on the owner's labels (eval phase 1, step 5).
 
-Reads the labelled sentences, runs Model A (trained detector), Model B (keyword
-overlap) and an "always supported" baseline on every claim, and reports
-recall / precision / F1 with `unsupported` as the positive class. Synthetic
+Reads the labelled sentences, runs Model A (trained detector), Model A retrained
+out-of-fold on these labels (eval phase 3), Model B (keyword overlap) and an
+"always supported" baseline on every claim, and reports recall / precision /
+F1 with `unsupported` as the positive class. Synthetic
 negatives are built from the supported sentences and reported separately; the
 relabel pass, when it exists, gives Cohen's kappa.
 
@@ -27,6 +28,7 @@ if hasattr(sys.stdout, "reconfigure"):
 from evaluation.hallucination_dataset import DATASETS_DIR, load_jsonl, save_jsonl
 from evaluation.hallucination_metrics import label_agreement
 from evaluation.hallucination_report import build_report, claim_rows, claude_agreement, predict_all
+from evaluation.hallucination_retrain import claim_features, out_of_fold, predict_with_fold
 from evaluation.perturb import synthetic_rows
 
 RESULTS_DIR = Path(__file__).resolve().parents[1] / "evaluation" / "results"
@@ -51,9 +53,19 @@ def main(datasets: Path, out: Path) -> int:
     embedder = get_embedder()
 
     real_preds = predict_all(claims, answers, detector, baseline, embedder)
+    # Model A retrained on these labels, each question scored by a model that never saw it.
+    real_preds["model_a_real"], fold_models = out_of_fold(
+        claim_features(claims, answers, detector, embedder),
+        [r["label"] == "unsupported" for r in claims],
+        [r["query_id"] for r in claims],
+    )
     synthetic = synthetic_rows(claims, answers)
     save_jsonl(datasets / "hallucination_synthetic.jsonl", synthetic)
     syn_preds = predict_all(synthetic, answers, detector, baseline, embedder) if synthetic else {}
+    if synthetic:
+        syn_preds["model_a_real"] = predict_with_fold(
+            fold_models, claim_features(synthetic, answers, detector, embedder), [r["query_id"] for r in synthetic]
+        )
 
     agreement = None
     relabels = load_jsonl(datasets / "hallucination_relabel.jsonl")

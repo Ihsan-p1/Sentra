@@ -149,3 +149,30 @@ def test_report_states_claude_readings_when_present():
     assert "Claude's reading" in with_claude and "1 label" in with_claude
     assert "Claude's reading" not in without
     assert data["claude_agreement"] == claude
+
+
+def test_report_includes_retrained_column_when_present():
+    rows = _claims()
+    preds = {m: [False, True, False] for m in ("model_a", "model_a_real", "model_b", "always_supported")}
+    syn_rows = [dict(rows[0], kind="year")]
+    syn_preds = {m: [True] for m in ("model_a", "model_a_real", "model_b", "always_supported")}
+    markdown, data = build_report(rows, preds, syn_rows, syn_preds, None, {"skipped": 0, "unlabelled": 0})
+    header = next(line for line in markdown.splitlines() if line.startswith("| Metric |"))
+    assert "Model A retrained on real labels (out-of-fold)" in header
+    assert markdown.splitlines()[markdown.splitlines().index(header) + 1] == "|---|" + "---|" * 4
+    assert "model_a_real" in data["real"]
+    assert "model_a_real" in data["synthetic"]["catch_rate"]
+    assert "always_supported" not in data["synthetic"]["catch_rate"]
+    swap = next(line for line in markdown.splitlines() if line.startswith("| Swap |"))
+    assert swap.count("|") - 1 == 2 + 3
+    assert "scored out-of-fold with one question held out per fold" in markdown
+
+
+def test_report_without_retrained_column_has_three_columns():
+    rows = _claims()
+    preds = {"model_a": [False] * 3, "model_b": [False] * 3, "always_supported": [False] * 3}
+    markdown, data = build_report(rows, preds, [], {}, None, {"skipped": 0, "unlabelled": 0})
+    header = next(line for line in markdown.splitlines() if line.startswith("| Metric |"))
+    assert header.count("|") - 1 == 1 + 3
+    assert set(data["real"]) == {"model_a", "model_b", "always_supported"}
+    assert "out-of-fold" not in markdown

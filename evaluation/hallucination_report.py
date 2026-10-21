@@ -8,9 +8,10 @@ from typing import Dict, List, Optional, Tuple
 
 from evaluation.hallucination_metrics import binary_scores, cluster_bootstrap_ci, label_agreement
 
-MODELS = ("model_a", "model_b", "always_supported")
+MODELS = ("model_a", "model_a_real", "model_b", "always_supported")
 MODEL_NAMES = {
     "model_a": "Model A (Logistic Regression)",
+    "model_a_real": "Model A retrained on real labels (out-of-fold)",
     "model_b": "Model B (Keyword overlap)",
     "always_supported": "Always supported",
 }
@@ -25,7 +26,7 @@ def claim_rows(rows: List[Dict]) -> List[Dict]:
 def predict_all(rows: List[Dict], answers_by_qid: Dict[str, Dict], detector, baseline, embedder) -> Dict[str, List[bool]]:
     """True means the checker calls the sentence unsupported."""
     source_cache = {}
-    preds = {m: [] for m in MODELS}
+    preds = {m: [] for m in ("model_a", "model_b", "always_supported")}
     for row in rows:
         qid = row["query_id"]
         if qid not in source_cache:
@@ -80,8 +81,10 @@ def build_report(
 ) -> Tuple[str, Dict]:
     y_true = [r["label"] == "unsupported" for r in real_rows]
     groups = [r["query_id"] for r in real_rows]
+    shown = [m for m in MODELS if m in real_preds]
+    syn_models = [m for m in shown if m != "always_supported" and m in syn_preds]
     real = {}
-    for m in MODELS:
+    for m in shown:
         scores = binary_scores(y_true, real_preds[m])
         for metric in METRICS:
             scores[f"{metric}_ci"] = cluster_bootstrap_ci(groups, y_true, real_preds[m], metric)
@@ -89,7 +92,7 @@ def build_report(
 
     synthetic = {}
     kinds = sorted({r["kind"] for r in syn_rows})
-    for m in MODELS[:2]:
+    for m in syn_models:
         if not syn_rows:
             break
         synthetic[m] = {"all": sum(syn_preds[m]) / len(syn_rows)}
@@ -106,13 +109,13 @@ def build_report(
         f"{positives} of them unsupported. Positive class: `unsupported`, so recall is the catch rate. "
         "Intervals are 95% bootstrap intervals over questions.",
         "",
-        "| Metric | " + " | ".join(MODEL_NAMES[m] for m in MODELS) + " |",
-        "|---|" + "---|" * len(MODELS),
+        "| Metric | " + " | ".join(MODEL_NAMES[m] for m in shown) + " |",
+        "|---|" + "---|" * len(shown),
     ]
     for metric in METRICS:
-        cells = [_with_ci(real[m][metric], real[m][f"{metric}_ci"]) for m in MODELS]
+        cells = [_with_ci(real[m][metric], real[m][f"{metric}_ci"]) for m in shown]
         lines.append(f"| {metric.capitalize()} | " + " | ".join(cells) + " |")
-    cells = [f"{real[m]['tp']} / {real[m]['fp']} / {real[m]['fn']}" for m in MODELS]
+    cells = [f"{real[m]['tp']} / {real[m]['fp']} / {real[m]['fn']}" for m in shown]
     lines.append("| TP / FP / FN | " + " | ".join(cells) + " |")
 
     lines += ["", "## Synthetic negatives (reported separately)", ""]
@@ -121,13 +124,13 @@ def build_report(
             f"{len(syn_rows)} supported sentences with one fact swapped, unsupported by construction. "
             "Catch rate = share flagged unsupported.",
             "",
-            "| Swap | n | " + " | ".join(MODEL_NAMES[m] for m in MODELS[:2]) + " |",
-            "|---|---|---|---|",
-            f"| all | {len(syn_rows)} | " + " | ".join(_pct(synthetic[m]["all"]) for m in MODELS[:2]) + " |",
+            "| Swap | n | " + " | ".join(MODEL_NAMES[m] for m in syn_models) + " |",
+            "|---|---|" + "---|" * len(syn_models),
+            f"| all | {len(syn_rows)} | " + " | ".join(_pct(synthetic[m]["all"]) for m in syn_models) + " |",
         ]
         for kind in kinds:
             n = sum(r["kind"] == kind for r in syn_rows)
-            lines.append(f"| {kind} | {n} | " + " | ".join(_pct(synthetic[m][kind]) for m in MODELS[:2]) + " |")
+            lines.append(f"| {kind} | {n} | " + " | ".join(_pct(synthetic[m][kind]) for m in syn_models) + " |")
     else:
         lines.append("No synthetic rows: no supported sentence had a name, year or number to swap.")
 
@@ -146,6 +149,9 @@ def build_report(
         "- The corpus holds article summaries (median 97 words), not full text.",
         "- One person chose every label; for most questions an AI tool tidied the written reasons.",
         "- Model A was trained on synthetic data.",
+        *(["- Model A retrained on real labels uses the same five features and a plain logistic regression "
+           "without the deployed overrides, scored out-of-fold with one question held out per fold; the "
+           "deployed model is unchanged."] if "model_a_real" in shown else []),
         "- Model B is scored per sentence with `check_sentence` on the same text as Model A; "
         "the app runs `check_response`, which splits sentences differently.",
         f"- {counts['skipped']} sentences were skipped by the engine (headings, under four words) and "
