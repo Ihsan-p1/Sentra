@@ -128,3 +128,48 @@ def test_report_states_extended_gold():
     md = build_report(SCORES, REFUSALS, LATENCY, {**META, "gold_extra": 12})
     assert ("12 articles first ranked by the phase 3 systems were judged later by the same owner; "
             "every system is scored on the same extended gold.") in md
+
+
+# --- final review fixes ---
+
+def test_pick_threshold_separates_minus_inf_score():
+    # a question with no candidates scores -inf; the midpoint with it is -inf, so it was never offered
+    t = pick_threshold([-0.5, 1.0], [float("-inf")])
+    assert float("-inf") < t <= -0.5
+
+
+def test_pick_threshold_needs_two_distinct_scores():
+    with pytest.raises(ValueError):
+        pick_threshold([0.5], [0.5])
+
+
+KEEP_GOLD = {q: {"relevant": ["good"], "judged": ["good", "bad"]} for q in ("q1", "q2", "q3", "q4")}
+DENSE_MISS = score_rankings({q: ["bad"] for q in KEEP_GOLD}, KEEP_GOLD)
+NEW_HIT = score_rankings({q: ["good"] for q in KEEP_GOLD}, KEEP_GOLD)
+
+
+def _keep_line(md, name):
+    return next(line for line in md.splitlines() if line.startswith(f"- {name}:"))
+
+
+def test_keep_rule_keeps_system_that_passes_all_three():
+    latency = {"dense": {"p50": 1, "p95": 70.0, "n": 3}, "rrf": {"p50": 1, "p95": 172.0, "n": 3}}
+    md = build_report({"dense": DENSE_MISS, "rrf": NEW_HIT}, REFUSALS, latency, META)
+    assert "## Keep rule (pre-registered)" in md
+    line = _keep_line(md, "Hybrid RRF (dense + TF-IDF, no model)")
+    assert "keep" in line and "better than dense" in line and "172 ms" in line
+
+
+def test_keep_rule_drops_system_over_latency_budget():
+    latency = {"dense": {"p50": 1, "p95": 70.0, "n": 3}, "rerank": {"p50": 1, "p95": 1080.0, "n": 3}}
+    md = build_report({"dense": DENSE_MISS, "rerank": NEW_HIT}, REFUSALS, latency, META)
+    line = _keep_line(md, "Cross-encoder rerank of dense candidates")
+    assert "drop" in line and "p95 over 1000 ms" in line
+
+
+def test_keep_rule_gate_needs_four_near_refusals():
+    groups = {"n1": ["ooc_held_out", "ooc_near"], "n2": ["ooc_held_out", "ooc_near"], "c1": "in_corpus_held_out"}
+    gate = refusal_table({"n1": -5.0, "n2": 2.0, "c1": 3.0}, groups, {"picked": 0.0})
+    md = build_report(SCORES, REFUSALS, LATENCY, META, gates={"rerank": {"threshold": 0.0, "refusals": gate}})
+    line = _keep_line(md, "Gate, Cross-encoder rerank of dense candidates")
+    assert "not useful" in line and "1/2" in line and "0/1" in line

@@ -25,6 +25,13 @@ GROUPS = {
     "ooc_near": "of which near-domain (elections outside Indonesia)",
 }
 
+# Keep rule, fixed in the phase 3 plan before any result was seen.
+KEEP_RECALL_GAIN = 0.05   # paired Recall@5 gain over dense, at least
+KEEP_MRR_DROP = 0.02      # paired MRR@10 may fall by at most this
+KEEP_P95_MS = 1000.0
+GATE_NEAR_MIN = 4         # near-domain held-out questions refused, at least
+GATE_FALSE_REFUSALS_MAX = 1  # in-corpus held-out questions refused, at most
+
 
 def _summary(values: List[float]) -> Dict:
     return {"mean": sum(values) / len(values) if values else None, "ci": mean_ci(values)}
@@ -88,9 +95,12 @@ def pick_threshold(in_corpus: List[float], out_of_corpus: List[float]) -> float:
     it is a leak and an in-corpus score below it is a false refusal.
     """
     scores = sorted(set(in_corpus) | set(out_of_corpus))
+    if len(scores) < 2:
+        raise ValueError("pick_threshold needs at least two distinct scores")
     best = None
     for lo, hi in zip(scores, scores[1:]):
-        t = (lo + hi) / 2
+        # The midpoint with -inf (a question with no candidates) is -inf and would separate nothing.
+        t = hi - 1.0 if lo == float("-inf") else (lo + hi) / 2
         leaks = sum(s >= t for s in out_of_corpus)
         key = (sum(s < t for s in in_corpus) + leaks, leaks, t)
         best = key if best is None or key < best else best
@@ -123,6 +133,43 @@ def _with_ci(summary: Dict) -> str:
         return "n/a"
     ci = summary["ci"]
     return _pct(summary["mean"]) + (f" [{_pct(ci[0])}, {_pct(ci[1])}]" if ci else "")
+
+
+def keep_rule_lines(scores: Dict, latency: Dict, gates: Optional[Dict]) -> List[str]:
+    """The pre-registered keep rule applied to every system other than dense and TF-IDF, and to each gate."""
+    lines = ["", "## Keep rule (pre-registered)", "",
+             f"A system is kept when its paired Recall@5 gain over dense is at least "
+             f"{KEEP_RECALL_GAIN * 100:.0f} pts, its MRR@10 falls by no more than {KEEP_MRR_DROP * 100:.0f} pts "
+             f"and its p95 is at most {KEEP_P95_MS:.0f} ms. It is called better than dense only when the "
+             f"Recall@5 interval excludes 0. A gate is useful when it refuses at least {GATE_NEAR_MIN} "
+             f"near-domain held-out questions with at most {GATE_FALSE_REFUSALS_MAX} in-corpus held-out "
+             "false refusal.", ""]
+    for key in scores:
+        if key in ("dense", "tfidf") or "dense" not in scores or key not in latency:
+            continue
+        recall = paired_difference(scores[key], scores["dense"], "recall_at_5")
+        mrr = paired_difference(scores[key], scores["dense"], "mrr_at_10")
+        p95 = latency[key]["p95"]
+        fails = []
+        if recall["mean"] is None or recall["mean"] < KEEP_RECALL_GAIN:
+            fails.append(f"Recall@5 gain under {KEEP_RECALL_GAIN * 100:.0f} pts")
+        if mrr["mean"] is None or mrr["mean"] < -KEEP_MRR_DROP:
+            fails.append(f"MRR@10 down more than {KEEP_MRR_DROP * 100:.0f} pts")
+        if p95 > KEEP_P95_MS:
+            fails.append(f"p95 over {KEEP_P95_MS:.0f} ms")
+        verdict = "drop (" + "; ".join(fails) + ")" if fails else "keep"
+        better = recall["ci"] is not None and recall["ci"][0] > 0
+        lines.append(f"- {SYSTEMS.get(key, key)}: {verdict}. Recall@5 {_points(recall)}, MRR@10 {_points(mrr)}, "
+                     f"p95 {p95:.0f} ms; " + ("better than dense." if better else "not shown better than dense."))
+    for key, gate in (gates or {}).items():
+        table = gate["refusals"]["picked"]
+        near = table.get("ooc_near", {"refused": 0, "total": 0})
+        false = table.get("in_corpus_held_out", {"refused": 0, "total": 0})
+        useful = near["refused"] >= GATE_NEAR_MIN and false["refused"] <= GATE_FALSE_REFUSALS_MAX
+        lines.append(f"- Gate, {SYSTEMS.get(key, key)}: {'useful' if useful else 'not useful'}. Near-domain "
+                     f"refused {near['refused']}/{near['total']}, in-corpus held-out false refusals "
+                     f"{false['refused']}/{false['total']}.")
+    return lines
 
 
 def build_report(
@@ -213,6 +260,9 @@ def build_report(
                 continue
             cells = [f"{t[group]['refused']}/{t[group]['total']}" if group in t else "n/a" for t in tables]
             lines.append(f"| {label} | {' | '.join(cells)} |")
+
+    if any(k not in ("dense", "tfidf") for k in scores) or gates:
+        lines += keep_rule_lines(scores, latency, gates)
 
     lines += ["", "## Latency per retrieval call", "", "| System | p50 | p95 | Calls |", "|---|---|---|---|"]
     for key, lat in latency.items():
