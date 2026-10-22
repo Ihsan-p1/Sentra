@@ -1,6 +1,6 @@
 {
   "meta": {
-    "commit": "a518378",
+    "commit": "7d1ff12",
     "corpus_version": "indonesia-election-2024@cecce290d0ff",
     "embedding_model": "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
     "reranker_model": "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1",
@@ -10,7 +10,7 @@
       "strict": 0.42
     },
     "n_articles": 154,
-    "generated_at": "2026-10-22T14:56:12",
+    "generated_at": "2026-10-22T15:13:22",
     "gold_provenance": "the owner judged every candidate, with an AI tool helping to read or summarise articles",
     "gold_extra": 109
   },
@@ -1159,28 +1159,28 @@
   },
   "latency": {
     "dense": {
-      "p50": 75.83294998039491,
-      "p95": 168.65702500217594,
+      "p50": 47.94975000550039,
+      "p95": 65.67658997082617,
       "n": 210
     },
     "tfidf": {
-      "p50": 3.003400022862479,
-      "p95": 3.6603399930754663,
+      "p50": 1.1900000099558383,
+      "p95": 2.89125498093199,
       "n": 210
     },
     "rrf": {
-      "p50": 78.09185000951402,
-      "p95": 172.1339799812995,
+      "p50": 49.696800037054345,
+      "p95": 67.8668899781769,
       "n": 210
     },
     "rerank": {
-      "p50": 1416.3439499388915,
-      "p95": 5246.270149978227,
+      "p50": 906.2152000260539,
+      "p95": 1266.2696350016631,
       "n": 210
     },
     "rerank_hybrid": {
-      "p50": 1468.7482499866746,
-      "p95": 6797.883915028067,
+      "p50": 1113.126599957468,
+      "p95": 1597.4240449664646,
       "n": 210
     }
   },
