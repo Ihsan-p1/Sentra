@@ -22,7 +22,7 @@
 
 ## Label consistency
 
-Not measured yet (run `scripts/label_hallucination.py --relabel` about a week after labelling).
+30 sentences relabelled blind: agreement 96.7%, Cohen's kappa 0.93.
 
 ## Limits
 

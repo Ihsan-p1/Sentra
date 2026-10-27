@@ -112,7 +112,11 @@
       }
     }
   },
-  "agreement": null,
+  "agreement": {
+    "n": 30,
+    "agreement": 0.9666666666666667,
+    "kappa": 0.9349240780911063
+  },
   "claude_agreement": {
     "n": 154,
     "agreement": 0.8831168831168831,
