@@ -1,0 +1,22 @@
+[
+  {"id": "o01", "text": "what is the price of bitcoin", "origin": "calibration", "kind": "far"},
+  {"id": "o02", "text": "how to cook fried rice", "origin": "calibration", "kind": "far"},
+  {"id": "o03", "text": "premier league top scorer", "origin": "calibration", "kind": "far"},
+  {"id": "o04", "text": "python list comprehension tutorial", "origin": "calibration", "kind": "far"},
+  {"id": "o05", "text": "weather forecast in tokyo", "origin": "calibration", "kind": "far"},
+  {"id": "o06", "text": "best smartphone 2025", "origin": "calibration", "kind": "far"},
+  {"id": "o07", "text": "how to lose weight fast", "origin": "calibration", "kind": "far"},
+  {"id": "o08", "text": "quantum computing basics", "origin": "calibration", "kind": "far"},
+  {"id": "o09", "text": "symptoms of dengue fever", "origin": "held_out", "kind": "far"},
+  {"id": "o10", "text": "who won the 2022 fifa world cup", "origin": "held_out", "kind": "far"},
+  {"id": "o11", "text": "how does photosynthesis work", "origin": "held_out", "kind": "far"},
+  {"id": "o12", "text": "best laptop for programming students", "origin": "held_out", "kind": "far"},
+  {"id": "o13", "text": "cheapest flights from jakarta to tokyo", "origin": "held_out", "kind": "far"},
+  {"id": "o14", "text": "resep rendang padang", "origin": "held_out", "kind": "far"},
+  {"id": "o15", "text": "who won the 2024 taiwan presidential election", "origin": "held_out", "kind": "near"},
+  {"id": "o16", "text": "india 2024 general election results", "origin": "held_out", "kind": "near"},
+  {"id": "o17", "text": "who won malaysia's 2022 general election", "origin": "held_out", "kind": "near"},
+  {"id": "o18", "text": "south korea martial law declaration december 2024", "origin": "held_out", "kind": "near"},
+  {"id": "o19", "text": "philippines 2022 presidential election winner", "origin": "held_out", "kind": "near"},
+  {"id": "o20", "text": "siapa pemenang pilpres amerika 2024", "origin": "held_out", "kind": "near"}
+]

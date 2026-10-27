@@ -1,0 +1,107 @@
+"""Candidate pool and gold sheet for the retrieval evaluation (eval phase 2)."""
+import ast
+from datetime import datetime
+from pathlib import Path
+
+from evaluation.hallucination_dataset import DATASETS_DIR, load_questions
+from evaluation.retrieval_gold import build_pool, extra_pool, make_sheet, merge_extra, parse_sheet
+
+POOL = {"q1": ["u1", "u2", "u3"], "q2": ["u2"], "q3": ["u1", "u3"]}
+QUESTIONS = {"q1": "free meal program", "q2": "court ruling", "q3": "who won"}
+ARTICLES = {
+    "u1": {"title": "Prabowo wins", "content": "Prabowo won the vote", "media_source": "tempo",
+           "published_date": datetime(2024, 3, 20)},
+    "u2": {"title": "Court ruling", "content": "The court rejected it", "media_source": "abc_news",
+           "published_date": None},
+    "u3": {"title": "Free meals", "content": "School lunch program", "media_source": "antaranews",
+           "published_date": datetime(2024, 8, 12)},
+}
+
+
+def sheet(answers):
+    """A sheet with q1..q3 answered as given; None leaves the line blank."""
+    text = make_sheet(POOL, QUESTIONS, ARTICLES)
+    for qid in ("q1", "q2", "q3"):
+        head = text.index(f"## {qid}:")
+        at = text.index("relevan: ", head) + len("relevan: ")
+        text = text[:at] + (answers.get(qid) or "") + text[at:]
+    return text
+
+
+def test_build_pool_unions_and_hides_rank():
+    assert build_pool(["c", "a", "b"], ["d", "a"], depth=2) == ["a", "c", "d"]
+
+
+def test_parse_sheet_reads_numbers_dash_and_blank():
+    gold, errors = parse_sheet(sheet({"q1": "1 3", "q2": "-"}), POOL)
+    assert gold == {"q1": ["u1", "u3"], "q2": []}
+    assert errors == []
+
+
+def test_parse_sheet_reports_bad_entries():
+    gold, errors = parse_sheet(sheet({"q1": "1 99 x"}), POOL)
+    assert gold == {"q1": ["u1"]}
+    assert len(errors) == 2
+
+
+def test_parse_sheet_rejects_sheet_built_from_another_pool():
+    # Numbers point into the pool; if the pool changed since the sheet was made,
+    # "1" may name a different article, so the whole question is refused.
+    gold, errors = parse_sheet(sheet({"q1": "1"}), {**POOL, "q1": ["u1", "u2"]})
+    assert "q1" not in gold
+    assert len(errors) == 1
+
+
+def test_make_sheet_shows_every_candidate_once_in_pool_order():
+    text = make_sheet(POOL, QUESTIONS, ARTICLES)
+    q1 = text[text.index("## q1:"):text.index("## q2:")]
+    assert "(3 kandidat, pool " in q1
+    assert q1.index("[1] *Prabowo wins*") < q1.index("[2] *Court ruling*") < q1.index("[3] *Free meals*")
+    assert "School lunch program" in q1 and "2024-08-12" in q1
+
+
+def test_make_sheet_points_to_the_guide():
+    assert "evaluation/datasets/RETRIEVAL_GUIDE.md" in make_sheet(POOL, QUESTIONS, ARTICLES)
+
+
+def test_make_sheet_round_trips_with_parse():
+    text = make_sheet(POOL, QUESTIONS, ARTICLES).replace("relevan: ", "relevan: 1", 1)
+    gold, _ = parse_sheet(text, POOL)
+    assert gold == {"q1": ["u1"]}
+
+
+def _calibration_out_of_corpus():
+    # Read with ast, as test_hallucination_dataset does: importing the script pulls in torch.
+    source = (Path(__file__).resolve().parents[1] / "scripts" / "calibrate_threshold.py").read_text(encoding="utf-8")
+    for node in ast.parse(source).body:
+        if isinstance(node, ast.Assign) and node.targets[0].id == "OUT_OF_CORPUS":
+            return ast.literal_eval(node.value)
+    raise AssertionError("OUT_OF_CORPUS not found")
+
+
+def test_ooc_questions_keep_calibration_set_apart_from_held_out():
+    ooc = load_questions(DATASETS_DIR / "ooc_questions.json")
+    assert len(ooc) == 20
+    calibration = [q for q in ooc if q["origin"] == "calibration"]
+    held_out = [q for q in ooc if q["origin"] == "held_out"]
+    assert [q["text"] for q in calibration] == _calibration_out_of_corpus()
+    assert len(held_out) == 12
+    assert sum(q["kind"] == "near" for q in held_out) == 6
+    assert {q["kind"] for q in ooc} == {"far", "near"}
+
+
+# --- eval phase 3: articles the new systems surface ---
+
+def test_extra_pool_lists_only_unjudged_top_k():
+    rankings = {"dense": {"q1": ["a", "b"]}, "rerank": {"q1": ["x", "a", "z"]}}
+    gold = {"q1": {"relevant": ["a"], "judged": ["a", "b"]}}
+    assert extra_pool(rankings, gold, depth=2) == {"q1": ["x"]}
+
+
+def test_merge_extra_keeps_old_relevant_and_is_idempotent():
+    gold = {"q1": {"relevant": ["a"], "judged": ["a", "b"]}}
+    once = merge_extra(gold, {"q1": ["x"]}, {"q1": ["x", "y"]})
+    assert once["q1"] == {"relevant": ["a", "x"], "judged": ["a", "b", "x", "y"]}
+    assert merge_extra(once, {"q1": ["x"]}, {"q1": ["x", "y"]}) == once
+    assert merge_extra(once, {"q1": []}, {"q1": ["x", "y"]})["q1"]["relevant"] == ["a"]
+    assert gold["q1"] == {"relevant": ["a"], "judged": ["a", "b"]}   # input untouched
