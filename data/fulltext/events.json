@@ -1,0 +1,16 @@
+{
+  "description": "Events for the full-text corpus, stage 1 (English). Windows are inclusive ISO dates. An event enters the corpus only if Antara and Tempo each have at least 4 news articles inside its window.",
+  "events": [
+    {"id": "e1", "name": "Constitutional Court age-limit ruling and MKMK ethics verdict", "start": "2023-10-16", "end": "2023-11-13", "keywords": ["age limit", "Anwar Usman", "MKMK", "Gibran running mate"], "required": true},
+    {"id": "e2", "name": "Social aid (bansos) and Jokowi neutrality controversy", "start": "2024-01-01", "end": "2024-02-13", "keywords": ["bansos", "social aid", "Jokowi neutrality"], "required": true},
+    {"id": "e3", "name": "Voting day and quick count", "start": "2024-02-14", "end": "2024-02-20", "keywords": ["quick count", "voting day", "polling stations"], "required": true},
+    {"id": "e3b", "name": "KPU official result", "start": "2024-03-20", "end": "2024-03-21", "keywords": ["KPU official result", "recapitulation", "president-elect"], "required": true},
+    {"id": "e4", "name": "Constitutional Court election dispute verdict", "start": "2024-04-22", "end": "2024-04-25", "keywords": ["election dispute", "dissenting opinion", "Constitutional Court verdict"], "required": true},
+    {"id": "e5", "name": "Regional election law revision and 'Peringatan Darurat' protests", "start": "2024-08-20", "end": "2024-08-31", "keywords": ["Pilkada law", "regional election threshold", "protest"], "required": true},
+    {"id": "r1", "name": "Presidential debates", "start": "2023-12-12", "end": "2024-02-04", "keywords": ["presidential debate"], "required": false},
+    {"id": "r2", "name": "Dirty Vote documentary", "start": "2024-02-11", "end": "2024-02-16", "keywords": ["Dirty Vote"], "required": false},
+    {"id": "r3", "name": "Sirekap vote-count app", "start": "2024-02-15", "end": "2024-03-10", "keywords": ["Sirekap"], "required": false},
+    {"id": "r4", "name": "House inquiry (hak angket) proposal", "start": "2024-02-19", "end": "2024-03-31", "keywords": ["inquiry right", "hak angket"], "required": false},
+    {"id": "r5", "name": "Prabowo-Gibran inauguration", "start": "2024-10-19", "end": "2024-10-21", "keywords": ["inauguration", "sworn in"], "required": false}
+  ]
+}
