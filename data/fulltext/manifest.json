@@ -1,0 +1,655 @@
+{
+ "description": "Full-text corpus stage 1: URLs and metadata only, never article text. Per event and outlet: news inside the event window whose title names the event or its outcome, sorted by date and cut to the quota (Tempo 4, Antara 4-8); opinion pieces found the same way are kept but not ingested. found_by is the query that surfaced the article. date_source 'page' is read from the article page; 'id-estimate' is a Tempo date estimated from the article id (Tempo is never fetched by code) and is checked against the page the owner saves.",
+ "articles": [
+  {
+   "url": "https://en.antaranews.com/news/296868/subianto-announces-jokowis-son-as-running-mate-for-presidential-race",
+   "outlet": "antaranews",
+   "event": "e1",
+   "genre": "news",
+   "title": "Subianto announces Jokowi's son as running mate for presidential race",
+   "published_date": "2023-10-22",
+   "date_source": "page",
+   "found_by": "antaranews site search: MKMK; Anwar Usman; Gibran running mate"
+  },
+  {
+   "url": "https://en.antaranews.com/news/296904/subianto-raka-presidential-candidacy-consistent-with-regulation-kpu",
+   "outlet": "antaranews",
+   "event": "e1",
+   "genre": "news",
+   "title": "Subianto-Raka presidential candidacy consistent with regulation: KPU",
+   "published_date": "2023-10-23",
+   "date_source": "page",
+   "found_by": "antaranews site search: MKMK; Anwar Usman; Gibran running mate"
+  },
+  {
+   "url": "https://en.antaranews.com/news/297441/honorary-council-to-hold-closed-door-meeting-with-nine-justices",
+   "outlet": "antaranews",
+   "event": "e1",
+   "genre": "news",
+   "title": "Honorary Council to hold closed-door meeting with nine justices",
+   "published_date": "2023-10-30",
+   "date_source": "page",
+   "found_by": "antaranews site search: MKMK; Anwar Usman; Gibran running mate"
+  },
+  {
+   "url": "https://en.antaranews.com/news/298017/palace-optimistic-of-sustained-conducive-condition-post-mkmks-verdict",
+   "outlet": "antaranews",
+   "event": "e1",
+   "genre": "news",
+   "title": "Palace optimistic of sustained conducive condition post-MKMK's verdict",
+   "published_date": "2023-11-06",
+   "date_source": "page",
+   "found_by": "antaranews site search: MKMK; Anwar Usman; Gibran running mate"
+  },
+  {
+   "url": "https://en.antaranews.com/news/298146/mkmk-imposes-verbal-reprimand-on-six-constitutional-court-justices",
+   "outlet": "antaranews",
+   "event": "e1",
+   "genre": "news",
+   "title": "MKMK imposes verbal reprimand on six Constitutional Court justices",
+   "published_date": "2023-11-07",
+   "date_source": "page",
+   "found_by": "antaranews site search: MKMK; Anwar Usman; Gibran running mate"
+  },
+  {
+   "url": "https://en.antaranews.com/news/298542/suhartoyo-strives-to-restore-public-trust-in-mk",
+   "outlet": "antaranews",
+   "event": "e1",
+   "genre": "news",
+   "title": "Suhartoyo strives to restore public trust in MK",
+   "published_date": "2023-11-13",
+   "date_source": "page",
+   "found_by": "antaranews site search: MKMK; Anwar Usman; Gibran running mate"
+  },
+  {
+   "url": "https://en.tempo.co/read/1784688/constitutional-courts-ruling-presidential-age-limit-remains-at-40-with-exception",
+   "outlet": "tempo",
+   "event": "e1",
+   "genre": "news",
+   "title": "Constitutional Court's Ruling: Presidential Age Limit Remains at 40 with Exception",
+   "published_date": "2023-10-16",
+   "date_source": "id-estimate",
+   "found_by": "Constitutional Court age limit ruling Gibran Anwar Usman MKMK"
+  },
+  {
+   "url": "https://en.tempo.co/read/1787579/constitutional-court-rejects-70-year-old-presidential-age-limit-lawsuit-today",
+   "outlet": "tempo",
+   "event": "e1",
+   "genre": "news",
+   "title": "Constitutional Court Rejects 70-year-old Presidential Age Limit Lawsuit Today",
+   "published_date": "2023-10-22",
+   "date_source": "id-estimate",
+   "found_by": "Constitutional Court age limit ruling Gibran Anwar Usman MKMK"
+  },
+  {
+   "url": "https://en.tempo.co/read/1789719/a-court-that-has-lost-its-dignity",
+   "outlet": "tempo",
+   "event": "e1",
+   "genre": "opinion",
+   "title": "A Court that has Lost its Dignity",
+   "published_date": "2023-10-28",
+   "date_source": "id-estimate",
+   "found_by": "Constitutional Court age limit ruling Gibran Anwar Usman MKMK"
+  },
+  {
+   "url": "https://en.tempo.co/read/1791076/anwar-usman-denies-lobbying-judges-over-presidential-age-limit-ruling",
+   "outlet": "tempo",
+   "event": "e1",
+   "genre": "news",
+   "title": "Anwar Usman Denies Lobbying Judges over Presidential Age Limit Ruling",
+   "published_date": "2023-10-31",
+   "date_source": "id-estimate",
+   "found_by": "Constitutional Court age limit ruling Gibran Anwar Usman MKMK"
+  },
+  {
+   "url": "https://en.tempo.co/read/1793864/mkmk-dismisses-anwar-usman-from-constitutional-court-chief-justice-post",
+   "outlet": "tempo",
+   "event": "e1",
+   "genre": "news",
+   "title": "MKMK Dismisses Anwar Usman from Constitutional Court Chief Justice Post",
+   "published_date": "2023-11-07",
+   "date_source": "id-estimate",
+   "found_by": "Constitutional Court age limit ruling Gibran Anwar Usman MKMK"
+  },
+  {
+   "url": "https://en.antaranews.com/news/303627/president-jokowi-distributes-rice-assistance-to-people-in-central-java",
+   "outlet": "antaranews",
+   "event": "e2",
+   "genre": "news",
+   "title": "President Jokowi distributes rice assistance to people in Central Java",
+   "published_date": "2024-01-22",
+   "date_source": "page",
+   "found_by": "bansos social aid Jokowi neutrality election 2024 | Jokowi social assistance distribution election rice aid January 2024 neutrality president campaign | president can campaign Jokowi statement neutrality bansos criticism February 2024"
+  },
+  {
+   "url": "https://en.antaranews.com/news/304026/vp-amin-stresses-on-remaining-neutral-amid-election-dynamics",
+   "outlet": "antaranews",
+   "event": "e2",
+   "genre": "news",
+   "title": "VP Amin stresses on remaining neutral amid election dynamics",
+   "published_date": "2024-01-25",
+   "date_source": "page",
+   "found_by": "bansos social aid Jokowi neutrality election 2024 | Jokowi social assistance distribution election rice aid January 2024 neutrality president campaign | president can campaign Jokowi statement neutrality bansos criticism February 2024"
+  },
+  {
+   "url": "https://en.antaranews.com/news/304425/rice-assistance-to-be-given-for-next-two-months-president",
+   "outlet": "antaranews",
+   "event": "e2",
+   "genre": "news",
+   "title": "Rice assistance to be given for next two months: President",
+   "published_date": "2024-01-30",
+   "date_source": "page",
+   "found_by": "bansos social aid Jokowi neutrality election 2024 | Jokowi social assistance distribution election rice aid January 2024 neutrality president campaign | president can campaign Jokowi statement neutrality bansos criticism February 2024"
+  },
+  {
+   "url": "https://en.antaranews.com/news/304722/president-jokowi-confirms-dprs-approval-to-2024-social-aid-budget",
+   "outlet": "antaranews",
+   "event": "e2",
+   "genre": "news",
+   "title": "President Jokowi confirms DPR's approval to 2024 social aid budget",
+   "published_date": "2024-02-02",
+   "date_source": "page",
+   "found_by": "bansos social aid Jokowi neutrality election 2024 | Jokowi social assistance distribution election rice aid January 2024 neutrality president campaign | president can campaign Jokowi statement neutrality bansos criticism February 2024"
+  },
+  {
+   "url": "https://en.antaranews.com/news/305349/apparatus-must-be-neutral-and-maintain-sovereignty-in-election-jokowi",
+   "outlet": "antaranews",
+   "event": "e2",
+   "genre": "news",
+   "title": "Apparatus must be neutral and maintain sovereignty in election: Jokowi",
+   "published_date": "2024-02-07",
+   "date_source": "page",
+   "found_by": "bansos social aid Jokowi neutrality election 2024 | Jokowi social assistance distribution election rice aid January 2024 neutrality president campaign | president can campaign Jokowi statement neutrality bansos criticism February 2024"
+  },
+  {
+   "url": "https://en.tempo.co/read/1817002/palace-stresses-jokowi-govts-social-aid-not-related-to-2024-elections",
+   "outlet": "tempo",
+   "event": "e2",
+   "genre": "news",
+   "title": "Palace Stresses Jokowi Govt's Social Aid Not Related to 2024 Elections",
+   "published_date": "2024-01-03",
+   "date_source": "id-estimate",
+   "found_by": "bansos social aid Jokowi neutrality election 2024"
+  },
+  {
+   "url": "https://en.tempo.co/read/1826487/manipulating-government-social-assistance",
+   "outlet": "tempo",
+   "event": "e2",
+   "genre": "opinion",
+   "title": "Manipulating Government Social Assistance",
+   "published_date": "2024-01-27",
+   "date_source": "id-estimate",
+   "found_by": "bansos social aid Jokowi neutrality election 2024"
+  },
+  {
+   "url": "https://en.tempo.co/read/1828847/jokowi-denies-politicizing-social-assistance-for-prabowo-gibran",
+   "outlet": "tempo",
+   "event": "e2",
+   "genre": "news",
+   "title": "Jokowi Denies Politicizing Social Assistance for Prabowo-Gibran",
+   "published_date": "2024-02-02",
+   "date_source": "id-estimate",
+   "found_by": "bansos social aid Jokowi neutrality election 2024"
+  },
+  {
+   "url": "https://en.tempo.co/read/1828907/5-jokowi-govts-social-assistance-program-ahead-of-the-election",
+   "outlet": "tempo",
+   "event": "e2",
+   "genre": "news",
+   "title": "5 Jokowi Govt's Social Assistance Program Ahead of the Election",
+   "published_date": "2024-02-02",
+   "date_source": "id-estimate",
+   "found_by": "bansos social aid Jokowi neutrality election 2024"
+  },
+  {
+   "url": "https://en.tempo.co/read/1830747/indonesian-govt-considers-suspending-social-assistance-during-election-silence-period",
+   "outlet": "tempo",
+   "event": "e2",
+   "genre": "news",
+   "title": "Indonesian Govt Considers Suspending Social Assistance During Election Silence Period",
+   "published_date": "2024-02-07",
+   "date_source": "id-estimate",
+   "found_by": "bansos social aid Jokowi neutrality election 2024"
+  },
+  {
+   "url": "https://en.antaranews.com/news/305883/former-president-megawati-casts-her-vote-at-tps-no-53-in-jakarta",
+   "outlet": "antaranews",
+   "event": "e3",
+   "genre": "news",
+   "title": "Former president Megawati casts her vote at TPS No. 53 in Jakarta",
+   "published_date": "2024-02-14",
+   "date_source": "page",
+   "found_by": "quick count voting day February 14 2024 presidential election"
+  },
+  {
+   "url": "https://en.antaranews.com/news/305916/anies-muhaimin-win-at-polling-station-where-anies-cast-his-vote-kpps",
+   "outlet": "antaranews",
+   "event": "e3",
+   "genre": "news",
+   "title": "Anies-Muhaimin win at polling station where Anies cast his vote : KPPS",
+   "published_date": "2024-02-14",
+   "date_source": "page",
+   "found_by": "quick count voting day February 14 2024 presidential election"
+  },
+  {
+   "url": "https://en.antaranews.com/news/305946/kpu-ready-to-organize-second-round-presidential-election-if-required",
+   "outlet": "antaranews",
+   "event": "e3",
+   "genre": "news",
+   "title": "KPU ready to organize second round presidential election if required",
+   "published_date": "2024-02-14",
+   "date_source": "page",
+   "found_by": "quick count voting day February 14 2024 presidential election"
+  },
+  {
+   "url": "https://en.antaranews.com/news/305952/ganjar-mahfud-pair-wins-at-polling-station-where-ganjar-voted",
+   "outlet": "antaranews",
+   "event": "e3",
+   "genre": "news",
+   "title": "Ganjar-Mahfud pair wins at polling station where Ganjar voted",
+   "published_date": "2024-02-14",
+   "date_source": "page",
+   "found_by": "quick count voting day February 14 2024 presidential election"
+  },
+  {
+   "url": "https://en.antaranews.com/news/305964/prabowo-gibran-win-big-at-polling-station-where-prabowo-voted",
+   "outlet": "antaranews",
+   "event": "e3",
+   "genre": "news",
+   "title": "Prabowo-Gibran win big at polling station where Prabowo voted",
+   "published_date": "2024-02-14",
+   "date_source": "page",
+   "found_by": "quick count voting day February 14 2024 presidential election"
+  },
+  {
+   "url": "https://en.antaranews.com/news/305991/jokowi-urges-residents-to-report-electoral-fraud-to-authorities",
+   "outlet": "antaranews",
+   "event": "e3",
+   "genre": "news",
+   "title": "Jokowi urges residents to report electoral fraud to authorities",
+   "published_date": "2024-02-15",
+   "date_source": "page",
+   "found_by": "quick count voting day February 14 2024 presidential election"
+  },
+  {
+   "url": "https://en.antaranews.com/news/305994/people-should-wait-for-kpus-final-vote-counting-results-president",
+   "outlet": "antaranews",
+   "event": "e3",
+   "genre": "news",
+   "title": "People should wait for KPU's final vote-counting results: President",
+   "published_date": "2024-02-15",
+   "date_source": "page",
+   "found_by": "quick count voting day February 14 2024 presidential election"
+  },
+  {
+   "url": "https://en.antaranews.com/news/306411/brin-advises-election-participants-to-not-spread-negative-narratives",
+   "outlet": "antaranews",
+   "event": "e3",
+   "genre": "news",
+   "title": "BRIN advises election participants to not spread negative narratives",
+   "published_date": "2024-02-19",
+   "date_source": "page",
+   "found_by": "quick count voting day February 14 2024 presidential election"
+  },
+  {
+   "url": "https://en.tempo.co/read/1833552/ganjar-mahfud-winning-team-responds-to-quick-count-results-with-prabowo-gibran-leading",
+   "outlet": "tempo",
+   "event": "e3",
+   "genre": "news",
+   "title": "Ganjar-Mahfud Winning Team Responds to Quick Count Results with Prabowo-Gibran Leading",
+   "published_date": "2024-02-14",
+   "date_source": "id-estimate",
+   "found_by": "quick count voting day February 14 2024 presidential election"
+  },
+  {
+   "url": "https://en.tempo.co/read/1833826/prabowo-gibran-team-claims-quick-count-results-above-expectations",
+   "outlet": "tempo",
+   "event": "e3",
+   "genre": "news",
+   "title": "Prabowo-Gibran Team Claims Quick Count Results 'Above Expectations'",
+   "published_date": "2024-02-14",
+   "date_source": "id-estimate",
+   "found_by": "quick count voting day February 14 2024 presidential election"
+  },
+  {
+   "url": "https://en.tempo.co/read/1833952/walhi-says-prabowo-gibrans-victory-rings-a-dangerous-alarm",
+   "outlet": "tempo",
+   "event": "e3",
+   "genre": "news",
+   "title": "Walhi Says Prabowo-Gibran's Victory 'Rings a Dangerous Alarm'",
+   "published_date": "2024-02-14",
+   "date_source": "id-estimate",
+   "found_by": "quick count voting day February 14 2024 presidential election"
+  },
+  {
+   "url": "https://en.tempo.co/read/1833977/ganjar-there-are-anomalies-in-the-presidential-elections-voting-results",
+   "outlet": "tempo",
+   "event": "e3",
+   "genre": "news",
+   "title": "Ganjar: There are anomalies in the presidential election's voting results",
+   "published_date": "2024-02-15",
+   "date_source": "id-estimate",
+   "found_by": "quick count voting day February 14 2024 presidential election"
+  },
+  {
+   "url": "https://en.antaranews.com/news/308952/prabowo-declared-president-elect-by-poll-body",
+   "outlet": "antaranews",
+   "event": "e3b",
+   "genre": "news",
+   "title": "Prabowo declared president-elect by poll body",
+   "published_date": "2024-03-21",
+   "date_source": "page",
+   "found_by": "antaranews id scan 308840-309010, titles naming the official result"
+  },
+  {
+   "url": "https://en.antaranews.com/news/309006/election-results-murmurs-of-electoral-fraud-peoples-expectations",
+   "outlet": "antaranews",
+   "event": "e3b",
+   "genre": "news",
+   "title": "Election results, murmurs of electoral fraud, people's expectations",
+   "published_date": "2024-03-21",
+   "date_source": "page",
+   "found_by": "antaranews id scan 308840-309010, titles naming the official result"
+  },
+  {
+   "url": "https://en.antaranews.com/news/309030/kpu-to-defend-election-results-in-constitutional-court",
+   "outlet": "antaranews",
+   "event": "e3b",
+   "genre": "news",
+   "title": "KPU to defend election results in Constitutional Court",
+   "published_date": "2024-03-22",
+   "date_source": "page",
+   "found_by": "antaranews id scan 308840-309010, titles naming the official result"
+  },
+  {
+   "url": "https://en.antaranews.com/news/309066/people-want-nations-leaders-to-get-along-after-election-prabowo",
+   "outlet": "antaranews",
+   "event": "e3b",
+   "genre": "news",
+   "title": "People want nation's leaders to get along after election: Prabowo",
+   "published_date": "2024-03-22",
+   "date_source": "page",
+   "found_by": "antaranews id scan 308840-309010, titles naming the official result"
+  },
+  {
+   "url": "https://en.tempo.co/read/1847609/kpu-declares-prabowo-winner-of-presidential-election-with-96-mn-votes",
+   "outlet": "tempo",
+   "event": "e3b",
+   "genre": "news",
+   "title": "KPU Declares Prabowo Winner of Presidential Election With 96 Mn Votes",
+   "published_date": "2024-03-20",
+   "date_source": "id-estimate",
+   "found_by": "KPU official result recapitulation Prabowo Gibran president-elect March 20 2024 | KPU announces 2024 election results Anies Ganjar reaction March 20 2024"
+  },
+  {
+   "url": "https://en.tempo.co/read/1847682/prabowo-subianto-welcomes-election-results-calls-for-unity",
+   "outlet": "tempo",
+   "event": "e3b",
+   "genre": "news",
+   "title": "Prabowo Subianto Welcomes Election Results; Calls for Unity",
+   "published_date": "2024-03-20",
+   "date_source": "id-estimate",
+   "found_by": "KPU official result recapitulation Prabowo Gibran president-elect March 20 2024 | KPU announces 2024 election results Anies Ganjar reaction March 20 2024"
+  },
+  {
+   "url": "https://en.tempo.co/read/1847740/malaysias-pm-anwar-ibrahim-congratulates-prabowo-subianto-on-election-victory",
+   "outlet": "tempo",
+   "event": "e3b",
+   "genre": "news",
+   "title": "Malaysia's PM Anwar Ibrahim Congratulates Prabowo Subianto on Election Victory",
+   "published_date": "2024-03-20",
+   "date_source": "id-estimate",
+   "found_by": "KPU official result recapitulation Prabowo Gibran president-elect March 20 2024 | KPU announces 2024 election results Anies Ganjar reaction March 20 2024"
+  },
+  {
+   "url": "https://en.tempo.co/read/1847810/minister-tito-karnavian-claims-2024-election-calmer-more-peaceful-than-2019",
+   "outlet": "tempo",
+   "event": "e3b",
+   "genre": "news",
+   "title": "Minister Tito Karnavian Claims 2024 Election 'Calmer, More Peaceful' Than 2019",
+   "published_date": "2024-03-20",
+   "date_source": "id-estimate",
+   "found_by": "KPU official result recapitulation Prabowo Gibran president-elect March 20 2024 | KPU announces 2024 election results Anies Ganjar reaction March 20 2024"
+  },
+  {
+   "url": "https://en.antaranews.com/news/311376/no-convincing-evidence-of-presidents-intervention-mk",
+   "outlet": "antaranews",
+   "event": "e4",
+   "genre": "news",
+   "title": "No convincing evidence of president's intervention: MK",
+   "published_date": "2024-04-22",
+   "date_source": "page",
+   "found_by": "Constitutional Court verdict election dispute dissenting opinion April 22 2024"
+  },
+  {
+   "url": "https://en.antaranews.com/news/311382/no-evidence-of-jokowis-partiality-to-sons-vp-bid-violates-law",
+   "outlet": "antaranews",
+   "event": "e4",
+   "genre": "news",
+   "title": "No evidence of Jokowi's partiality to son's VP bid violates law",
+   "published_date": "2024-04-22",
+   "date_source": "page",
+   "found_by": "Constitutional Court verdict election dispute dissenting opinion April 22 2024"
+  },
+  {
+   "url": "https://en.antaranews.com/news/311388/no-relevance-of-social-assistance-and-increasing-vote-acquisition-mk",
+   "outlet": "antaranews",
+   "event": "e4",
+   "genre": "news",
+   "title": "No relevance of social assistance and increasing vote acquisition: MK",
+   "published_date": "2024-04-22",
+   "date_source": "page",
+   "found_by": "Constitutional Court verdict election dispute dissenting opinion April 22 2024"
+  },
+  {
+   "url": "https://en.antaranews.com/news/311400/mk-rejects-argument-on-alleged-election-campaign-violations-by-prabowo",
+   "outlet": "antaranews",
+   "event": "e4",
+   "genre": "news",
+   "title": "MK rejects argument on alleged election campaign violations by Prabowo",
+   "published_date": "2024-04-22",
+   "date_source": "page",
+   "found_by": "Constitutional Court verdict election dispute dissenting opinion April 22 2024"
+  },
+  {
+   "url": "https://en.antaranews.com/news/311403/mk-dismisses-challenges-to-prabowo-gibrans-election-win",
+   "outlet": "antaranews",
+   "event": "e4",
+   "genre": "news",
+   "title": "MK dismisses challenges to Prabowo-Gibran's election win",
+   "published_date": "2024-04-22",
+   "date_source": "page",
+   "found_by": "Constitutional Court verdict election dispute dissenting opinion April 22 2024"
+  },
+  {
+   "url": "https://en.antaranews.com/news/311436/jokowi-to-begin-power-transition-to-prabowo-following-election-verdict",
+   "outlet": "antaranews",
+   "event": "e4",
+   "genre": "news",
+   "title": "Jokowi to begin power transition to Prabowo following election verdict",
+   "published_date": "2024-04-22",
+   "date_source": "page",
+   "found_by": "Constitutional Court verdict election dispute dissenting opinion April 22 2024"
+  },
+  {
+   "url": "https://en.antaranews.com/news/311448/ganjar-mahfud-congratulate-prabowo-gibran-on-election-dispute-verdict",
+   "outlet": "antaranews",
+   "event": "e4",
+   "genre": "news",
+   "title": "Ganjar-Mahfud congratulate Prabowo-Gibran on election dispute verdict",
+   "published_date": "2024-04-22",
+   "date_source": "page",
+   "found_by": "Constitutional Court verdict election dispute dissenting opinion April 22 2024"
+  },
+  {
+   "url": "https://en.antaranews.com/news/311466/prabowo-sees-election-dispute-as-healthy-dynamic-campaign-team",
+   "outlet": "antaranews",
+   "event": "e4",
+   "genre": "news",
+   "title": "Prabowo sees election dispute as healthy dynamic: Campaign team",
+   "published_date": "2024-04-22",
+   "date_source": "page",
+   "found_by": "Constitutional Court verdict election dispute dissenting opinion April 22 2024"
+  },
+  {
+   "url": "https://en.tempo.co/read/1859429/top-court-justice-saldi-isra-delivers-dissenting-opinion-on-election-dispute-hearing",
+   "outlet": "tempo",
+   "event": "e4",
+   "genre": "news",
+   "title": "Top Court Justice Saldi Isra Delivers Dissenting Opinion on Election Dispute Hearing",
+   "published_date": "2024-04-22",
+   "date_source": "id-estimate",
+   "found_by": "Constitutional Court verdict election dispute dissenting opinion April 22 2024"
+  },
+  {
+   "url": "https://en.tempo.co/read/1859546/anies-baswedan-concedes-to-prabowo-as-court-rejects-election-petition",
+   "outlet": "tempo",
+   "event": "e4",
+   "genre": "news",
+   "title": "Anies Baswedan Concedes to Prabowo as Court Rejects Election Petition",
+   "published_date": "2024-04-22",
+   "date_source": "id-estimate",
+   "found_by": "Constitutional Court verdict election dispute dissenting opinion April 22 2024"
+  },
+  {
+   "url": "https://en.tempo.co/read/1859682/mui-everyone-must-accept-mk-decision-on-election-dispute-willingly",
+   "outlet": "tempo",
+   "event": "e4",
+   "genre": "news",
+   "title": "MUI: Everyone Must Accept MK Decision on Election Dispute Willingly",
+   "published_date": "2024-04-22",
+   "date_source": "id-estimate",
+   "found_by": "Constitutional Court verdict election dispute dissenting opinion April 22 2024"
+  },
+  {
+   "url": "https://en.tempo.co/read/1859837/constitutional-court-verdict-on-election-dispute-sets-bad-precedent-economist-says",
+   "outlet": "tempo",
+   "event": "e4",
+   "genre": "news",
+   "title": "Constitutional Court Verdict on Election Dispute Sets 'Bad Precedent', Economist Says",
+   "published_date": "2024-04-23",
+   "date_source": "id-estimate",
+   "found_by": "Constitutional Court verdict election dispute dissenting opinion April 22 2024"
+  },
+  {
+   "url": "https://en.antaranews.com/news/323071/regional-polls-court-relaxes-threshold-for-nominating-candidates",
+   "outlet": "antaranews",
+   "event": "e5",
+   "genre": "news",
+   "title": "Regional polls: Court relaxes threshold for nominating candidates",
+   "published_date": "2024-08-20",
+   "date_source": "page",
+   "found_by": "Pilkada law regional election threshold protest August 2024"
+  },
+  {
+   "url": "https://en.antaranews.com/news/323323/indonesians-rally-against-regional-election-law-amendment",
+   "outlet": "antaranews",
+   "event": "e5",
+   "genre": "news",
+   "title": "Indonesians rally against regional election law amendment",
+   "published_date": "2024-08-22",
+   "date_source": "page",
+   "found_by": "Pilkada law regional election threshold protest August 2024"
+  },
+  {
+   "url": "https://en.antaranews.com/news/323339/dpr-backs-down-on-local-polls-law-revision-amid-protests",
+   "outlet": "antaranews",
+   "event": "e5",
+   "genre": "news",
+   "title": "DPR backs down on local polls law revision amid protests",
+   "published_date": "2024-08-22",
+   "date_source": "page",
+   "found_by": "Pilkada law regional election threshold protest August 2024"
+  },
+  {
+   "url": "https://en.antaranews.com/news/323359/welcome-peoples-aspirations-on-regional-election-law-dpr",
+   "outlet": "antaranews",
+   "event": "e5",
+   "genre": "news",
+   "title": "Welcome people's aspirations on Regional Election Law: DPR",
+   "published_date": "2024-08-22",
+   "date_source": "page",
+   "found_by": "Pilkada law regional election threshold protest August 2024"
+  },
+  {
+   "url": "https://en.antaranews.com/news/323415/underage-student-protesters-entitled-to-special-protection-kpai",
+   "outlet": "antaranews",
+   "event": "e5",
+   "genre": "news",
+   "title": "Underage student protesters entitled to special protection: KPAI",
+   "published_date": "2024-08-23",
+   "date_source": "page",
+   "found_by": "Pilkada law regional election threshold protest August 2024"
+  },
+  {
+   "url": "https://en.antaranews.com/news/323507/indonesias-house-urged-to-adjust-regional-election-law-per-mk-rulings",
+   "outlet": "antaranews",
+   "event": "e5",
+   "genre": "news",
+   "title": "Indonesia's House urged to adjust regional election law per MK rulings",
+   "published_date": "2024-08-24",
+   "date_source": "page",
+   "found_by": "Pilkada law regional election threshold protest August 2024"
+  },
+  {
+   "url": "https://en.antaranews.com/news/323559/dpr-approves-kpus-regional-candidacy-rules-aligned-with-mk-rulings",
+   "outlet": "antaranews",
+   "event": "e5",
+   "genre": "news",
+   "title": "DPR approves KPU's regional candidacy rules aligned with MK rulings",
+   "published_date": "2024-08-25",
+   "date_source": "page",
+   "found_by": "Pilkada law regional election threshold protest August 2024"
+  },
+  {
+   "url": "https://en.antaranews.com/news/323819/jokowi-calls-for-peaceful-protests-hopes-for-protesters-release",
+   "outlet": "antaranews",
+   "event": "e5",
+   "genre": "news",
+   "title": "Jokowi calls for peaceful protests, hopes for protesters' release",
+   "published_date": "2024-08-27",
+   "date_source": "page",
+   "found_by": "Pilkada law regional election threshold protest August 2024"
+  },
+  {
+   "url": "https://en.tempo.co/read/1906272/indonesias-constitutional-court-lowers-threshold-for-regional-head-elections-candidacy",
+   "outlet": "tempo",
+   "event": "e5",
+   "genre": "news",
+   "title": "Indonesia's Constitutional Court Lowers Threshold for Regional Head Elections Candidacy",
+   "published_date": "2024-08-20",
+   "date_source": "id-estimate",
+   "found_by": "Pilkada law regional election threshold protest August 2024"
+  },
+  {
+   "url": "https://en.tempo.co/read/1906699/constitutional-court-decision-blocks-former-governors-to-run-as-deputy-governors-in-the-same-region",
+   "outlet": "tempo",
+   "event": "e5",
+   "genre": "news",
+   "title": "Constitutional Court Decision Blocks Former Governors to Run as Deputy Governors in the Same Region",
+   "published_date": "2024-08-21",
+   "date_source": "id-estimate",
+   "found_by": "Pilkada law regional election threshold protest August 2024"
+  },
+  {
+   "url": "https://en.tempo.co/read/1906815/house-set-to-pass-regional-head-elections-law-revision-only-pdip-opposes",
+   "outlet": "tempo",
+   "event": "e5",
+   "genre": "news",
+   "title": "House Set to Pass Regional Head Elections Law Revision; Only PDIP Opposes",
+   "published_date": "2024-08-21",
+   "date_source": "id-estimate",
+   "found_by": "Pilkada law regional election threshold protest August 2024"
+  },
+  {
+   "url": "https://en.tempo.co/read/1906990/ui-professors-council-sees-dpr-defying-constitution-resembling-colonial-era",
+   "outlet": "tempo",
+   "event": "e5",
+   "genre": "news",
+   "title": "UI Professors Council Sees DPR Defying Constitution, Resembling Colonial Era",
+   "published_date": "2024-08-21",
+   "date_source": "id-estimate",
+   "found_by": "Pilkada law regional election threshold protest August 2024"
+  }
+ ]
+}
