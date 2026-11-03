@@ -17,7 +17,7 @@ import os
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-CORPUS_PATH = os.path.join("data", "election_articles.json")
+from config.settings import settings
 
 # Required on every article; ingestion rejects anything missing these.
 REQUIRED_FIELDS = ("title", "content", "media_source")
@@ -25,9 +25,9 @@ REQUIRED_FIELDS = ("title", "content", "media_source")
 _cache: Dict[str, Any] = {}
 
 
-def _read(path: str) -> Dict[str, Any]:
-    """Read and cache the raw JSON payload."""
-    resolved = os.path.abspath(path)
+def _read(path: Optional[str]) -> Dict[str, Any]:
+    """Read and cache the raw JSON payload; None means settings.CORPUS_PATH."""
+    resolved = os.path.abspath(path or settings.CORPUS_PATH)
     if resolved not in _cache:
         with open(resolved, "r", encoding="utf-8") as f:
             _cache[resolved] = json.load(f)
@@ -44,7 +44,7 @@ def _parse_date(value: Optional[str]) -> Optional[datetime]:
         return None
 
 
-def load_articles(path: str = CORPUS_PATH) -> List[Dict[str, Any]]:
+def load_articles(path: Optional[str] = None) -> List[Dict[str, Any]]:
     """
     Return the corpus as a list of article dicts, dates parsed to datetime.
 
@@ -73,7 +73,23 @@ def load_articles(path: str = CORPUS_PATH) -> List[Dict[str, Any]]:
     return articles
 
 
-def corpus_version(path: str = CORPUS_PATH) -> str:
+def corpus_sources(path: Optional[str] = None) -> List[str]:
+    """
+    The outlets this corpus covers, from its top-level "sources" key.
+
+    Ingestion, retrieval and the framing label map all read this list, so a
+    corpus file decides its own outlets instead of a global setting.
+    """
+    payload = _read(path)
+    sources = payload.get("sources")
+    if not isinstance(sources, list) or not sources:
+        raise ValueError(
+            f"{path or settings.CORPUS_PATH} has no non-empty 'sources' list"
+        )
+    return list(sources)
+
+
+def corpus_version(path: Optional[str] = None) -> str:
     """
     Short content fingerprint of the corpus, e.g. "indonesia-election-2024@a1b2c3d4e5f6".
 
@@ -86,7 +102,7 @@ def corpus_version(path: str = CORPUS_PATH) -> str:
     return f"{payload.get('name', 'corpus')}@{digest}"
 
 
-def corpus_metadata(path: str = CORPUS_PATH) -> Dict[str, Any]:
+def corpus_metadata(path: Optional[str] = None) -> Dict[str, Any]:
     """Name, description, version and per-source counts. Used by scripts and docs."""
     payload = _read(path)
     articles = load_articles(path)

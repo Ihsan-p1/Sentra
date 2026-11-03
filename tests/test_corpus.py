@@ -12,12 +12,16 @@ import pytest
 
 from config.settings import settings
 from data.corpus import (
-    CORPUS_PATH,
     REQUIRED_FIELDS,
     corpus_metadata,
+    corpus_sources,
     corpus_version,
     load_articles,
 )
+
+# corpus_version() of data/election_articles.json before the "sources" key was
+# added. The fingerprint hashes the article list only, so it must not move.
+OLD_CORPUS_VERSION = "indonesia-election-2024@cecce290d0ff"
 
 
 @pytest.fixture(scope="module")
@@ -27,7 +31,7 @@ def articles():
 
 @pytest.fixture(scope="module")
 def raw():
-    with open(CORPUS_PATH, "r", encoding="utf-8") as f:
+    with open(settings.CORPUS_PATH, "r", encoding="utf-8") as f:
         return json.load(f)
 
 
@@ -80,6 +84,38 @@ class TestLoader:
         assert load_articles(str(odd))[0]["published_date"] is None
 
 
+class TestCorpusSelection:
+    def test_sources_come_from_the_corpus_file(self, tmp_path):
+        path = tmp_path / "one_source.json"
+        path.write_text(json.dumps({"name": "c", "sources": ["a"], "articles": []}),
+                        encoding="utf-8")
+
+        assert corpus_sources(str(path)) == ["a"]
+
+    def test_missing_sources_key_raises(self, tmp_path):
+        path = tmp_path / "no_sources.json"
+        path.write_text(json.dumps({"name": "c", "articles": []}), encoding="utf-8")
+
+        with pytest.raises(ValueError, match="no_sources.json"):
+            corpus_sources(str(path))
+
+    def test_corpus_path_follows_settings(self, tmp_path, monkeypatch):
+        path = tmp_path / "other.json"
+        path.write_text(json.dumps({
+            "name": "other",
+            "sources": ["antaranews"],
+            "articles": [{"title": "t", "content": "c", "media_source": "antaranews"}],
+        }), encoding="utf-8")
+        monkeypatch.setattr(settings, "CORPUS_PATH", str(path))
+
+        assert [a["title"] for a in load_articles()] == ["t"]
+        assert corpus_sources() == ["antaranews"]
+        assert corpus_version().startswith("other@")
+
+    def test_old_corpus_version_unchanged(self):
+        assert corpus_version("data/election_articles.json") == OLD_CORPUS_VERSION
+
+
 class TestCorpusVersion:
     def test_version_is_stable_across_calls(self):
         assert corpus_version() == corpus_version()
@@ -121,11 +157,11 @@ class TestCorpusVersion:
 class TestCorpusContent:
     def test_every_source_is_supported(self, articles):
         for article in articles:
-            assert article["media_source"] in settings.SUPPORTED_MEDIA
+            assert article["media_source"] in corpus_sources()
 
     def test_all_supported_sources_are_present(self, articles):
         present = {a["media_source"] for a in articles}
-        assert present == set(settings.SUPPORTED_MEDIA)
+        assert present == set(corpus_sources())
 
     def test_metadata_counts_match_the_loaded_articles(self, articles):
         meta = corpus_metadata()

@@ -349,8 +349,9 @@ The corpus covers the 2024 Indonesian presidential election and its aftermath:
 Rebuild the database from it with `python scripts/tools/refresh_database.py`,
 which re-embeds every chunk and verifies the vectors it wrote.
 
-Source identifiers (`antaranews`, `tempo`, `abc_news`) are defined once in
-`settings.SUPPORTED_MEDIA` and reused by ingestion, retrieval, and training.
+Source identifiers (`antaranews`, `tempo`, `abc_news`) are defined once, in the
+corpus file's `sources` key (read by `data.corpus.corpus_sources()`), and reused by
+ingestion, retrieval, and training. `CORPUS_PATH` in `.env` selects the corpus file.
 
 ## Contributing
 

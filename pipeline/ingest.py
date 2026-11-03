@@ -10,6 +10,7 @@ import json
 import sys
 sys.path.append('..')
 from config.settings import settings
+from data.corpus import corpus_sources
 from database.connection import db_manager, init_database
 from pipeline.preprocessing import ArticlePreprocessor, ProcessedChunk
 from pipeline.embeddings import get_embedder
@@ -56,7 +57,7 @@ class ArticleIngestor:
         db = db or db_manager
 
         # Validate media source
-        if article.get('media_source') not in settings.SUPPORTED_MEDIA:
+        if article.get('media_source') not in corpus_sources():
             raise ValueError(f"Unsupported media source: {article.get('media_source')}")
 
         # Insert article

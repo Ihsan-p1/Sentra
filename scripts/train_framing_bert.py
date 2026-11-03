@@ -69,7 +69,7 @@ def train():
     # 1. Load Data from the corpus
     import sys
     sys.path.insert(0, ".")
-    from data.corpus import corpus_metadata, load_articles
+    from data.corpus import corpus_metadata, corpus_sources, load_articles
 
     articles = load_articles()
     print(f"Loaded {len(articles)} articles ({corpus_metadata()['version']}).")
@@ -80,7 +80,7 @@ def train():
     
     # Derive labels from the canonical source list so they can never drift from
     # the media_source values used at ingestion and retrieval time.
-    label_map = {media: idx for idx, media in enumerate(settings.SUPPORTED_MEDIA)}
+    label_map = {media: idx for idx, media in enumerate(corpus_sources())}
     print(f"Label map: {label_map}")
 
     # Reverse map for saving
@@ -108,7 +108,7 @@ def train():
     if skipped:
         # Loud on purpose: a silent skip here previously dropped a whole source
         # from training while the pipeline still queried it at runtime.
-        print(f"[WARN] Skipped articles from sources not in SUPPORTED_MEDIA: {skipped}")
+        print(f"[WARN] Skipped articles from sources not in the corpus 'sources' list: {skipped}")
 
     # 3. Train/Test Split (stratified so every source appears in both splits)
     X_train, X_test, y_train, y_test = train_test_split(
