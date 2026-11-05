@@ -1,0 +1,14 @@
+[
+  {"id": "f01", "text": "how did the constitutional court age limit ruling let gibran run for vice president", "origin": "fulltext", "event": "e1"},
+  {"id": "f02", "text": "what did the MKMK ethics council decide about anwar usman", "origin": "fulltext", "event": "e1"},
+  {"id": "f03", "text": "was jokowi's social aid distribution linked to the 2024 election", "origin": "fulltext", "event": "e2"},
+  {"id": "f04", "text": "rice assistance programme before the presidential election", "origin": "fulltext", "event": "e2"},
+  {"id": "f05", "text": "what did the quick count show on voting day", "origin": "fulltext", "event": "e3"},
+  {"id": "f06", "text": "how did the candidates react to the quick count results", "origin": "fulltext", "event": "e3"},
+  {"id": "f07", "text": "when did the KPU declare prabowo the winner and with how many votes", "origin": "fulltext", "event": "e3b"},
+  {"id": "f08", "text": "siapa yang ditetapkan KPU sebagai presiden terpilih", "origin": "fulltext", "event": "e3b"},
+  {"id": "f09", "text": "what did the constitutional court rule on the presidential election dispute", "origin": "fulltext", "event": "e4"},
+  {"id": "f10", "text": "which judges gave a dissenting opinion in the election dispute verdict", "origin": "fulltext", "event": "e4"},
+  {"id": "f11", "text": "why did people protest against the regional election law revision in august 2024", "origin": "fulltext", "event": "e5"},
+  {"id": "f12", "text": "apa putusan MK soal ambang batas pencalonan pilkada", "origin": "fulltext", "event": "e5"}
+]

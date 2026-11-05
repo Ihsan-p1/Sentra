@@ -1,0 +1,33 @@
+{
+  "description": "Threshold calibration for the full-text corpus (scripts/calibrate_threshold.py --questions). In-corpus: three short queries per event, written apart from fulltext_questions.json so the eval questions stay unseen. Out-of-corpus: the old inline list, none of which touches the 2024 election.",
+  "in_corpus": [
+    "gibran running mate",
+    "anwar usman ethics violation",
+    "batas usia capres cawapres",
+    "bansos jokowi",
+    "social aid before the election",
+    "jokowi neutrality in the election",
+    "quick count results",
+    "polling station results 2024",
+    "hasil quick count pilpres",
+    "who won the 2024 indonesian election",
+    "how many votes did prabowo get",
+    "siapa pemenang pemilu 2024",
+    "election dispute verdict",
+    "dissenting opinion saldi isra",
+    "gugatan sengketa pilpres di MK",
+    "pilkada law protests",
+    "peringatan darurat demo",
+    "regional election candidacy threshold"
+  ],
+  "out_of_corpus": [
+    "what is the price of bitcoin",
+    "how to cook fried rice",
+    "premier league top scorer",
+    "python list comprehension tutorial",
+    "weather forecast in tokyo",
+    "best smartphone 2025",
+    "how to lose weight fast",
+    "quantum computing basics"
+  ]
+}

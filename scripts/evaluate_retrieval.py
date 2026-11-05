@@ -10,7 +10,10 @@ database and the reranker model, not the LLM.
 
 Usage:
     python scripts/evaluate_retrieval.py
+    python scripts/evaluate_retrieval.py --questions evaluation/datasets/fulltext_questions.json \
+        --gold evaluation/datasets/retrieval_gold_fulltext.json --out-name retrieval_fulltext
 """
+import argparse
 import asyncio
 import json
 import os
@@ -18,6 +21,7 @@ import subprocess
 import sys
 import time
 from datetime import datetime
+from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -27,7 +31,7 @@ if hasattr(sys.stdout, "reconfigure"):
 from config.settings import settings
 from data.corpus import corpus_version, load_articles
 from database.connection import db_manager
-from evaluation.hallucination_dataset import DATASETS_DIR, load_questions
+from evaluation.hallucination_dataset import DATASETS_DIR, QUESTIONS_PATH, load_questions
 from evaluation.lexical_retriever import TfidfRetriever
 from evaluation.retrieval_gold import EXTRA_POOL_PATH, GOLD_PATH
 from evaluation.reranking import RERANKER_MODEL, CrossEncoderReranker, reciprocal_rank_fusion, rerank
@@ -39,6 +43,26 @@ from rag.retrieval import RAGRetriever
 RESULTS_DIR = DATASETS_DIR.parent / "results"
 REPEATS = 3
 SYSTEM_KEYS = ("dense", "tfidf", "rrf", "rerank", "rerank_hybrid")
+
+
+def parse_args(argv=None) -> argparse.Namespace:
+    """No arguments reproduce the old corpus's run and its output names."""
+    parser = argparse.ArgumentParser(description="Score retrieval against gold articles.")
+    parser.add_argument("--questions", default=str(QUESTIONS_PATH), help="in-corpus questions")
+    parser.add_argument("--gold", default=str(GOLD_PATH), help="gold articles per question")
+    parser.add_argument("--out-name", default="retrieval", help="base name of the .md/.json results")
+    return parser.parse_args(argv)
+
+
+def output_paths(out_name: str):
+    return RESULTS_DIR / f"{out_name}.md", RESULTS_DIR / f"{out_name}.json"
+
+
+def gold_provenance(gold: dict) -> str:
+    if gold and all(e.get("source") == "event" for e in gold.values()):
+        return ("none; relevance is constructed from event membership (a question about an event "
+                "is answered by that event's news), checked by the owner on a sample")
+    return "the owner judged every candidate, with an AI tool helping to read or summarise articles"
 
 
 def extra_judged(gold: dict) -> int:
@@ -108,10 +132,11 @@ async def run(questions: list, tfidf: TfidfRetriever, reranker: CrossEncoderRera
     return rankings, times, max_sims, rerank_max
 
 
-def main() -> int:
-    in_corpus = load_questions()
+def main(argv=None) -> int:
+    args = parse_args(argv)
+    in_corpus = load_questions(args.questions)
     ooc = load_questions(DATASETS_DIR / "ooc_questions.json")
-    gold = json.loads(GOLD_PATH.read_text(encoding="utf-8"))
+    gold = json.loads(Path(args.gold).read_text(encoding="utf-8"))
     articles = load_articles()
 
     reranker = CrossEncoderReranker()
@@ -133,7 +158,10 @@ def main() -> int:
     groups.update({q["id"]: ooc_group(q) for q in ooc})
     refusals = refusal_table(max_sims, groups, thresholds)
     gates = {}
-    for system, scores_by_q in rerank_max.items():
+    # A reranker gate is fitted on in-corpus calibration questions; a question set without any
+    # (the full-text corpus) would fit it on out-of-corpus scores alone, so it gets no gate.
+    has_calibration = "in_corpus_calibration" in groups.values()
+    for system, scores_by_q in (rerank_max.items() if has_calibration else ()):
         t = pick_threshold([scores_by_q[q] for q, g in groups.items() if g == "in_corpus_calibration"],
                            [scores_by_q[q] for q, g in groups.items() if g == "ooc_calibration"])
         gates[system] = {"threshold": t, "refusals": refusal_table(scores_by_q, groups, {"picked": t})}
@@ -151,21 +179,21 @@ def main() -> int:
         "thresholds": thresholds,
         "n_articles": len(articles),
         "generated_at": datetime.now().isoformat(timespec="seconds"),
-        "gold_provenance": "the owner judged every candidate, with an AI tool helping to read "
-                           "or summarise articles",
+        "gold_provenance": gold_provenance(gold),
         "gold_extra": extra_judged(gold),
     }
 
     RESULTS_DIR.mkdir(exist_ok=True)
+    md_path, json_path = output_paths(args.out_name)
     report = build_report(scores, refusals, latency, meta, gates, unjudged)
-    (RESULTS_DIR / "retrieval.md").write_text(report, encoding="utf-8", newline="\n")
-    (RESULTS_DIR / "retrieval.json").write_text(json.dumps({
+    md_path.write_text(report, encoding="utf-8", newline="\n")
+    json_path.write_text(json.dumps({
         "meta": meta, "scores": scores, "refusals": refusals, "latency": latency,
         "max_similarity": max_sims, "rerank_max": rerank_max, "gates": gates,
         "unjudged": unjudged, "rankings": rankings,
     }, indent=2) + "\n", encoding="utf-8", newline="\n")
     print(report)
-    print(f"[INFO] wrote {RESULTS_DIR / 'retrieval.md'} and retrieval.json")
+    print(f"[INFO] wrote {md_path} and {json_path.name}")
     return 0
 
 
