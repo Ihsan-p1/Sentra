@@ -37,7 +37,8 @@ def raw():
 
 class TestLoader:
     def test_corpus_loads(self, articles):
-        assert len(articles) > 100
+        # Smallest corpus the full-text quota allows: 6 required events x (4 Antara + 4 Tempo).
+        assert len(articles) >= 48
 
     def test_every_article_has_the_required_fields(self, articles):
         for article in articles:
