@@ -89,6 +89,20 @@ def corpus_sources(path: Optional[str] = None) -> List[str]:
     return list(sources)
 
 
+def training_articles(path: Optional[str] = None) -> List[Dict[str, Any]]:
+    """
+    Articles that may train learned weights: those whose outlet is not listed in
+    the corpus's "no_train_sources" (Tempo's robots.txt says ai-train=no).
+    """
+    blocked = set(_read(path).get("no_train_sources", []))
+    return [a for a in load_articles(path) if a["media_source"] not in blocked]
+
+
+def unevaluated_models(path: Optional[str] = None) -> List[str]:
+    """Models never measured on this corpus, from its "unevaluated_models" key."""
+    return list(_read(path).get("unevaluated_models", []))
+
+
 def corpus_version(path: Optional[str] = None) -> str:
     """
     Short content fingerprint of the corpus, e.g. "indonesia-election-2024@a1b2c3d4e5f6".

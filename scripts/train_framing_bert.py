@@ -69,10 +69,15 @@ def train():
     # 1. Load Data from the corpus
     import sys
     sys.path.insert(0, ".")
-    from data.corpus import corpus_metadata, corpus_sources, load_articles
+    from data.corpus import corpus_metadata, corpus_sources, training_articles
 
-    articles = load_articles()
-    print(f"Loaded {len(articles)} articles ({corpus_metadata()['version']}).")
+    # Outlets in the corpus's no_train_sources (Tempo: robots.txt ai-train=no) never train weights.
+    articles = training_articles()
+    print(f"Loaded {len(articles)} trainable articles ({corpus_metadata()['version']}).")
+    missing = [m for m in corpus_sources() if not any(a['media_source'] == m for a in articles)]
+    if missing:
+        print(f"[ERROR] No trainable articles for {missing}; a classifier missing those classes is not trained.")
+        sys.exit(1)
     
     # 2. Prepare Data (Chunking headlines + snippets for training)
     texts = []

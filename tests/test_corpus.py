@@ -17,6 +17,8 @@ from data.corpus import (
     corpus_sources,
     corpus_version,
     load_articles,
+    training_articles,
+    unevaluated_models,
 )
 
 # corpus_version() of data/election_articles.json before the "sources" key was
@@ -115,6 +117,31 @@ class TestCorpusSelection:
 
     def test_old_corpus_version_unchanged(self):
         assert corpus_version("data/election_articles.json") == OLD_CORPUS_VERSION
+
+
+class TestTrainingBoundary:
+    def test_training_articles_drop_no_train_sources(self, tmp_path):
+        path = tmp_path / "fulltext.json"
+        path.write_text(json.dumps({
+            "name": "c",
+            "sources": ["antaranews", "tempo"],
+            "no_train_sources": ["tempo"],
+            "unevaluated_models": ["framing_bert"],
+            "articles": [
+                {"title": "a", "content": "c", "media_source": "antaranews"},
+                {"title": "t", "content": "c", "media_source": "tempo"},
+            ],
+        }), encoding="utf-8")
+
+        assert [a["title"] for a in training_articles(str(path))] == ["a"]
+        assert unevaluated_models(str(path)) == ["framing_bert"]
+
+    def test_training_articles_old_corpus_unchanged(self):
+        # The old corpus has neither key, so nothing is held back from training.
+        old = "data/election_articles.json"
+
+        assert training_articles(old) == load_articles(old)
+        assert unevaluated_models(old) == []
 
 
 class TestCorpusVersion:
