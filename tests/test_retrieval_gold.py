@@ -1,10 +1,14 @@
 """Candidate pool and gold sheet for the retrieval evaluation (eval phase 2)."""
 import ast
+import json
 from datetime import datetime
 from pathlib import Path
 
+import pytest
+
 from evaluation.hallucination_dataset import DATASETS_DIR, load_questions
-from evaluation.retrieval_gold import build_pool, extra_pool, make_sheet, merge_extra, parse_sheet
+from evaluation.retrieval_gold import (build_pool, extra_pool, gold_from_events, make_sheet, merge_extra,
+                                       parse_sheet)
 
 POOL = {"q1": ["u1", "u2", "u3"], "q2": ["u2"], "q3": ["u1", "u3"]}
 QUESTIONS = {"q1": "free meal program", "q2": "court ruling", "q3": "who won"}
@@ -105,3 +109,39 @@ def test_merge_extra_keeps_old_relevant_and_is_idempotent():
     assert merge_extra(once, {"q1": ["x"]}, {"q1": ["x", "y"]}) == once
     assert merge_extra(once, {"q1": []}, {"q1": ["x", "y"]})["q1"]["relevant"] == ["a"]
     assert gold["q1"] == {"relevant": ["a"], "judged": ["a", "b"]}   # input untouched
+
+
+ENTRIES = [
+    {"url": "a1", "event": "e1", "genre": "news"},
+    {"url": "t1", "event": "e1", "genre": "news"},
+    {"url": "a2", "event": "e2", "genre": "news"},
+    {"url": "o1", "event": "e1", "genre": "opinion"},
+]
+
+
+def test_gold_from_events_news_only():
+    gold = gold_from_events(ENTRIES, {"f01": "e1", "f02": "e2"})
+    assert gold["f01"] == {"relevant": ["a1", "t1"], "judged": ["a1", "a2", "t1"], "source": "event"}
+    assert gold["f02"]["relevant"] == ["a2"]
+    # Opinion pieces are not ingested, so they are neither relevant nor judged.
+    assert all("o1" not in e["relevant"] + e["judged"] for e in gold.values())
+
+
+def test_gold_unknown_event_raises():
+    with pytest.raises(ValueError, match="e9"):
+        gold_from_events(ENTRIES, {"f01": "e9"})
+
+
+def test_fulltext_gold_file_is_current():
+    """The committed gold is what gold_from_events builds from the manifest and the questions."""
+    from pipeline.fulltext.manifest import load_events, load_manifest
+
+    questions = load_questions(DATASETS_DIR / "fulltext_questions.json")
+    by_event = {}
+    for q in questions:
+        assert q["origin"] == "fulltext"
+        by_event.setdefault(q["event"], []).append(q["id"])
+    required = {e["id"] for e in load_events() if e["required"]}
+    assert {k: len(v) for k, v in by_event.items()} == {e: 2 for e in required}
+    committed = json.loads((DATASETS_DIR / "retrieval_gold_fulltext.json").read_text(encoding="utf-8"))
+    assert committed == gold_from_events(load_manifest(), {q["id"]: q["event"] for q in questions})

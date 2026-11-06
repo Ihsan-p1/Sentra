@@ -114,3 +114,21 @@ def merge_extra(gold: Dict, picked: Dict[str, List[str]], pool: Dict[str, List[s
         entry["relevant"] = [u for u in entry["relevant"] if u not in extra] + list(urls)
         entry["judged"] = sorted(set(entry["judged"]) | extra)
     return merged
+
+
+def gold_from_events(entries: List[Dict], question_events: Dict[str, str]) -> Dict:
+    """Gold by construction for the full-text corpus: a question about event X is answered by X's news.
+
+    `entries` are manifest rows. Opinion pieces are not ingested, so they are left out. Every
+    ingested article counts as judged: the ones outside the event are judged not relevant.
+    """
+    news = [e for e in entries if e["genre"] == "news"]
+    events = {e["event"] for e in news}
+    judged = sorted(e["url"] for e in news)
+    gold = {}
+    for qid, event in question_events.items():
+        if event not in events:
+            raise ValueError(f"{qid}: event {event} has no news articles in the manifest")
+        relevant = sorted(e["url"] for e in news if e["event"] == event)
+        gold[qid] = {"relevant": relevant, "judged": judged, "source": "event"}
+    return gold

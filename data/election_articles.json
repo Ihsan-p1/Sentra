@@ -1,6 +1,7 @@
 {
   "name": "indonesia-election-2024",
   "description": "English-language coverage of the 2024 Indonesian presidential election and its aftermath, from ANTARA News, Tempo English and ABC News.",
+  "sources": ["antaranews", "tempo", "abc_news"],
   "articles": [
     {
       "title": "2024 election: Baswedan draws number 1, Subianto 2, Pranowo 3",
