@@ -37,3 +37,11 @@ def test_calibration_questions_file(tmp_path):
     assert len(in_corpus) >= 12
     # None of the old out-of-corpus questions touches the 2024 election, so all of them still apply.
     assert out_of_corpus == calibrate_threshold.OUT_OF_CORPUS
+
+
+def test_gold_check_and_event_meta():
+    assert evaluate_retrieval.parse_args([]).gold_check is None
+    assert evaluate_retrieval.parse_args(["--gold-check", "c.json"]).gold_check == "c.json"
+    assert evaluate_retrieval.is_event_gold({"f01": {"source": "event"}})
+    assert not evaluate_retrieval.is_event_gold({"q1": {"relevant": []}})
+    assert evaluate_retrieval.median_words([{"content": "a b c"}, {"content": "a"}, {"content": "a b"}]) == 2

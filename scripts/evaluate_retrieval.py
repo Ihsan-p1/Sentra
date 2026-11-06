@@ -11,12 +11,14 @@ database and the reranker model, not the LLM.
 Usage:
     python scripts/evaluate_retrieval.py
     python scripts/evaluate_retrieval.py --questions evaluation/datasets/fulltext_questions.json \
-        --gold evaluation/datasets/retrieval_gold_fulltext.json --out-name retrieval_fulltext
+        --gold evaluation/datasets/retrieval_gold_fulltext.json --out-name retrieval_fulltext \
+        --gold-check evaluation/datasets/retrieval_gold_fulltext_check.json
 """
 import argparse
 import asyncio
 import json
 import os
+import statistics
 import subprocess
 import sys
 import time
@@ -51,7 +53,16 @@ def parse_args(argv=None) -> argparse.Namespace:
     parser.add_argument("--questions", default=str(QUESTIONS_PATH), help="in-corpus questions")
     parser.add_argument("--gold", default=str(GOLD_PATH), help="gold articles per question")
     parser.add_argument("--out-name", default="retrieval", help="base name of the .md/.json results")
+    parser.add_argument("--gold-check", default=None, help="owner's check of a constructed gold, if any")
     return parser.parse_args(argv)
+
+
+def is_event_gold(gold: dict) -> bool:
+    return bool(gold) and all(e.get("source") == "event" for e in gold.values())
+
+
+def median_words(articles: list) -> int:
+    return int(statistics.median(len(a["content"].split()) for a in articles))
 
 
 def output_paths(out_name: str):
@@ -59,7 +70,7 @@ def output_paths(out_name: str):
 
 
 def gold_provenance(gold: dict) -> str:
-    if gold and all(e.get("source") == "event" for e in gold.values()):
+    if is_event_gold(gold):
         return ("none; relevance is constructed from event membership (a question about an event "
                 "is answered by that event's news), checked by the owner on a sample")
     return "the owner judged every candidate, with an AI tool helping to read or summarise articles"
@@ -181,6 +192,10 @@ def main(argv=None) -> int:
         "generated_at": datetime.now().isoformat(timespec="seconds"),
         "gold_provenance": gold_provenance(gold),
         "gold_extra": extra_judged(gold),
+        "event_gold": is_event_gold(gold),
+        "median_words": median_words(articles),
+        "gold_check": (json.loads(Path(args.gold_check).read_text(encoding="utf-8"))
+                       if args.gold_check else None),
     }
 
     RESULTS_DIR.mkdir(exist_ok=True)
