@@ -27,6 +27,7 @@ Thumbs.db
 
 # Project specific
 data/raw/
+data/scraped_articles.json
 logs/
 
 # Large Models
