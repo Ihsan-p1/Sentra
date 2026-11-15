@@ -40,6 +40,9 @@ def fetch_all(entries: list[dict], session, raw_dir: Path, delay_s: float = 2.0)
         if entry["outlet"] != "antaranews":
             continue
         url = entry["url"]
+        if urlparse(url).hostname != "en.antaranews.com":
+            results[url] = "failed: not an Antara URL"
+            continue
         target = raw_path(url, "antaranews", raw_dir)
         if target.exists():
             results[url] = "skipped"

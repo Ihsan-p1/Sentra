@@ -26,7 +26,7 @@ A second reading by Claude, written after the owner finished, matches the owner 
 
 - One annotator and one pass. No second annotator, so no inter-annotator agreement.
 - 145 sentences. The interval resamples whole articles (2,000 draws), because sentences of one article are not independent.
-- The sample is stratified: the same number of sentences per outlet, split evenly over each outlet's events. It does not follow the corpus's own proportions.
+- The sample is stratified: the same number of sentences per outlet, split evenly over each outlet's events, with any remainder taken from the largest event. It does not follow the corpus's own proportions.
 - Macro F1 counts both classes equally. With few sentences labelled biased, a handful of them moves the score; read it next to the best constant.
 - Sentences are the units `/analyze` produced (pysbd). BASIL's figure uses BASIL's own segmentation.
 - The owner labelled from a summary of BABE's annotation manual (`evaluation/datasets/DEBERTA_LABELING_GUIDE.md`), not as a trained BABE annotator.

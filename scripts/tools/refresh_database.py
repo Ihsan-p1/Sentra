@@ -1,5 +1,5 @@
 """
-Clear the database and re-ingest data/election_articles.json from scratch.
+Clear the database and re-ingest the corpus CORPUS_PATH names from scratch.
 
 Run this whenever the corpus OR settings.EMBEDDING_MODEL changes. Changing the
 embedding model without re-ingesting leaves the stored vectors in a different

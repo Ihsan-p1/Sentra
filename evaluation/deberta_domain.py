@@ -25,6 +25,7 @@ ANSWERS = {"b": "biased", "biased": "biased", "n": "neutral", "neutral": "neutra
 SHEET_HEAD = re.compile(r"^# .*\(sampel ([0-9a-f]{12})\)\s*$")
 ITEM = re.compile(r"^## (\d+)\s*$")
 ANSWER = re.compile(r"^label:(.*)$")
+LOOSE_ANSWER = re.compile(r"(?i)^\s*label\s*:")
 
 
 def macro_f1(gold: List[str], pred: List[str]) -> float:
@@ -120,7 +121,7 @@ def make_sheet(sample: List[Dict]) -> str:
 
 def parse_sheet(text: str, sample: List[Dict]) -> Tuple[List[Dict], List[str]]:
     """Labels read from a filled sheet, plus one message per line that could not be read."""
-    lines = text.splitlines()
+    lines = text.lstrip("﻿").splitlines()  # Notepad saves UTF-8 with a BOM
     head = SHEET_HEAD.match(lines[0]) if lines else None
     if not head or head.group(1) != sample_fingerprint(sample):
         return [], ["the sheet was made from a different sample; make a new sheet"]
@@ -137,12 +138,17 @@ def parse_sheet(text: str, sample: List[Dict]) -> Tuple[List[Dict], List[str]]:
                 current = None
             continue
         answer = ANSWER.match(line)
+        if not answer and LOOSE_ANSWER.match(line):
+            errors.append(f"line {no}: write the label line exactly as `label: b`, lower case, no indent")
+            continue
         if not (answer and current):
             continue
         value, sentence_id, current = answer.group(1).strip().lower(), current, None
         if not value:
             continue
-        if value in ANSWERS:
+        if any(entry["id"] == sentence_id for entry in labels):
+            errors.append(f"line {no}: {sentence_id} is labelled more than once")
+        elif value in ANSWERS:
             labels.append({"id": sentence_id, "label": ANSWERS[value]})
         else:
             errors.append(f"line {no}: {sentence_id} -> {value!r} is not b, n or s")
@@ -219,7 +225,8 @@ def build_report(sample: List[Dict], labels: List[Dict], meta: Dict, reading: Li
         f"- {len(rows)} sentences. The interval resamples whole articles (2,000 draws), because "
         "sentences of one article are not independent.",
         "- The sample is stratified: the same number of sentences per outlet, split evenly over each "
-        "outlet's events. It does not follow the corpus's own proportions.",
+        "outlet's events, with any remainder taken from the largest event. It does not follow the "
+        "corpus's own proportions.",
         "- Macro F1 counts both classes equally. With few sentences labelled biased, a handful of them "
         "moves the score; read it next to the best constant.",
         "- Sentences are the units `/analyze` produced (pysbd). BASIL's figure uses BASIL's own segmentation.",

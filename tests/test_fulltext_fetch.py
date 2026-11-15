@@ -78,3 +78,12 @@ def test_failed_status_recorded(tmp_path):
 
     assert result == {ANTARA: "failed: 403"}
     assert not raw_path(ANTARA, "antaranews", tmp_path).exists()
+
+
+def test_never_requests_a_tempo_url_mislabelled_as_antara(tmp_path):
+    session = FakeSession()
+
+    result = fetch_all([entry(TEMPO, "antaranews")], session, tmp_path, delay_s=0)
+
+    assert result == {TEMPO: "failed: not an Antara URL"}
+    assert session.calls == []

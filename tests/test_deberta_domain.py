@@ -172,3 +172,17 @@ def test_report_carries_other_domains_and_no_sentence_text():
     assert "antaranews" in report and "tempo" in report
     assert "quoted or reported speech" in report and "not that an outlet is biased" in report
     assert not any(row["text"] in report for row in sample)
+
+
+def test_parse_sheet_reads_a_bom_and_refuses_duplicates_and_stray_label_lines():
+    sample = stratified_sample(sentences({("antaranews", "e1"): 2, ("tempo", "e1"): 2}), n=2)
+    filled = make_sheet(sample).replace("label: \n", "label: b\n", 1)
+
+    labels, errors = parse_sheet("﻿" + filled, sample)
+    assert errors == [] and labels == [{"id": 1, "label": B}]
+
+    labels, errors = parse_sheet(filled.replace("label: b", "Label: b"), sample)
+    assert labels == [] and len(errors) == 1 and "label" in errors[0]
+
+    labels, errors = parse_sheet(filled + "\n## 001\nrepeated\nlabel: n\n", sample)
+    assert len(errors) == 1 and "more than once" in errors[0]

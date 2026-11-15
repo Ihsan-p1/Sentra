@@ -45,3 +45,10 @@ def test_gold_check_and_event_meta():
     assert evaluate_retrieval.is_event_gold({"f01": {"source": "event"}})
     assert not evaluate_retrieval.is_event_gold({"q1": {"relevant": []}})
     assert evaluate_retrieval.median_words([{"content": "a b c"}, {"content": "a"}, {"content": "a b"}]) == 2
+
+
+def test_gold_urls_missing_from_the_corpus_are_reported():
+    gold = {"q1": {"relevant": ["u1", "u2"], "judged": ["u1", "u2", "u3"]},
+            "q2": {"relevant": ["u2"], "judged": ["u2"]}}
+    assert evaluate_retrieval.missing_gold_urls(gold, {"u1": {}, "u2": {}}) == []
+    assert evaluate_retrieval.missing_gold_urls(gold, {"u1": {}}) == ["u2"]

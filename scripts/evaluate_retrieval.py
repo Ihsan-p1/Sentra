@@ -143,15 +143,27 @@ async def run(questions: list, tfidf: TfidfRetriever, reranker: CrossEncoderRera
     return rankings, times, max_sims, rerank_max
 
 
+def missing_gold_urls(gold: dict, by_url: dict) -> list:
+    """Relevant URLs of the gold that the active corpus does not hold."""
+    return sorted({url for entry in gold.values() for url in entry["relevant"]} - set(by_url))
+
+
 def main(argv=None) -> int:
     args = parse_args(argv)
     in_corpus = load_questions(args.questions)
     ooc = load_questions(DATASETS_DIR / "ooc_questions.json")
     gold = json.loads(Path(args.gold).read_text(encoding="utf-8"))
     articles = load_articles()
+    by_url = {a["url"]: a for a in articles}
+
+    # A gold made for another corpus would score near zero and overwrite that corpus's results.
+    missing = missing_gold_urls(gold, by_url)
+    if missing:
+        print(f"[ERROR] {len(missing)} relevant URLs of {args.gold} are not in the active corpus "
+              f"(first: {missing[0]}); set CORPUS_PATH to the corpus this gold was built for")
+        return 1
 
     reranker = CrossEncoderReranker()
-    by_url = {a["url"]: a for a in articles}
 
     async def with_db():
         await db_manager.connect()
