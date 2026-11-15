@@ -173,3 +173,20 @@ def test_keep_rule_gate_needs_four_near_refusals():
     md = build_report(SCORES, REFUSALS, LATENCY, META, gates={"rerank": {"threshold": 0.0, "refusals": gate}})
     line = _keep_line(md, "Gate, Cross-encoder rerank of dense candidates")
     assert "not useful" in line and "1/2" in line and "0/1" in line
+
+
+# --- full-text corpus (Task 9) ---
+
+CHECK = {"design": "5 gold-relevant and 5 gold-not-relevant pairs, seed 7, judged blind",
+         "pairs": [{"qid": "f01", "url": "u1", "gold": True, "owner": True},
+                   {"qid": "f05", "url": "u2", "gold": True, "owner": False}]}
+
+
+def test_report_on_event_gold_states_construction_and_full_text():
+    meta = {**META, "n_articles": 63, "event_gold": True, "median_words": 309, "gold_check": CHECK}
+    md = build_report(SCORES, REFUSALS, LATENCY, meta)
+    assert "owner-judged" not in md and "summaries" not in md and "pooled" not in md
+    assert "63 full-text news articles (median 309 words)" in md
+    assert "built from event membership" in md
+    assert "The owner checked 2 (question, article) pairs" in md and "agreed with the gold on 1" in md
+    assert "f05 u2 (gold relevant, owner not relevant)" in md

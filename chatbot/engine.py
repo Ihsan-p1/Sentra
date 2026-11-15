@@ -22,6 +22,8 @@ from pipeline.embeddings import get_embedder
 # For LLM generation (using OpenAI or Ollama)
 from chatbot.llm_client import LLMClient, LLMUnavailable
 from chatbot.conversation_memory import conversation_memory
+from chatbot.framing_gate import neural_framing, style_match_label
+from data.corpus import unevaluated_models
 from chatbot.sentences import prepare_for_check, split_sentences
 from chatbot.language import (
     INTENT_HELP,
@@ -427,14 +429,9 @@ class ChatbotEngine:
         # Model B: Statistical (TF-IDF)
         framing_statistical = self.framing_analyzer.analyze_media_framing(texts_by_media)
         
-        # Model A: Neural (DistilBERT)
-        framing_neural = {}
-        for media, texts in texts_by_media.items():
-            if texts:
-                combined_text = " ".join(texts)[:512]
-                prediction = self.bert_framing.predict_source_style(combined_text)
-                framing_neural[media] = prediction.get(media, 0.0)
-                
+        # Model A: Neural (DistilBERT); None per outlet on a corpus it was never measured on
+        framing_neural = neural_framing(texts_by_media, self.bert_framing, unevaluated_models())
+
         return {
             "statistical": framing_statistical,
             "neural": framing_neural
@@ -510,7 +507,7 @@ class ChatbotEngine:
                 "model_a": {
                     "name": "DistilBERT Classifier (Neural)",
                     "keywords": {
-                        m: [f"Style Match: {score:.1%}"] 
+                        m: [style_match_label(score)]
                         for m, score in framing_res["neural"].items()
                     },
                     "method": "Fine-tuned Transformer"

@@ -9,6 +9,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 import sys
 sys.path.append('..')
 from config.settings import settings
+from data.corpus import corpus_sources
 from database.connection import db_manager
 from pipeline.embeddings import get_embedder
 
@@ -67,7 +68,7 @@ class RAGRetriever:
         Main retrieval method.
         """
         top_k = top_k or settings.TOP_K_RETRIEVAL
-        media_sources = media_filter or settings.SUPPORTED_MEDIA
+        media_sources = media_filter or corpus_sources()
 
         # 1. Generate query embedding (from the expanded form - see QUERY_PREFIX)
         query_embedding = self.embedder.generate_single(expand_query(query)).reshape(1, -1)

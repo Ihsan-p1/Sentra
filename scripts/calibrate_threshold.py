@@ -12,10 +12,13 @@ candidate threshold so the choice can be defended with data.
 
 Usage:
     python scripts/calibrate_threshold.py
+    python scripts/calibrate_threshold.py --questions evaluation/datasets/fulltext_calibration.json
 
 Requires a populated database (scripts/tools/refresh_database.py).
 """
+import argparse
 import asyncio
+import json
 import os
 import statistics
 import sys
@@ -82,6 +85,22 @@ OUT_OF_CORPUS = [
 CANDIDATES = [0.25, 0.30, 0.35, 0.38, 0.40, 0.42, 0.44, 0.45, 0.46, 0.48, 0.50, 0.55]
 
 
+def parse_args(argv=None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Calibrate the retrieval refusal threshold.")
+    parser.add_argument("--questions", default=None,
+                        help='JSON {"in_corpus": [...], "out_of_corpus": [...]}; default: the lists above')
+    return parser.parse_args(argv)
+
+
+def load_question_sets(path=None):
+    """(in-corpus, out-of-corpus) queries: the inline lists, or the two lists in a JSON file."""
+    if path is None:
+        return IN_CORPUS, OUT_OF_CORPUS
+    with open(path, encoding="utf-8") as f:
+        data = json.load(f)
+    return data["in_corpus"], data["out_of_corpus"]
+
+
 async def max_similarities(retriever, queries):
     """Best-matching chunk score for each query."""
     results = []
@@ -101,7 +120,8 @@ def describe(label, scored):
     return values
 
 
-async def main():
+async def main(argv=None):
+    in_corpus, out_of_corpus = load_question_sets(parse_args(argv).questions)
     await db_manager.connect()
     retriever = RAGRetriever()
 
@@ -111,8 +131,8 @@ async def main():
     print(f"Embedding model: {settings.EMBEDDING_MODEL}")
     print(f"Current setting: RETRIEVAL_THRESHOLD = {settings.RETRIEVAL_THRESHOLD}\n")
 
-    in_scored = await max_similarities(retriever, IN_CORPUS)
-    out_scored = await max_similarities(retriever, OUT_OF_CORPUS)
+    in_scored = await max_similarities(retriever, in_corpus)
+    out_scored = await max_similarities(retriever, out_of_corpus)
 
     in_values = describe("In-corpus", in_scored)
     out_values = describe("Out-of-corpus", out_scored)

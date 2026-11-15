@@ -172,6 +172,33 @@ def keep_rule_lines(scores: Dict, latency: Dict, gates: Optional[Dict]) -> List[
     return lines
 
 
+def _relevance(flag: bool) -> str:
+    return "relevant" if flag else "not relevant"
+
+
+def event_gold_lines(meta: Dict) -> List[str]:
+    """Limits for the full-text corpus, whose gold is constructed rather than judged."""
+    lines = [
+        f"- The corpus holds {meta['n_articles']} full-text news articles (median "
+        f"{meta['median_words']} words).",
+        "- Gold is constructed, not judged: a question about an event counts every news article of "
+        "that event as relevant and every other article as not relevant. It can be too broad for a "
+        "narrow question and misses articles from another event that answer it.",
+    ]
+    check = meta.get("gold_check")
+    if check:
+        pairs = check["pairs"]
+        off = [p for p in pairs if p["owner"] != p["gold"]]
+        line = (f"- The owner checked {len(pairs)} (question, article) pairs ({check['design']}) and "
+                f"agreed with the gold on {len(pairs) - len(off)}.")
+        if off:
+            line += " Disagreements: " + "; ".join(
+                f"{p['qid']} {p['url']} (gold {_relevance(p['gold'])}, owner {_relevance(p['owner'])})"
+                for p in off) + "."
+        lines.append(line)
+    return lines
+
+
 def build_report(
     scores: Dict,
     refusals: Dict,
@@ -182,10 +209,13 @@ def build_report(
 ) -> str:
     first = next(iter(scores.values()))
     names = list(refusals)
+    # Event gold exists only for the full-text corpus (retrieval_gold.gold_from_events).
+    event = meta.get("event_gold")
+    gold_kind = "gold built from event membership (see Limits)" if event else "owner-judged gold articles"
     lines = [
         "# Retrieval evaluation",
         "",
-        f"{first['n_scored']} questions scored against owner-judged gold articles. "
+        f"{first['n_scored']} questions scored against {gold_kind}. "
         "Recall@5 is the share of a question's relevant articles in the top 5; MRR@10 is the "
         "reciprocal rank of the first relevant article in the top 10. Intervals are 95% "
         "bootstrap intervals over questions.",
@@ -272,10 +302,11 @@ def build_report(
         "",
         "## Limits",
         "",
-        f"- The corpus holds {meta['n_articles']} article summaries (median 97 words), not full text.",
-        f"- Gold comes from a single judge: {meta['gold_provenance']}.",
-        "- Gold is pooled from the top 10 of both systems; a relevant article neither system "
-        "ranked in its top 10 was never judged and counts as not relevant.",
+        *(event_gold_lines(meta) if event else [
+            f"- The corpus holds {meta['n_articles']} article summaries (median 97 words), not full text.",
+            f"- Gold comes from a single judge: {meta['gold_provenance']}.",
+            "- Gold is pooled from the top 10 of both systems; a relevant article neither system "
+            "ranked in its top 10 was never judged and counts as not relevant."]),
         *([f"- {meta['gold_extra']} articles first ranked by the phase 3 systems were judged later by "
            "the same owner; every system is scored on the same extended gold."]
           if meta.get("gold_extra") else []),

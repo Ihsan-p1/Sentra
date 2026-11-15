@@ -87,8 +87,9 @@ class Settings(BaseSettings):
     RETRIEVAL_THRESHOLD: float = 0.35
     RETRIEVAL_THRESHOLD_STRICT: float = 0.42  # reduce_hallucination mode
 
-    # Media Sources (English-language Indonesian news)
-    SUPPORTED_MEDIA: list = ["antaranews", "tempo", "abc_news"]
+    # Active corpus. Its outlet list lives in the file's own "sources" key
+    # (data.corpus.corpus_sources), so switching corpora switches outlets too.
+    CORPUS_PATH: str = "data/election_articles.json"
 
     # Paths
     MODELS_DIR: str = "models"

@@ -69,10 +69,15 @@ def train():
     # 1. Load Data from the corpus
     import sys
     sys.path.insert(0, ".")
-    from data.corpus import corpus_metadata, load_articles
+    from data.corpus import corpus_metadata, corpus_sources, training_articles
 
-    articles = load_articles()
-    print(f"Loaded {len(articles)} articles ({corpus_metadata()['version']}).")
+    # Outlets in the corpus's no_train_sources (Tempo: robots.txt ai-train=no) never train weights.
+    articles = training_articles()
+    print(f"Loaded {len(articles)} trainable articles ({corpus_metadata()['version']}).")
+    missing = [m for m in corpus_sources() if not any(a['media_source'] == m for a in articles)]
+    if missing:
+        print(f"[ERROR] No trainable articles for {missing}; a classifier missing those classes is not trained.")
+        sys.exit(1)
     
     # 2. Prepare Data (Chunking headlines + snippets for training)
     texts = []
@@ -80,7 +85,7 @@ def train():
     
     # Derive labels from the canonical source list so they can never drift from
     # the media_source values used at ingestion and retrieval time.
-    label_map = {media: idx for idx, media in enumerate(settings.SUPPORTED_MEDIA)}
+    label_map = {media: idx for idx, media in enumerate(corpus_sources())}
     print(f"Label map: {label_map}")
 
     # Reverse map for saving
@@ -108,7 +113,7 @@ def train():
     if skipped:
         # Loud on purpose: a silent skip here previously dropped a whole source
         # from training while the pipeline still queried it at runtime.
-        print(f"[WARN] Skipped articles from sources not in SUPPORTED_MEDIA: {skipped}")
+        print(f"[WARN] Skipped articles from sources not in the corpus 'sources' list: {skipped}")
 
     # 3. Train/Test Split (stratified so every source appears in both splits)
     X_train, X_test, y_train, y_test = train_test_split(

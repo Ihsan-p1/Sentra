@@ -1,0 +1,65 @@
+{
+  "design": "5 pairs the gold calls relevant and 5 it calls not relevant, drawn at random with seed 7, judged blind on 2026-11-06",
+  "pairs": [
+    {
+      "qid": "f01",
+      "url": "https://en.tempo.co/read/1906272/indonesias-constitutional-court-lowers-threshold-for-regional-head-elections-candidacy",
+      "gold": false,
+      "owner": false
+    },
+    {
+      "qid": "f02",
+      "url": "https://en.antaranews.com/news/311403/mk-dismisses-challenges-to-prabowo-gibrans-election-win",
+      "gold": false,
+      "owner": true
+    },
+    {
+      "qid": "f02",
+      "url": "https://en.tempo.co/read/1793864/mkmk-dismisses-anwar-usman-from-constitutional-court-chief-justice-post",
+      "gold": true,
+      "owner": true
+    },
+    {
+      "qid": "f02",
+      "url": "https://en.tempo.co/read/1847740/malaysias-pm-anwar-ibrahim-congratulates-prabowo-subianto-on-election-victory",
+      "gold": false,
+      "owner": false
+    },
+    {
+      "qid": "f05",
+      "url": "https://en.antaranews.com/news/305952/ganjar-mahfud-pair-wins-at-polling-station-where-ganjar-voted",
+      "gold": true,
+      "owner": false
+    },
+    {
+      "qid": "f06",
+      "url": "https://en.antaranews.com/news/305883/former-president-megawati-casts-her-vote-at-tps-no-53-in-jakarta",
+      "gold": true,
+      "owner": false
+    },
+    {
+      "qid": "f08",
+      "url": "https://en.antaranews.com/news/298017/palace-optimistic-of-sustained-conducive-condition-post-mkmks-verdict",
+      "gold": false,
+      "owner": false
+    },
+    {
+      "qid": "f09",
+      "url": "https://en.antaranews.com/news/311436/jokowi-to-begin-power-transition-to-prabowo-following-election-verdict",
+      "gold": true,
+      "owner": true
+    },
+    {
+      "qid": "f11",
+      "url": "https://en.antaranews.com/news/309006/election-results-murmurs-of-electoral-fraud-peoples-expectations",
+      "gold": false,
+      "owner": false
+    },
+    {
+      "qid": "f12",
+      "url": "https://en.antaranews.com/news/323819/jokowi-calls-for-peaceful-protests-hopes-for-protesters-release",
+      "gold": true,
+      "owner": true
+    }
+  ]
+}
