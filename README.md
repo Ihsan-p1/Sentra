@@ -326,7 +326,6 @@ Sentra/
 │   └── framing_bert/   # Fine-tuned DistilBERT weights (generated)
 ├── pipeline/           # Preprocessing, embeddings, ingestion
 ├── rag/                # Vector retrieval logic
-├── scraper/            # News scrapers (ANTARA, Tempo, ABC News)
 ├── scripts/            # Training, evaluation, and debug utilities
 ├── tests/              # pytest suite (unit + integration)
 ├── utils/              # Per-request tracing
